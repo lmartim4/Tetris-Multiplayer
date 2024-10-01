@@ -15,34 +15,34 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TetrisMultiplayer.cpp">
+    <ClCompile Include="Server.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Server\enet-1.3.18\host.c">
+    <ClCompile Include="enet-1.3.18\callbacks.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Server\enet-1.3.18\list.c">
+    <ClCompile Include="enet-1.3.18\compress.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Server\enet-1.3.18\packet.c">
+    <ClCompile Include="enet-1.3.18\host.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Server\enet-1.3.18\peer.c">
+    <ClCompile Include="enet-1.3.18\list.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Server\enet-1.3.18\protocol.c">
+    <ClCompile Include="enet-1.3.18\packet.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Server\enet-1.3.18\unix.c">
+    <ClCompile Include="enet-1.3.18\peer.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Server\enet-1.3.18\win32.c">
+    <ClCompile Include="enet-1.3.18\protocol.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Server\enet-1.3.18\callbacks.c">
+    <ClCompile Include="enet-1.3.18\unix.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Server\enet-1.3.18\compress.c">
+    <ClCompile Include="enet-1.3.18\win32.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
