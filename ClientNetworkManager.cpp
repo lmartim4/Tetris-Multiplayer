@@ -1,8 +1,8 @@
 // ClientNetworkManager.cpp
 
 #include "ClientNetworkManager.hpp"
+#include "TetrisActions.hpp"
 #include <iostream>
-#include <enet/enet.h>
 
 // Constructor
 ClientNetworkManager::ClientNetworkManager(const std::string& serverAddress, uint16_t port) {
@@ -21,7 +21,10 @@ ClientNetworkManager::ClientNetworkManager(const std::string& serverAddress, uin
     }
 
     networkThread = std::thread(&ClientNetworkManager::networkLoop, this);
-    heartbeatThread = std::thread(&ClientNetworkManager::sendHeartbeatLoop, this);
+    actionThread = std::thread(&ClientNetworkManager::actionLoop, this);
+
+    // Seed random number generator
+    std::srand(std::time(0));
 }
 
 // Destructor
@@ -30,8 +33,8 @@ ClientNetworkManager::~ClientNetworkManager() {
     if (networkThread.joinable()) {
         networkThread.join();
     }
-    if (heartbeatThread.joinable()) {
-        heartbeatThread.join();
+    if (actionThread.joinable()) {
+        actionThread.join();
     }
 }
 
@@ -66,15 +69,36 @@ void ClientNetworkManager::networkLoop() {
     }
 }
 
-// Send heartbeat packet every second
-void ClientNetworkManager::sendHeartbeatLoop() {
-    while (running) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+// Function to send a random Tetris action
+void ClientNetworkManager::sendRandomAction() {
+    // Define possible actions
+    TetrisAction actions[] = {
+        TetrisAction::START, TetrisAction::RESTART, TetrisAction::PAUSE,
+        TetrisAction::RESUME, TetrisAction::LEFT, TetrisAction::RIGHT,
+        TetrisAction::ROTATE_LEFT, TetrisAction::ROTATE_RIGHT,
+        TetrisAction::DROP_FASTER, TetrisAction::DROP_INSTANT
+    };
 
-        // Create and send the heartbeat packet
-        std::vector<uint8_t> data = {'H', 'E', 'A', 'R', 'T', 'B', 'E', 'A', 'T'};
-        Packet heartbeatPacket(data);
-        enqueueOutgoingPacket(heartbeatPacket);
+    // Select a random action
+    int randomIndex = std::rand() % 10;
+    TetrisAction action = actions[randomIndex];
+
+    // Create a packet to send the action
+    std::vector<uint8_t> data = { static_cast<uint8_t>(action) };
+    Packet actionPacket(data);
+
+    // Send the packet
+    enqueueOutgoingPacket(actionPacket);
+
+    // Print the sent action
+    std::cout << "Sent action: " << randomIndex << std::endl;
+}
+
+// Function that runs every 2 seconds to send random action
+void ClientNetworkManager::actionLoop() {
+    while (running) {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        sendRandomAction();
     }
 }
 

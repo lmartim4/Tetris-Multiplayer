@@ -4,7 +4,10 @@
 #define CLIENT_NETWORK_MANAGER_HPP
 
 #include "NetworkManager.hpp"
+#include "TetrisActions.hpp"
 #include <chrono>
+#include <cstdlib>  // For rand() and srand()
+#include <ctime>    // For time()
 #include <thread>
 
 class ClientNetworkManager : public NetworkManager {
@@ -12,7 +15,7 @@ private:
     ENetHost* client;
     ENetPeer* peer;
     std::thread networkThread;
-    std::thread heartbeatThread;
+    std::thread actionThread;
 
 public:
     ClientNetworkManager(const std::string& serverAddress = "localhost", uint16_t port = 12345);
@@ -21,10 +24,10 @@ public:
     // Main network loop to handle events and packets
     void networkLoop();
 
-    // Send heartbeat packet every second
-    void sendHeartbeatLoop();
+    // Send a random Tetris action
+    void sendRandomAction();
 
-    // Send all outgoing packets to the server
+    // Send outgoing packets to the server
     void sendOutgoingPackets() override;
 
     // Parse the incoming ENet packet
@@ -32,6 +35,9 @@ public:
 
     // Create an ENet packet from the internal Packet structure
     ENetPacket* createENetPacket(const Packet& packet);
+
+    // Random action loop (called every 2 seconds)
+    void actionLoop();
 };
 
 #endif // CLIENT_NETWORK_MANAGER_HPP

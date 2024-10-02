@@ -1,5 +1,3 @@
-// client_main.cpp
-
 #include <enet/enet.h>
 #include "ClientNetworkManager.hpp"
 

@@ -23,17 +23,17 @@ $(SERVER_TARGET): $(SERVER_OBJ)
 	$(CXX) $(SERVER_OBJ) -o $(SERVER_TARGET) $(LDFLAGS)
 
 # Rule for compiling client.cpp and other client source files
-client.o: client.cpp ClientNetworkManager.hpp NetworkManager.hpp
+client.o: client.cpp ClientNetworkManager.hpp NetworkManager.hpp TetrisActions.hpp
 	$(CXX) $(CXXFLAGS) client.cpp
 
-ClientNetworkManager.o: ClientNetworkManager.cpp ClientNetworkManager.hpp NetworkManager.hpp
+ClientNetworkManager.o: ClientNetworkManager.cpp ClientNetworkManager.hpp NetworkManager.hpp TetrisActions.hpp
 	$(CXX) $(CXXFLAGS) ClientNetworkManager.cpp
 
 # Rule for compiling server.cpp and other server source files
-server.o: server.cpp ServerNetworkManager.hpp NetworkManager.hpp
+server.o: server.cpp ServerNetworkManager.hpp NetworkManager.hpp TetrisActions.hpp
 	$(CXX) $(CXXFLAGS) server.cpp
 
-ServerNetworkManager.o: ServerNetworkManager.cpp ServerNetworkManager.hpp NetworkManager.hpp
+ServerNetworkManager.o: ServerNetworkManager.cpp ServerNetworkManager.hpp NetworkManager.hpp TetrisActions.hpp
 	$(CXX) $(CXXFLAGS) ServerNetworkManager.cpp
 
 # Rule for compiling shared NetworkManager.cpp

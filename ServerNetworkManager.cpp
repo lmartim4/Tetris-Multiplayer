@@ -1,6 +1,5 @@
-// ServerNetworkManager.cpp
-
 #include "ServerNetworkManager.hpp"
+#include "TetrisActions.hpp"
 #include <iostream>
 #include <stdexcept>
 
@@ -79,16 +78,15 @@ ENetPacket* ServerNetworkManager::createENetPacket(const Packet& packet) {
     return enet_packet_create(packet.data.data(), packet.data.size(), ENET_PACKET_FLAG_RELIABLE);
 }
 
-// Handle an incoming packet, for example, to process heartbeat packets
+// Handle an incoming packet, for example, to process Tetris actions
 void ServerNetworkManager::handlePacket(const ENetEvent& event) {
     Packet packet = parsePacket(event.packet);
 
-    // Check if the packet is a heartbeat
-    std::string packetData(packet.data.begin(), packet.data.end());
-    if (packetData == "HEARTBEAT") {
-        // Print the client's IP address
-        char clientIP[16];
-        enet_address_get_host_ip(&event.peer->address, clientIP, sizeof(clientIP));
-        std::cout << "Heartbeat received from: " << clientIP << std::endl;
+    // Check if the packet contains a Tetris action
+    if (!packet.data.empty()) {
+        TetrisAction action = static_cast<TetrisAction>(packet.data[0]);  // Assume the action is encoded in the first byte
+
+        // Print the action
+        std::cout << "Received action: " << TetrisActionToString(action) << " from client." << std::endl;
     }
 }
