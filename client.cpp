@@ -1,7 +1,7 @@
 // client_main.cpp
 
 #include <enet/enet.h>
-#include "ClientNetworkManager.h"
+#include "ClientNetworkManager.hpp"
 
 class Client {
 public:

@@ -1,7 +1,7 @@
 // server_main.cpp
 
 #include <enet/enet.h>
-#include "ServerNetworkManager.h"
+#include "ServerNetworkManager.hpp"
 
 class Server {
 public:

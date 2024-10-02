@@ -7,9 +7,9 @@ LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lenet
 CLIENT_TARGET = client-app
 SERVER_TARGET = server-app
 
-# Define object files
-CLIENT_OBJ = client.o
-SERVER_OBJ = server.o
+# Define object files for client and server
+CLIENT_OBJ = client.o ClientNetworkManager.o NetworkManager.o
+SERVER_OBJ = server.o ServerNetworkManager.o NetworkManager.o
 
 # Default target: build both client and server
 all: $(CLIENT_TARGET) $(SERVER_TARGET)
@@ -22,13 +22,23 @@ $(CLIENT_TARGET): $(CLIENT_OBJ)
 $(SERVER_TARGET): $(SERVER_OBJ)
 	$(CXX) $(SERVER_OBJ) -o $(SERVER_TARGET) $(LDFLAGS)
 
-# Rule for compiling client.cpp
-$(CLIENT_OBJ): client.cpp
+# Rule for compiling client.cpp and other client source files
+client.o: client.cpp ClientNetworkManager.hpp NetworkManager.hpp
 	$(CXX) $(CXXFLAGS) client.cpp
 
-# Rule for compiling server.cpp
-$(SERVER_OBJ): server.cpp
+ClientNetworkManager.o: ClientNetworkManager.cpp ClientNetworkManager.hpp NetworkManager.hpp
+	$(CXX) $(CXXFLAGS) ClientNetworkManager.cpp
+
+# Rule for compiling server.cpp and other server source files
+server.o: server.cpp ServerNetworkManager.hpp NetworkManager.hpp
 	$(CXX) $(CXXFLAGS) server.cpp
+
+ServerNetworkManager.o: ServerNetworkManager.cpp ServerNetworkManager.hpp NetworkManager.hpp
+	$(CXX) $(CXXFLAGS) ServerNetworkManager.cpp
+
+# Rule for compiling shared NetworkManager.cpp
+NetworkManager.o: NetworkManager.cpp NetworkManager.hpp
+	$(CXX) $(CXXFLAGS) NetworkManager.cpp
 
 # Run the client
 run-client: $(CLIENT_TARGET)
