@@ -1,13 +1,13 @@
-// ClientNetworkManager.cpp
-
 #include "ClientNetworkManager.hpp"
-#include "TetrisActions.hpp"
+#include "PacketType.hpp"
 #include <iostream>
 
 // Constructor
-ClientNetworkManager::ClientNetworkManager(const std::string& serverAddress, uint16_t port) {
-    client = enet_host_create(nullptr, 1, 2, 0, 0);  // 1 client, 2 channels
-    if (!client) {
+ClientNetworkManager::ClientNetworkManager(const std::string &serverAddress, uint16_t port)
+{
+    client = enet_host_create(nullptr, 1, 2, 0, 0); // 1 client, 2 channels
+    if (!client)
+    {
         throw std::runtime_error("Failed to create ENet client host.");
     }
 
@@ -16,7 +16,8 @@ ClientNetworkManager::ClientNetworkManager(const std::string& serverAddress, uin
     address.port = port;
 
     peer = enet_host_connect(client, &address, 2, 0);
-    if (!peer) {
+    if (!peer)
+    {
         throw std::runtime_error("No available peers for initiating an ENet connection.");
     }
 
@@ -28,29 +29,38 @@ ClientNetworkManager::ClientNetworkManager(const std::string& serverAddress, uin
 }
 
 // Destructor
-ClientNetworkManager::~ClientNetworkManager() {
+ClientNetworkManager::~ClientNetworkManager()
+{
     enet_host_destroy(client);
-    if (networkThread.joinable()) {
+    if (networkThread.joinable())
+    {
         networkThread.join();
     }
-    if (actionThread.joinable()) {
+    if (actionThread.joinable())
+    {
         actionThread.join();
     }
 }
 
 // Main network loop
-void ClientNetworkManager::networkLoop() {
-    while (running) {
+void ClientNetworkManager::networkLoop()
+{
+    while (running)
+    {
         ENetEvent event;
-        while (enet_host_service(client, &event, 1000) > 0) {
-            switch (event.type) {
+        while (enet_host_service(client, &event, 1000) > 0)
+        {
+            Packet packet(PacketType::CUSTOM, {}); // Declare the packet variable outside the switch block
+
+            switch (event.type)
+            {
             case ENET_EVENT_TYPE_CONNECT:
                 std::cout << "Connected to server." << std::endl;
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
-                std::cout << "Packet received from server." << std::endl;
-                enqueueIncomingPacket(parsePacket(event.packet));
+                packet = parsePacket(event.packet); // Now you can assign to packet here
+                handlePacket(packet);               // Call handlePacket to trigger listeners
                 enet_packet_destroy(event.packet);
                 break;
 
@@ -69,57 +79,62 @@ void ClientNetworkManager::networkLoop() {
     }
 }
 
-// Function to send a random Tetris action
-void ClientNetworkManager::sendRandomAction() {
-    // Define possible actions
-    TetrisAction actions[] = {
-        TetrisAction::START, TetrisAction::RESTART, TetrisAction::PAUSE,
-        TetrisAction::RESUME, TetrisAction::LEFT, TetrisAction::RIGHT,
-        TetrisAction::ROTATE_LEFT, TetrisAction::ROTATE_RIGHT,
-        TetrisAction::DROP_FASTER, TetrisAction::DROP_INSTANT
-    };
-
-    // Select a random action
-    int randomIndex = std::rand() % 10;
-    TetrisAction action = actions[randomIndex];
-
-    // Create a packet to send the action
-    std::vector<uint8_t> data = { static_cast<uint8_t>(action) };
-    Packet actionPacket(data);
+// Function to send a specific command
+void ClientNetworkManager::sendCommand(PacketType commandType)
+{
+    std::vector<uint8_t> data = {};          // Empty data, you can modify this if needed
+    Packet commandPacket(commandType, data); // Explicit PacketType
 
     // Send the packet
-    enqueueOutgoingPacket(actionPacket);
+    enqueueOutgoingPacket(commandPacket);
 
-    // Print the sent action
-    std::cout << "Sent action: " << randomIndex << std::endl;
+    // Print the sent command
+    std::cout << "Sent command: " << PacketTypeToString(commandType) << std::endl;
 }
 
-// Function that runs every 2 seconds to send random action
-void ClientNetworkManager::actionLoop() {
-    while (running) {
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        sendRandomAction();
+// Function that runs every 2 seconds to send random command
+void ClientNetworkManager::actionLoop()
+{
+    while (running)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+        // Send a random command
+        int randomIndex = std::rand() % 17;
+
+        sendCommand(PacketType::JOIN_REQUEST);
+        // sendCommand((PacketType)randomIndex);
     }
 }
 
 // Send all outgoing packets
-void ClientNetworkManager::sendOutgoingPackets() {
-    while (!outgoingPackets.empty()) {
+void ClientNetworkManager::sendOutgoingPackets()
+{
+    while (!outgoingPackets.empty())
+    {
         Packet packet = outgoingPackets.front();
         outgoingPackets.pop();
 
-        ENetPacket* enetPacket = createENetPacket(packet);
+        // Convert packet to raw data and send it
+        std::vector<uint8_t> rawData = packet.toRawData();
+        ENetPacket *enetPacket = enet_packet_create(rawData.data(), rawData.size(), ENET_PACKET_FLAG_RELIABLE);
         enet_peer_send(peer, 0, enetPacket);
     }
 }
 
 // Parse an incoming ENet packet into a custom Packet structure
-Packet ClientNetworkManager::parsePacket(ENetPacket* enetPacket) {
-    std::vector<uint8_t> data(enetPacket->data, enetPacket->data + enetPacket->dataLength);
-    return Packet(data);
+Packet ClientNetworkManager::parsePacket(ENetPacket *enetPacket)
+{
+    if (enetPacket->dataLength < 1)
+        return Packet(PacketType::CUSTOM, {});
+
+    PacketType type = static_cast<PacketType>(enetPacket->data[0]);                             // First byte is the packet type
+    std::vector<uint8_t> data(enetPacket->data + 1, enetPacket->data + enetPacket->dataLength); // Remaining data
+    return Packet(type, data);
 }
 
 // Create an ENet packet from a custom Packet structure
-ENetPacket* ClientNetworkManager::createENetPacket(const Packet& packet) {
+ENetPacket *ClientNetworkManager::createENetPacket(const Packet &packet)
+{
     return enet_packet_create(packet.data.data(), packet.data.size(), ENET_PACKET_FLAG_RELIABLE);
 }

@@ -1,5 +1,3 @@
-// ServerNetworkManager.hpp
-
 #ifndef SERVER_NETWORK_MANAGER_HPP
 #define SERVER_NETWORK_MANAGER_HPP
 
@@ -7,16 +5,14 @@
 #include <enet/enet.h>
 #include <thread>
 
-class ServerNetworkManager : public NetworkManager {
+class ServerNetworkManager : public NetworkManager
+{ // Public inheritance
 private:
-    ENetHost* server;
+    ENetHost *server;
     std::thread networkThread;
 
 public:
-    // Constructor
     ServerNetworkManager(uint16_t port = 12345);
-
-    // Destructor
     ~ServerNetworkManager();
 
     // Main network loop to handle events
@@ -26,13 +22,10 @@ public:
     void sendOutgoingPackets() override;
 
     // Parse incoming ENet packet into the custom Packet structure
-    Packet parsePacket(ENetPacket* enetPacket);
+    Packet parsePacket(ENetPacket *enetPacket);
 
     // Create an ENet packet from the internal Packet structure
-    ENetPacket* createENetPacket(const Packet& packet);
-
-    // Handle an incoming packet
-    void handlePacket(const ENetEvent& event);
+    ENetPacket *createENetPacket(const Packet &packet);
 };
 
 #endif // SERVER_NETWORK_MANAGER_HPP
