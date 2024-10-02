@@ -11,6 +11,9 @@
 *.o
 *.obj
 
+client-app
+server-app
+
 # Precompiled Headers
 *.gch
 *.pch
