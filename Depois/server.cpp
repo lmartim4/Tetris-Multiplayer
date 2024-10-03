@@ -1,3 +1,4 @@
+#ifdef SERVER
 #include <enet/enet.h>
 #include <iostream>
 
@@ -52,3 +53,5 @@ int main(int argc, char** argv) {
     enet_host_destroy(server);
     return 0;
 }
+
+#endif 

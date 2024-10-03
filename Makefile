@@ -1,43 +1,23 @@
-# Define the compiler and flags
-CXX = g++
-CXXFLAGS = -c
-LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system -lenet
+# Variables
+SRC_FILES := main.cpp # List of source files, update as needed
+OBJ_FILES := $(SRC_FILES:.cpp=.o)     # Convert source file names to object file names
+TARGET := tout                        # Name of the final executable
 
-# Define targets for client and server
-CLIENT_TARGET = client-app
-SERVER_TARGET = server-app
+# Default target
+all: $(TARGET)
 
-# Define object files
-CLIENT_OBJ = client.o
-SERVER_OBJ = server.o
+# Build the target executable by linking object files
+$(TARGET): $(OBJ_FILES)
+	g++ -o $(TARGET) $(OBJ_FILES)
 
-# Default target: build both client and server
-all: $(CLIENT_TARGET) $(SERVER_TARGET)
+# Compile .cpp files to .o files (generic rule)
+%.o: %.cpp
+	g++ -c $< -o $@
 
-# Rule for building the client executable
-$(CLIENT_TARGET): $(CLIENT_OBJ)
-	$(CXX) $(CLIENT_OBJ) -o $(CLIENT_TARGET) $(LDFLAGS)
+# Run the executable
+run:
+	./$(TARGET)
 
-# Rule for building the server executable
-$(SERVER_TARGET): $(SERVER_OBJ)
-	$(CXX) $(SERVER_OBJ) -o $(SERVER_TARGET) $(LDFLAGS)
-
-# Rule for compiling client.cpp
-$(CLIENT_OBJ): client.cpp
-	$(CXX) $(CXXFLAGS) client.cpp
-
-# Rule for compiling server.cpp
-$(SERVER_OBJ): server.cpp
-	$(CXX) $(CXXFLAGS) server.cpp
-
-# Run the client
-run-client: $(CLIENT_TARGET)
-	./$(CLIENT_TARGET)
-
-# Run the server
-run-server: $(SERVER_TARGET)
-	./$(SERVER_TARGET)
-
-# Clean up the build
+# Clean up the object files and the executable
 clean:
-	rm -f $(CLIENT_OBJ) $(SERVER_OBJ) $(CLIENT_TARGET) $(SERVER_TARGET)
+	rm -f $(OBJ_FILES) $(TARGET)
