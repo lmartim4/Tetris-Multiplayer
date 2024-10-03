@@ -9,8 +9,9 @@ class ServerManager : public NetworkManager
 {
 private:
 public:
+    
     ServerManager(uint16_t port = 12345);
     ~ServerManager();
 };
 
-#endif // SERVER_NETWORK_MANAGER_HPP
+#endif

@@ -3,6 +3,7 @@
 
 #include "PacketType.hpp"
 #include <enet/enet.h>
+#include <iomanip>
 #include <queue>
 #include <vector>
 #include <iostream>
@@ -72,11 +73,11 @@ protected:
     // Handle a received packet by triggering the corresponding listener
     void handlePacket(Packet &packet, ENetPeer *peer);
 
-    
-
 public:
     NetworkManager();
     virtual ~NetworkManager();
+
+    static const int version = 1;
 
     // Register a listener for a specific packet type
     void registerListener(PacketType packetType, std::function<void(const Packet &)> callback);
@@ -86,15 +87,31 @@ public:
 
     // Check if the network manager is running
     bool isRunning() const;
-    
+
     void startNetwrokTask()
     {
         networkThread = std::thread(&NetworkManager::networkLoop, this);
-        std::cout << "Network Manager is running..." << std::endl;
+
         while (isRunning())
             std::this_thread::sleep_for(std::chrono::seconds(1));
-        
+
         enet_deinitialize();
+    }
+
+    void network_print(const char *array)
+    {
+        // Get current time as time_t (seconds since epoch)
+        auto now = std::chrono::system_clock::now();
+        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+        // Convert time_t to local time (struct tm)
+        std::tm *localTime = std::localtime(&currentTime);
+        std::cout << "[" << std::put_time(localTime, "%H:%M:%S") << "] " << array;
+    }
+
+    ENetHost *getHost()
+    {
+        return host;
     }
 };
 
