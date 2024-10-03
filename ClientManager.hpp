@@ -7,19 +7,14 @@
 #include <ctime>    // For time()
 #include <thread>
 
-class ClientNetworkManager : public NetworkManager {
+class ClientManager : public NetworkManager {
 private:
     ENetPeer* peer;
-    std::thread networkThread;
     std::thread actionThread;
 
 public:
-    ClientNetworkManager(const std::string& serverAddress = "localhost", uint16_t port = 12345);
-    ~ClientNetworkManager();
-
-    // Process ENet events specifically for client (handle server connections, etc.)
-    void processENetEvent(ENetEvent& event) override;
-
+    ClientManager(const std::string& serverAddress = "localhost", uint16_t port = 12345);
+    ~ClientManager();
     // Random action loop (called every 2 seconds)
     void actionLoop();
 };

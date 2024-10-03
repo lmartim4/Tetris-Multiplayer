@@ -1,32 +1,12 @@
 #include <enet/enet.h>
-#include "ServerNetworkManager.hpp"
+#include "ServerManager.hpp"
 
-class Server
+ServerManager server;
+
+void printJOINRequest(const Packet &packet)
 {
-public:
-    Server() : serverManager(12345) {}
-
-    void run()
-    {
-        std::cout << "Server is running..." << std::endl;
-        while (serverManager.isRunning())
-        {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-    }
-    ServerNetworkManager serverManager;
-
-private:
-};
-
-
-Server server;
-
-void printJOINRequest(const Packet &packet, ENetPeer *peer)
-{
-    std::cout << "I got a " << PacketTypeToString(packet.type) << " from " << peer->address.host << ":" << peer->address.port << std::endl;
-    server.serverManager.sendPacketToPeer(peer, Packet(PacketType::HEARTBEAT, {0}));
-    
+    std::cout << "I got a " << PacketTypeToString(packet.type) << " from " << packet.peer->host->address.host << ":" << packet.peer->host->address.port << std::endl;
+    server.send_packet(Packet(PacketType::HEARTBEAT, {0}, packet.peer));
 }
 
 int main()
@@ -36,8 +16,10 @@ int main()
         std::cerr << "Failed to initialize ENet." << std::endl;
         return EXIT_FAILURE;
     }
-    server.serverManager.registerListener(PacketType::JOIN_REQUEST, printJOINRequest);
-    server.run();
-    enet_deinitialize();
+    
+    server.registerListener(PacketType::JOIN_REQUEST, printJOINRequest);    
+
+    server.startNetwrokTask();
+    //Dont do anything after start network
     return 0;
 }

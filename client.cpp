@@ -1,36 +1,13 @@
 #include <enet/enet.h>
-#include "ClientNetworkManager.hpp"
+#include "ClientManager.hpp"
 #include "TetrisActions.hpp"
 
-class Client
+ClientManager client("localhost", 12345);
+
+void printHEARTBEAT(const Packet &packet)
 {
-public:
-    Client() : clientManager("localhost", 12345)
-    {
-        
-    }
-
-    void run()
-    {
-        std::cout << "Client is running..." << std::endl;
-        while (clientManager.isRunning())
-        {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-    }
-
-    ClientNetworkManager clientManager;
-
-private:
-};
-
-Client client;
-
-void printHEARTBEAT(const Packet &packet, ENetPeer *peer)
-{
-    std::cout << "I got a " << PacketTypeToString(packet.type) << " from " << peer->address.host << ":" << peer->address.port << std::endl;
-    client.clientManager.sendPacketToPeer(peer, Packet(PacketType::HEARTBEAT, {0}));
-    
+    std::cout << "I got a " << PacketTypeToString(packet.type) << " from " << packet.peer->host->address.host << std::endl;
+    // client.sendPacketToPeer(peer, Packet(PacketType::HEARTBEAT, {0}));
 }
 
 int main()
@@ -41,9 +18,9 @@ int main()
         return EXIT_FAILURE;
     }
 
-    client.clientManager.registerListener(PacketType::HEARTBEAT, printHEARTBEAT);
-    client.run();
+    client.registerListener(PacketType::HEARTBEAT, printHEARTBEAT);
 
-    enet_deinitialize();
+    client.startNetwrokTask();
+    //Dont do anything after start network
     return 0;
 }

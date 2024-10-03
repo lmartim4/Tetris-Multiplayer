@@ -8,8 +8,8 @@ CLIENT_TARGET = client-app
 SERVER_TARGET = server-app
 
 # Define object files for client and server
-CLIENT_OBJ = client.o ClientNetworkManager.o NetworkManager.o
-SERVER_OBJ = server.o ServerNetworkManager.o NetworkManager.o
+CLIENT_OBJ = client.o ClientManager.o NetworkManager.o
+SERVER_OBJ = server.o ServerManager.o NetworkManager.o
 
 # Default target: build both client and server
 all: $(CLIENT_TARGET) $(SERVER_TARGET)
@@ -23,18 +23,18 @@ $(SERVER_TARGET): $(SERVER_OBJ)
 	$(CXX) $(SERVER_OBJ) -o $(SERVER_TARGET) $(LDFLAGS)
 
 # Rule for compiling client.cpp and other client source files
-client.o: client.cpp ClientNetworkManager.hpp NetworkManager.hpp TetrisActions.hpp
+client.o: client.cpp ClientManager.hpp NetworkManager.hpp TetrisActions.hpp
 	$(CXX) $(CXXFLAGS) client.cpp
 
-ClientNetworkManager.o: ClientNetworkManager.cpp ClientNetworkManager.hpp NetworkManager.hpp TetrisActions.hpp
-	$(CXX) $(CXXFLAGS) ClientNetworkManager.cpp
+ClientManager.o: ClientManager.cpp ClientManager.hpp NetworkManager.hpp TetrisActions.hpp
+	$(CXX) $(CXXFLAGS) ClientManager.cpp
 
 # Rule for compiling server.cpp and other server source files
-server.o: server.cpp ServerNetworkManager.hpp NetworkManager.hpp TetrisActions.hpp
+server.o: server.cpp ServerManager.hpp NetworkManager.hpp TetrisActions.hpp
 	$(CXX) $(CXXFLAGS) server.cpp
 
-ServerNetworkManager.o: ServerNetworkManager.cpp ServerNetworkManager.hpp NetworkManager.hpp TetrisActions.hpp
-	$(CXX) $(CXXFLAGS) ServerNetworkManager.cpp
+ServerManager.o: ServerManager.cpp ServerManager.hpp NetworkManager.hpp TetrisActions.hpp
+	$(CXX) $(CXXFLAGS) ServerManager.cpp
 
 # Rule for compiling shared NetworkManager.cpp
 NetworkManager.o: NetworkManager.cpp NetworkManager.hpp

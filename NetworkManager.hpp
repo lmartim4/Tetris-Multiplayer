@@ -16,11 +16,10 @@ struct Packet
 {
     PacketType type;           // The type of the packet (ACTION, HEARTBEAT, etc.)
     std::vector<uint8_t> data; // The rest of the data in the packet
-    ENetPeer *sourcePeer;      // The peer who sent the packet (if applicable)
-    ENetPeer *destinationPeer; // The peer who will receive the packet (nullptr for broadcast)
+    ENetPeer *peer;
 
-    Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *src = nullptr, ENetPeer *dest = nullptr)
-        : type(t), data(d), sourcePeer(src), destinationPeer(dest) {}
+    Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *dest = nullptr)
+        : type(t), data(d), peer(dest) {}
 
     // Serialize the packet for sending over the network
     std::vector<uint8_t> toRawData() const
@@ -35,38 +34,21 @@ struct Packet
 // Base class for network manager
 class NetworkManager
 {
-protected:
-    ENetHost *host;                     // The ENet host, used by both server and client
-    std::atomic<bool> running;          // To control the network loop
-    std::queue<Packet> outgoingPackets; // Queue for outgoing packets
-
+private:
+    std::atomic<bool> running;           // To control the network loop
+    std::queue<Packet> outgoingPackets;  // Queue for outgoing packets
+    std::queue<Packet> incommingPackets; // Queue for outgoing packets
     // Map to hold listeners for specific packet types
-    std::unordered_map<uint8_t, std::function<void(const Packet &, ENetPeer *)>> listeners;
+    std::unordered_map<uint8_t, std::function<void(const Packet &)>> listeners;
 
-public:
-    NetworkManager();
-    virtual ~NetworkManager();
-
-    // Enqueue outgoing packets
-    void enqueueOutgoingPacket(const Packet &packet);
-
-    // Register a listener for a specific packet type
-    void registerListener(PacketType packetType, std::function<void(const Packet &, ENetPeer *)> callback);
-
-    // Handle a received packet by triggering the corresponding listener
-    void handlePacket(const Packet &packet, ENetPeer *peer);
+    // Send a packet to a specific peer
+    void sendPacketToEnet(const Packet &packet);
 
     // Process incoming packets
     void processIncomingPackets();
 
     // Stop the network loop
     void stop();
-
-    // Check if the network manager is running
-    bool isRunning() const;
-
-    // Common method: Parse the incoming ENet packet into a custom Packet structure
-    Packet parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer);
 
     // Common method: Create an ENet packet from the custom Packet structure
     ENetPacket *createENetPacket(const Packet &packet);
@@ -77,14 +59,43 @@ public:
     // Send packets to the specified peer or broadcast
     void sendOutgoingPackets();
 
-    // Send a packet to a specific peer
-    void sendPacketToPeer(ENetPeer *peer, const Packet &packet);
+    // handle ENet events (implementation is in derived classes)
+    void processENetEvent(ENetEvent &event);
 
-    // Broadcast a packet to all connected peers
-    void broadcastPacket(const Packet &packet);
+protected:
+    std::thread networkThread;
+    ENetHost *host; // The ENet host, used by both server and client
 
-    // Pure virtual method to handle ENet events (implementation is in derived classes)
-    virtual void processENetEvent(ENetEvent &event) = 0;
+    // Common method: Parse the incoming ENet packet into a custom Packet structure
+    static Packet parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer);
+
+    // Handle a received packet by triggering the corresponding listener
+    void handlePacket(Packet &packet, ENetPeer *peer);
+
+    
+
+public:
+    NetworkManager();
+    virtual ~NetworkManager();
+
+    // Register a listener for a specific packet type
+    void registerListener(PacketType packetType, std::function<void(const Packet &)> callback);
+
+    // Enqueue outgoing packets
+    void send_packet(const Packet &packet);
+
+    // Check if the network manager is running
+    bool isRunning() const;
+    
+    void startNetwrokTask()
+    {
+        networkThread = std::thread(&NetworkManager::networkLoop, this);
+        std::cout << "Network Manager is running..." << std::endl;
+        while (isRunning())
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        
+        enet_deinitialize();
+    }
 };
 
 #endif // NETWORK_MANAGER_HPP

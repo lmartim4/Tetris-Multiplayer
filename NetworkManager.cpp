@@ -1,7 +1,9 @@
 #include "NetworkManager.hpp"
 
 // Constructor
-NetworkManager::NetworkManager() : host(nullptr), running(true) {}
+NetworkManager::NetworkManager() : host(nullptr), running(true)
+{
+}
 
 // Destructor
 NetworkManager::~NetworkManager()
@@ -10,35 +12,40 @@ NetworkManager::~NetworkManager()
 }
 
 // Enqueue an outgoing packet
-void NetworkManager::enqueueOutgoingPacket(const Packet &packet)
+void NetworkManager::send_packet(const Packet &packet)
 {
     outgoingPackets.push(packet);
 }
 
 // Register a listener for a specific packet type
-void NetworkManager::registerListener(PacketType packetType, std::function<void(const Packet &, ENetPeer *)> callback)
+void NetworkManager::registerListener(PacketType packetType, std::function<void(const Packet &)> callback)
 {
     listeners[static_cast<uint8_t>(packetType)] = callback;
 }
 
 // Handle a received packet by triggering the corresponding listener
-void NetworkManager::handlePacket(const Packet &packet, ENetPeer *peer)
+void NetworkManager::handlePacket(Packet &packet, ENetPeer *peer)
 {
     uint8_t packetType = static_cast<uint8_t>(packet.type);
     if (listeners.find(packetType) != listeners.end())
     {
-        listeners[packetType](packet, peer); // Pass both packet and the source peer
+        packet.peer = peer;
+        listeners[packetType](packet); // Pass both packet and the source peer
+    }
+    else
+    {
+        std::cout << "No listener for packet - " << PacketTypeToString(packet.type) << "\n";
     }
 }
 
 // Process incoming packets
 void NetworkManager::processIncomingPackets()
 {
-    while (!outgoingPackets.empty())
+    while (!incommingPackets.empty())
     {
-        Packet packet = outgoingPackets.front();
-        outgoingPackets.pop();
-        handlePacket(packet, packet.sourcePeer);
+        Packet packet = incommingPackets.front();
+        incommingPackets.pop();
+        handlePacket(packet, packet.peer);
     }
 }
 
@@ -77,10 +84,8 @@ void NetworkManager::networkLoop()
     while (running)
     {
         ENetEvent event;
-        while (enet_host_service(host, &event, 1000) > 0)
-        {
+        while (enet_host_service(host, &event, 100) > 0)
             processENetEvent(event); // Call the virtual function for specific event handling
-        }
 
         sendOutgoingPackets();
         processIncomingPackets();
@@ -94,32 +99,48 @@ void NetworkManager::sendOutgoingPackets()
     {
         Packet packet = outgoingPackets.front();
         outgoingPackets.pop();
+        
+        std::cout << "Sending a packet to enet sender\n";
 
-        if (packet.destinationPeer)
+        if (packet.peer)
         {
-            sendPacketToPeer(packet.destinationPeer, packet);
+            ENetPacket *enetPacket = createENetPacket(packet);
+            enet_peer_send(packet.peer, 0, enetPacket);
         }
         else
         {
-            broadcastPacket(packet); // If no specific peer, broadcast to all
+            std::vector<uint8_t> rawData = packet.toRawData();
+            for (size_t i = 0; i < host->peerCount; ++i)
+            {
+                ENetPacket *enetPacket = enet_packet_create(rawData.data(), rawData.size(), ENET_PACKET_FLAG_RELIABLE);
+                enet_peer_send(&host->peers[i], 0, enetPacket);
+            }
         }
     }
 }
 
-// Send a packet to a specific peer
-void NetworkManager::sendPacketToPeer(ENetPeer *peer, const Packet &packet)
+// Process ENet events for the server
+void NetworkManager::processENetEvent(ENetEvent &event)
 {
-    ENetPacket *enetPacket = createENetPacket(packet);
-    enet_peer_send(peer, 0, enetPacket);
-}
-
-// Broadcast a packet to all connected peers
-void NetworkManager::broadcastPacket(const Packet &packet)
-{
-    std::vector<uint8_t> rawData = packet.toRawData();
-    for (size_t i = 0; i < host->peerCount; ++i)
+    switch (event.type)
     {
-        ENetPacket *enetPacket = enet_packet_create(rawData.data(), rawData.size(), ENET_PACKET_FLAG_RELIABLE);
-        enet_peer_send(&host->peers[i], 0, enetPacket);
+    case ENET_EVENT_TYPE_CONNECT:
+        std::cout << "ENET_EVENT_TYPE_CONNECT" << std::endl;
+        break;
+
+    case ENET_EVENT_TYPE_RECEIVE:
+    {
+        Packet packet = parsePacket(event.packet, event.peer); // Parse packet with source peer
+        handlePacket(packet, event.peer);                      // Handle the received packet
+        enet_packet_destroy(event.packet);
+    }
+    break;
+
+    case ENET_EVENT_TYPE_DISCONNECT:
+        std::cout << "ENET_EVENT_TYPE_DISCONNECT " << std::endl;
+        break;
+
+    default:
+        break;
     }
 }
