@@ -28,7 +28,8 @@ void NetworkManager::handlePacket(Packet &packet, ENetPeer *peer)
     }
     else
     {
-        std::cout << "No listener for packet - " << PacketTypeToString(packet.type) << "\n";
+        network_print("");
+        std::cout << "[" << peer->address.host << ":" << peer->address.port << "]" << " >> \"" << PacketTypeToString(packet.type) << "\" (No listener registred)\n";
     }
 }
 
