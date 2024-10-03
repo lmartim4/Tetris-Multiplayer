@@ -42,25 +42,20 @@ ClientNetworkManager::~ClientNetworkManager()
     }
 }
 
-// Main network loop
-void ClientNetworkManager::networkLoop()
-{
-    while (running)
-    {
+void ClientNetworkManager::networkLoop() {
+    while (running) {
         ENetEvent event;
-        while (enet_host_service(client, &event, 1000) > 0)
-        {
-            Packet packet(PacketType::CUSTOM, {}); // Declare the packet variable outside the switch block
+        Packet packet(PacketType::CUSTOM, {});  // Declare the packet outside the switch block
 
-            switch (event.type)
-            {
+        while (enet_host_service(client, &event, 1000) > 0) {
+            switch (event.type) {
             case ENET_EVENT_TYPE_CONNECT:
                 std::cout << "Connected to server." << std::endl;
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
-                packet = parsePacket(event.packet); // Now you can assign to packet here
-                handlePacket(packet);               // Call handlePacket to trigger listeners
+                packet = parsePacket(event.packet);  // Assign the packet within this case
+                handlePacket(packet);  // Call handlePacket to trigger listeners
                 enet_packet_destroy(event.packet);
                 break;
 
@@ -79,6 +74,7 @@ void ClientNetworkManager::networkLoop()
     }
 }
 
+
 // Function to send a specific command
 void ClientNetworkManager::sendCommand(PacketType commandType)
 {
@@ -92,21 +88,6 @@ void ClientNetworkManager::sendCommand(PacketType commandType)
     std::cout << "Sent command: " << PacketTypeToString(commandType) << std::endl;
 }
 
-// Function that runs every 2 seconds to send random command
-void ClientNetworkManager::actionLoop()
-{
-    while (running)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-        // Send a random command
-        int randomIndex = std::rand() % 17;
-
-        sendCommand(PacketType::JOIN_REQUEST);
-        // sendCommand((PacketType)randomIndex);
-    }
-}
-
 // Send all outgoing packets
 void ClientNetworkManager::sendOutgoingPackets()
 {
@@ -115,26 +96,24 @@ void ClientNetworkManager::sendOutgoingPackets()
         Packet packet = outgoingPackets.front();
         outgoingPackets.pop();
 
-        // Convert packet to raw data and send it
-        std::vector<uint8_t> rawData = packet.toRawData();
-        ENetPacket *enetPacket = enet_packet_create(rawData.data(), rawData.size(), ENET_PACKET_FLAG_RELIABLE);
+        ENetPacket *enetPacket = createENetPacket(packet);
         enet_peer_send(peer, 0, enetPacket);
     }
 }
 
-// Parse an incoming ENet packet into a custom Packet structure
-Packet ClientNetworkManager::parsePacket(ENetPacket *enetPacket)
+// Function that runs every 2 seconds to send random command
+void ClientNetworkManager::actionLoop()
 {
-    if (enetPacket->dataLength < 1)
-        return Packet(PacketType::CUSTOM, {});
+    while (running)
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    PacketType type = static_cast<PacketType>(enetPacket->data[0]);                             // First byte is the packet type
-    std::vector<uint8_t> data(enetPacket->data + 1, enetPacket->data + enetPacket->dataLength); // Remaining data
-    return Packet(type, data);
-}
-
-// Create an ENet packet from a custom Packet structure
-ENetPacket *ClientNetworkManager::createENetPacket(const Packet &packet)
-{
-    return enet_packet_create(packet.data.data(), packet.data.size(), ENET_PACKET_FLAG_RELIABLE);
+        // Send a random command
+        PacketType commands[] = {
+            PacketType::JOIN_REQUEST, PacketType::START, PacketType::LEFT,
+            PacketType::RIGHT, PacketType::ROTATE_LEFT, PacketType::ROTATE_RIGHT,
+            PacketType::DROP_FASTER, PacketType::DROP_INSTANT};
+        int randomIndex = std::rand() % 8;
+        sendCommand(commands[randomIndex]);
+    }
 }

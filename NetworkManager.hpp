@@ -54,9 +54,6 @@ public:
     // Handle a received packet by triggering the corresponding listener
     void handlePacket(const Packet &packet);
 
-    // To be implemented by derived classes to send outgoing packets
-    virtual void sendOutgoingPackets() = 0;
-
     // Process incoming packets
     void processIncomingPackets();
 
@@ -65,6 +62,15 @@ public:
 
     // Check if the network manager is running
     bool isRunning() const;
+
+    // Common method: Parse the incoming ENet packet into a custom Packet structure
+    Packet parsePacket(ENetPacket *enetPacket);
+
+    // Common method: Create an ENet packet from the custom Packet structure
+    ENetPacket *createENetPacket(const Packet &packet);
+
+    // Pure virtual method to send outgoing packets (each derived class may send packets differently)
+    virtual void sendOutgoingPackets() = 0;
 };
 
 #endif // NETWORK_MANAGER_HPP

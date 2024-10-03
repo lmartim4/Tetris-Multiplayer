@@ -5,10 +5,9 @@
 #include <enet/enet.h>
 #include <thread>
 
-class ServerNetworkManager : public NetworkManager
-{ // Public inheritance
+class ServerNetworkManager : public NetworkManager {
 private:
-    ENetHost *server;
+    ENetHost* server;
     std::thread networkThread;
 
 public:
@@ -20,12 +19,6 @@ public:
 
     // Send all outgoing packets to clients
     void sendOutgoingPackets() override;
-
-    // Parse incoming ENet packet into the custom Packet structure
-    Packet parsePacket(ENetPacket *enetPacket);
-
-    // Create an ENet packet from the internal Packet structure
-    ENetPacket *createENetPacket(const Packet &packet);
 };
 
 #endif // SERVER_NETWORK_MANAGER_HPP

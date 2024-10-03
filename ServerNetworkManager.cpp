@@ -1,5 +1,4 @@
 #include "ServerNetworkManager.hpp"
-#include "PacketType.hpp"
 #include <iostream>
 #include <stdexcept>
 
@@ -32,22 +31,21 @@ ServerNetworkManager::~ServerNetworkManager()
 // Main network loop to process ENet events
 void ServerNetworkManager::networkLoop()
 {
+    Packet packet(PacketType::CUSTOM, {});
     while (running)
     {
         ENetEvent event;
         while (enet_host_service(server, &event, 1000) > 0)
         {
-            Packet packet{PacketType::CUSTOM, {0}}; // Declare the packet variable outside the switch block
-
             switch (event.type)
             {
             case ENET_EVENT_TYPE_CONNECT:
-                std::cout << "Client connected: " << event.peer->address.host << std::endl;
+                std::cout << "Client connected." << std::endl;
                 break;
 
             case ENET_EVENT_TYPE_RECEIVE:
-                packet = parsePacket(event.packet); // Now you can assign to packet here
-                handlePacket(packet);               // Call handlePacket to trigger listeners
+                packet = parsePacket(event.packet);
+                handlePacket(packet); // Handle the received packet
                 enet_packet_destroy(event.packet);
                 break;
 
@@ -76,25 +74,8 @@ void ServerNetworkManager::sendOutgoingPackets()
         std::vector<uint8_t> rawData = packet.toRawData();
         for (size_t i = 0; i < server->peerCount; ++i)
         {
-            ENetPacket *enetPacket = enet_packet_create(rawData.data(), rawData.size(), ENET_PACKET_FLAG_RELIABLE);
+            ENetPacket *enetPacket = createENetPacket(packet);
             enet_peer_send(&server->peers[i], 0, enetPacket);
         }
     }
-}
-
-// Parse an incoming ENet packet into a custom Packet structure
-Packet ServerNetworkManager::parsePacket(ENetPacket *enetPacket)
-{
-    if (enetPacket->dataLength < 1)
-        return Packet(PacketType::CUSTOM, {});
-
-    PacketType type = static_cast<PacketType>(enetPacket->data[0]);                             // First byte is the packet type
-    std::vector<uint8_t> data(enetPacket->data + 1, enetPacket->data + enetPacket->dataLength); // Remaining data
-    return Packet(type, data);
-}
-
-// Create an ENet packet from a custom Packet structure
-ENetPacket *ServerNetworkManager::createENetPacket(const Packet &packet)
-{
-    return enet_packet_create(packet.data.data(), packet.data.size(), ENET_PACKET_FLAG_RELIABLE);
 }

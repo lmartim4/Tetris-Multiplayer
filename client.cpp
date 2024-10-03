@@ -17,11 +17,7 @@ class Client
 public:
     Client() : clientManager("localhost", 12345)
     {
-        // Register listener for Tetris actions
-        for (uint8_t i = 0; i < 10; ++i)
-        {
-            clientManager.registerListener((PacketType)i, onTetrisActionReceived);
-        }
+        
     }
 
     void run()

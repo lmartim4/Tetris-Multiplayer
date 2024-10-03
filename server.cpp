@@ -1,5 +1,3 @@
-// server_main.cpp
-
 #include <enet/enet.h>
 #include "ServerNetworkManager.hpp"
 
