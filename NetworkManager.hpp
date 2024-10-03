@@ -16,9 +16,11 @@ struct Packet
 {
     PacketType type;           // The type of the packet (ACTION, HEARTBEAT, etc.)
     std::vector<uint8_t> data; // The rest of the data in the packet
+    ENetPeer *sourcePeer;      // The peer who sent the packet (if applicable)
+    ENetPeer *destinationPeer; // The peer who will receive the packet (nullptr for broadcast)
 
-    Packet(PacketType t, const std::vector<uint8_t> &d)
-        : type(t), data(d) {}
+    Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *src = nullptr, ENetPeer *dest = nullptr)
+        : type(t), data(d), sourcePeer(src), destinationPeer(dest) {}
 
     // Serialize the packet for sending over the network
     std::vector<uint8_t> toRawData() const
@@ -34,12 +36,12 @@ struct Packet
 class NetworkManager
 {
 protected:
-    std::queue<Packet> incomingPackets; // Queue for incoming packets
-    std::queue<Packet> outgoingPackets; // Queue for outgoing packets
+    ENetHost *host;                     // The ENet host, used by both server and client
     std::atomic<bool> running;          // To control the network loop
+    std::queue<Packet> outgoingPackets; // Queue for outgoing packets
 
     // Map to hold listeners for specific packet types
-    std::unordered_map<uint8_t, std::function<void(const std::vector<uint8_t> &)>> listeners;
+    std::unordered_map<uint8_t, std::function<void(const Packet &, ENetPeer *)>> listeners;
 
 public:
     NetworkManager();
@@ -49,10 +51,10 @@ public:
     void enqueueOutgoingPacket(const Packet &packet);
 
     // Register a listener for a specific packet type
-    void registerListener(PacketType packetType, std::function<void(const std::vector<uint8_t> &)> callback);
+    void registerListener(PacketType packetType, std::function<void(const Packet &, ENetPeer *)> callback);
 
     // Handle a received packet by triggering the corresponding listener
-    void handlePacket(const Packet &packet);
+    void handlePacket(const Packet &packet, ENetPeer *peer);
 
     // Process incoming packets
     void processIncomingPackets();
@@ -64,13 +66,25 @@ public:
     bool isRunning() const;
 
     // Common method: Parse the incoming ENet packet into a custom Packet structure
-    Packet parsePacket(ENetPacket *enetPacket);
+    Packet parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer);
 
     // Common method: Create an ENet packet from the custom Packet structure
     ENetPacket *createENetPacket(const Packet &packet);
 
-    // Pure virtual method to send outgoing packets (each derived class may send packets differently)
-    virtual void sendOutgoingPackets() = 0;
+    // Generalized network loop to handle events
+    void networkLoop();
+
+    // Send packets to the specified peer or broadcast
+    void sendOutgoingPackets();
+
+    // Send a packet to a specific peer
+    void sendPacketToPeer(ENetPeer *peer, const Packet &packet);
+
+    // Broadcast a packet to all connected peers
+    void broadcastPacket(const Packet &packet);
+
+    // Pure virtual method to handle ENet events (implementation is in derived classes)
+    virtual void processENetEvent(ENetEvent &event) = 0;
 };
 
 #endif // NETWORK_MANAGER_HPP

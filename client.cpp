@@ -2,16 +2,6 @@
 #include "ClientNetworkManager.hpp"
 #include "TetrisActions.hpp"
 
-// Example listener function for Tetris actions
-void onTetrisActionReceived(const std::vector<uint8_t> &data)
-{
-    if (data.empty())
-        return;
-
-    TetrisAction action = static_cast<TetrisAction>(data[0]);
-    std::cout << "Listener received Tetris action: " << TetrisActionToString(action) << std::endl;
-}
-
 class Client
 {
 public:
@@ -34,6 +24,15 @@ public:
 private:
 };
 
+Client client;
+
+void printHEARTBEAT(const Packet &packet, ENetPeer *peer)
+{
+    std::cout << "I got a " << PacketTypeToString(packet.type) << " from " << peer->address.host << ":" << peer->address.port << std::endl;
+    client.clientManager.sendPacketToPeer(peer, Packet(PacketType::HEARTBEAT, {0}));
+    
+}
+
 int main()
 {
     if (enet_initialize() != 0)
@@ -42,7 +41,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    Client client;
+    client.clientManager.registerListener(PacketType::HEARTBEAT, printHEARTBEAT);
     client.run();
 
     enet_deinitialize();

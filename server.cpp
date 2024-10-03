@@ -19,9 +19,14 @@ public:
 private:
 };
 
-void printJOINRequest(const std::vector<uint8_t> &data)
+
+Server server;
+
+void printJOINRequest(const Packet &packet, ENetPeer *peer)
 {
-    std::cout << "I got a join request" << std::endl;
+    std::cout << "I got a " << PacketTypeToString(packet.type) << " from " << peer->address.host << ":" << peer->address.port << std::endl;
+    server.serverManager.sendPacketToPeer(peer, Packet(PacketType::HEARTBEAT, {0}));
+    
 }
 
 int main()
@@ -31,11 +36,8 @@ int main()
         std::cerr << "Failed to initialize ENet." << std::endl;
         return EXIT_FAILURE;
     }
-
-    Server server;
     server.serverManager.registerListener(PacketType::JOIN_REQUEST, printJOINRequest);
     server.run();
-
     enet_deinitialize();
     return 0;
 }

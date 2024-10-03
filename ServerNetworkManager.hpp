@@ -7,18 +7,14 @@
 
 class ServerNetworkManager : public NetworkManager {
 private:
-    ENetHost* server;
     std::thread networkThread;
 
 public:
     ServerNetworkManager(uint16_t port = 12345);
     ~ServerNetworkManager();
 
-    // Main network loop to handle events
-    void networkLoop();
-
-    // Send all outgoing packets to clients
-    void sendOutgoingPackets() override;
+    // Process ENet events specifically for server (handle client connections, etc.)
+    void processENetEvent(ENetEvent& event) override;
 };
 
 #endif // SERVER_NETWORK_MANAGER_HPP
