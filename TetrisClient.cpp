@@ -4,15 +4,16 @@
 
 ClientManager client;
 
-void printHEARTBEAT(const Packet &packet)
+void heartbeat_listener(const Packet &packet)
 {
-    client.heartbeat_listener();
+    client.on_receive_heartbeat();
 }
 
 int main()
 {
-    client.registerListener(PacketType::HEARTBEAT, printHEARTBEAT);
+    client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
 
+    
     while (client.isRunning())
         ;
 

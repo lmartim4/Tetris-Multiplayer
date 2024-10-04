@@ -1,13 +1,11 @@
-#ifndef PACKET_TYPE_HPP
-#define PACKET_TYPE_HPP
+#pragma once
 
 enum class PacketType : char
 {
-    // Game actions/commands
-    JOIN_REQUEST = 0,
+    // Game actions/commands Packets
+    JOIN_REQUEST,
     JOIN_ACCEPTED,
     JOIN_DENIED,
-    LEAVE_WARNING,
     START,
     RESTART,
     PAUSE,
@@ -20,10 +18,12 @@ enum class PacketType : char
     DROP_INSTANT,
 
     // Network/connection-related
-    HEARTBEAT = 14,  // A heartbeat packet to keep the connection alive
-    CONNECT = 15,    // A packet sent upon connecting
-    DISCONNECT = 16, // A packet sent upon disconnection
-    CUSTOM = 17      // Reserved for any custom packet types
+    HEARTBEAT,  // A heartbeat packet to keep the connection alive
+    CONNECT,    // A packet sent upon connecting
+    DISCONNECT, // A packet sent upon disconnection
+
+    // Error packet threating
+    PARSING_ERROR // Reserved for any custom packet types
 };
 
 // Utility function to convert PacketType to a string (for debugging)
@@ -37,8 +37,6 @@ inline const char *PacketTypeToString(PacketType type)
         return "JOIN_ACCEPTED";
     case PacketType::JOIN_DENIED:
         return "JOIN_DENIED";
-    case PacketType::LEAVE_WARNING:
-        return "LEAVE_WARNING";
     case PacketType::START:
         return "START";
     case PacketType::RESTART:
@@ -65,11 +63,9 @@ inline const char *PacketTypeToString(PacketType type)
         return "CONNECT";
     case PacketType::DISCONNECT:
         return "DISCONNECT";
-    case PacketType::CUSTOM:
-        return "CUSTOM";
+    case PacketType::PARSING_ERROR:
+        return "PARSING_ERROR";
     default:
         return "UNKNOWN_PACKET_TYPE";
     }
 }
-
-#endif // PACKET_TYPE_HPP

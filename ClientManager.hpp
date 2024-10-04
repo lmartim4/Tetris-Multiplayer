@@ -1,5 +1,4 @@
-#ifndef CLIENT_NETWORK_MANAGER_HPP
-#define CLIENT_NETWORK_MANAGER_HPP
+#pragma once
 
 #include "NetworkManager.hpp"
 #include <SFML/Graphics.hpp>
@@ -10,26 +9,34 @@ class ClientManager : public NetworkManager
 {
 private:
     ENetPeer *serverPeer;
-    std::thread actionThread;
-    std::thread windowThread;
+
+    std::thread ThreadHeartbeat;
+    std::thread ThreadSFML;
+
+    std::atomic<bool> sfml_running;
+
     bool isConnected = false;
     unsigned long last_heartbeat;
-    std::atomic<bool> sfml_running;
+
     bool debugEnabled = false;
+
+protected:
+    void onPeerConnect(ENetPeer *peer) override;
+    void onPeerDisconnect(ENetPeer *peer) override;
 
 public:
     ClientManager(const std::string &serverAddress = "localhost", uint16_t port = 12345);
     ~ClientManager();
-
-    void HEARTBEAT_TASK();
-    void heartbeat_listener();
-
-    void initializeSFML();
-
-    void windowLoop();
-    void stopWindow();
-
+    
     void toggleDebug();
-};
+    void on_receive_heartbeat();
 
-#endif // CLIENT_NETWORK_MANAGER_HPP
+    
+    void TaskStartHeartbeat();
+    void TaskHeartbeat();
+    void TaskStopHeartbeat();
+
+    void TaskStartSFML();
+    void TaskSFML();
+    void TaskStopSFML();
+};

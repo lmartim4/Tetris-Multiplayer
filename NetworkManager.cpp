@@ -1,4 +1,7 @@
 #include "NetworkManager.hpp"
+#include <iomanip>
+#include <iostream>
+#include <thread>
 
 char *NetworkManager::uint32_to_ipv4(uint32_t ip_addr)
 {
@@ -28,7 +31,7 @@ NetworkManager::NetworkManager()
 
 NetworkManager::~NetworkManager()
 {
-    stopNetwork();
+    TaskStopNetwork();
 }
 
 void NetworkManager::send_packet(const Packet &packet)
@@ -47,13 +50,14 @@ void NetworkManager::network_print(const char *array)
     std::cout << "[" << std::put_time(localTime, "%H:%M:%S") << "] " << array;
 }
 
-void NetworkManager::startNetworkTask()
+void NetworkManager::TaskStartNetwork()
 {
+    network_print("Initializing Network Task...\n");
     if (running)
         throw std::logic_error("Network Task already running! (Why would you start again?)");
-    
+
     running = true;
-    networkThread = std::thread(&NetworkManager::networkLoop, this);
+    networkThread = std::thread(&NetworkManager::TaskNetwork, this);
 }
 
 void NetworkManager::registerListener(PacketType packetType, std::function<void(const Packet &)> callback)
@@ -86,7 +90,7 @@ void NetworkManager::processIncomingPackets()
     }
 }
 
-void NetworkManager::stopNetwork()
+void NetworkManager::TaskStopNetwork()
 {
     running = false;
 
@@ -103,7 +107,12 @@ bool NetworkManager::isRunning() const
 Packet NetworkManager::parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer)
 {
     if (enetPacket->dataLength < 1)
-        return Packet(PacketType::CUSTOM, {}, sourcePeer);
+    {
+        network_print("Failed to parse a packet from ");
+        std::cout << uint32_to_ipv4(sourcePeer->address.host) << ":" << sourcePeer->address.port << std::endl;
+
+        return Packet(PacketType::PARSING_ERROR, {}, sourcePeer);
+    }
     PacketType type = static_cast<PacketType>(enetPacket->data[0]);                             // First byte is the packet type
     std::vector<uint8_t> data(enetPacket->data + 1, enetPacket->data + enetPacket->dataLength); // Remaining data
     return Packet(type, data, sourcePeer);
@@ -115,7 +124,7 @@ ENetPacket *NetworkManager::createENetPacket(const Packet &packet)
     return enet_packet_create(rawData.data(), rawData.size(), ENET_PACKET_FLAG_RELIABLE);
 }
 
-void NetworkManager::networkLoop()
+void NetworkManager::TaskNetwork()
 {
     int network_frequencie = 20; // Hertz
     while (running)
@@ -159,8 +168,7 @@ void NetworkManager::processENetEvent(ENetEvent &event)
     switch (event.type)
     {
     case ENET_EVENT_TYPE_CONNECT:
-        network_print("");
-        std::cout << "[CONNECT] " << uint32_to_ipv4(event.peer->address.host) << ":" << event.peer->address.port << std::endl;
+        onPeerConnect(event.peer);
         break;
 
     case ENET_EVENT_TYPE_RECEIVE:
@@ -172,12 +180,16 @@ void NetworkManager::processENetEvent(ENetEvent &event)
     break;
 
     case ENET_EVENT_TYPE_DISCONNECT:
-        network_print("");
-        std::cout << "[DISCONNECT] " << uint32_to_ipv4(event.peer->address.host) << ":" << event.peer->address.port << std::endl;
+        onPeerDisconnect(event.peer);
         break;
 
     default:
         std::cout << "[ENET] EventType = " << event.type << std::endl;
         break;
     }
+}
+
+ENetHost *NetworkManager::getHost()
+{
+    return host;
 }

@@ -1,6 +1,4 @@
-#ifndef TETRIS_ACTIONS_HPP
-#define TETRIS_ACTIONS_HPP
-
+#pragma once
 enum class TetrisAction {
     START,
     RESTART,
@@ -29,5 +27,3 @@ inline const char* TetrisActionToString(TetrisAction action) {
     default: return "UNKNOWN_ACTION";
     }
 }
-
-#endif // TETRIS_ACTIONS_HPP

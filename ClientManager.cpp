@@ -3,12 +3,24 @@
 #include <chrono>
 #include <SFML/Graphics.hpp>
 
+void ClientManager::onPeerConnect(ENetPeer *peer)
+{
+    std::cout << std::endl;
+    network_print("");
+    std::cout << "Connection successful to " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl
+              << std::endl;
+}
+void ClientManager::onPeerDisconnect(ENetPeer *peer)
+{
+    network_print("Disconnected from server\n");
+}
+
 ClientManager::ClientManager(const std::string &serverAddress, uint16_t port)
 {
     std::cout << "============================" << std::endl;
-    std::cout << "Starting Tetris Client..." << std::endl;
-    std::cout << "Using NetworkManager version v" << NetworkManager::version << std::endl;
-    std::cout << "Connection target: " << serverAddress << ":" << port << std::endl;
+    std::cout << "|| Starting Tetris Client..." << std::endl;
+    std::cout << "|| Using NetworkManager version v" << NetworkManager::version << std::endl;
+    std::cout << "|| Connection target: " << serverAddress << ":" << port << std::endl;
     std::cout << "============================" << std::endl
               << std::endl;
 
@@ -25,29 +37,31 @@ ClientManager::ClientManager(const std::string &serverAddress, uint16_t port)
     if (!serverPeer)
         throw std::runtime_error("No available serverPeers for initiating an ENet connection.");
 
-    // Inicia a thread do heartbeat
-    actionThread = std::thread(&ClientManager::HEARTBEAT_TASK, this);
-
-    initializeSFML();
-    startNetworkTask();
+    TaskStartHeartbeat();
+    TaskStartSFML();
+    TaskStartNetwork();
 }
 
 ClientManager::~ClientManager()
 {
-    if (actionThread.joinable())
-        actionThread.join();
-
-    stopWindow();
+    TaskStopSFML();
+    TaskStopHeartbeat();
 }
 
-void ClientManager::heartbeat_listener()
+void ClientManager::on_receive_heartbeat()
 {
     auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
     last_heartbeat = now_ms;
 }
 
-void ClientManager::HEARTBEAT_TASK()
+void ClientManager::TaskStartHeartbeat()
+{
+    network_print("Initializing Heartbeat Task...\n");
+    ThreadHeartbeat = std::thread(&ClientManager::TaskHeartbeat, this);
+}
+
+void ClientManager::TaskHeartbeat()
 {
     int heartbeat_frequencie = 1; // Hertz
     while (isRunning())
@@ -66,13 +80,14 @@ void ClientManager::toggleDebug()
                       .c_str());
 }
 
-void ClientManager::initializeSFML()
+void ClientManager::TaskStartSFML()
 {
+    network_print("Initializing SFML Task...\n");
     sfml_running = true;
-    windowThread = std::thread(&ClientManager::windowLoop, this);
+    ThreadSFML = std::thread(&ClientManager::TaskSFML, this);
 }
 
-void ClientManager::windowLoop()
+void ClientManager::TaskSFML()
 {
     sf::RenderWindow window(sf::VideoMode(400, 300), "Tetris Client");
     window.setFramerateLimit(60);
@@ -182,9 +197,15 @@ void ClientManager::windowLoop()
 }
 
 // Função para parar o loop da janela
-void ClientManager::stopWindow()
+void ClientManager::TaskStopSFML()
 {
     sfml_running = false;
-    if (windowThread.joinable())
-        windowThread.join();
+    if (ThreadSFML.joinable())
+        ThreadSFML.join();
+}
+
+void ClientManager::TaskStopHeartbeat()
+{
+    if (ThreadHeartbeat.joinable())
+        ThreadHeartbeat.join();
 }

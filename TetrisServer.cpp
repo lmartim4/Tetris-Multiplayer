@@ -1,4 +1,5 @@
 #include <enet/enet.h>
+#include <iostream>
 #include "ServerManager.hpp"
 
 ServerManager server(12345);
@@ -18,9 +19,12 @@ void JoinRequestListener(const Packet &packet)
 
 int main(int argc, const char *argv[])
 {
+    server.network_print("Waiting connections...\n");
+
     server.registerListener(PacketType::JOIN_REQUEST, JoinRequestListener);
     server.registerListener(PacketType::HEARTBEAT, HeartbeatListener);
 
-    while (server.isRunning());
+    while (server.isRunning())
+        ;
     return 0;
 }

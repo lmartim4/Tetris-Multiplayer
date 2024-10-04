@@ -1,5 +1,4 @@
-#ifndef SERVER_NETWORK_MANAGER_HPP
-#define SERVER_NETWORK_MANAGER_HPP
+#pragma once
 
 #include "NetworkManager.hpp"
 #include <enet/enet.h>
@@ -8,10 +7,11 @@
 class ServerManager : public NetworkManager
 {
 private:
+protected:
+    void onPeerConnect(ENetPeer *peer) override;
+    void onPeerDisconnect(ENetPeer *peer) override;
+
 public:
-    
     ServerManager(uint16_t port = 12345);
     ~ServerManager();
 };
-
-#endif
