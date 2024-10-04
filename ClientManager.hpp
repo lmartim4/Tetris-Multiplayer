@@ -14,7 +14,7 @@ private:
     std::thread windowThread;
     bool isConnected = false;
     unsigned long last_heartbeat;
-    std::atomic<bool> running;
+    std::atomic<bool> sfml_running;
     bool debugEnabled = false;
 
 public:
@@ -22,22 +22,13 @@ public:
     ~ClientManager();
 
     void HEARTBEAT_TASK();
+    void heartbeat_listener();
 
-    void on_receive_heartbeat()
-    {
-        // Get the current time point
-        auto now = std::chrono::system_clock::now();
+    void initializeSFML();
 
-        // Convert the time point to milliseconds since epoch
-        auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-        last_heartbeat = now_ms;
-    }
+    void windowLoop();
+    void stopWindow();
 
-    void windowLoop(); // Função principal do loop da janela
-
-    void stopWindow(); // Para parar a thread da janela
-
-    // Método para alternar o estado de debug
     void toggleDebug();
 };
 

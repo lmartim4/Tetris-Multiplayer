@@ -1,7 +1,7 @@
 #include <enet/enet.h>
 #include "ServerManager.hpp"
 
-ServerManager server;
+ServerManager server(12345);
 
 void HeartbeatListener(const Packet &packet)
 {
@@ -16,15 +16,11 @@ void JoinRequestListener(const Packet &packet)
         server.send_packet(Packet(PacketType::JOIN_DENIED, {0}, packet.peer));
 }
 
-int main()
+int main(int argc, const char *argv[])
 {
     server.registerListener(PacketType::JOIN_REQUEST, JoinRequestListener);
     server.registerListener(PacketType::HEARTBEAT, HeartbeatListener);
 
-    
-
-    // Do not run anything after this
-    server.startNetwrokTask();
-    // Dont do anything after start network
+    while (server.isRunning());
     return 0;
 }

@@ -6,15 +6,15 @@ ClientManager client;
 
 void printHEARTBEAT(const Packet &packet)
 {
-    client.on_receive_heartbeat();
+    client.heartbeat_listener();
 }
 
 int main()
 {
     client.registerListener(PacketType::HEARTBEAT, printHEARTBEAT);
 
-    // Do not run anything after this
-    client.startNetwrokTask();
-    // Dont do anything after start network
+    while (client.isRunning())
+        ;
+
     return 0;
 }

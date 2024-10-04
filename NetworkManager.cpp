@@ -1,16 +1,59 @@
 #include "NetworkManager.hpp"
 
-NetworkManager::NetworkManager() : host(nullptr), running(true)
+char *NetworkManager::uint32_to_ipv4(uint32_t ip_addr)
 {
+    // Allocate memory for the resulting IP address string (e.g., "255.255.255.255\0" is 16 characters)
+    static char ip_str[16];
+
+    // Convert from host byte order to network byte order
+    ip_addr = htonl(ip_addr);
+
+    // Break the integer into its four bytes and format as an IPv4 address string
+    snprintf(ip_str, sizeof(ip_str), "%u.%u.%u.%u",
+             (ip_addr >> 24) & 0xFF,
+             (ip_addr >> 16) & 0xFF,
+             (ip_addr >> 8) & 0xFF,
+             ip_addr & 0xFF);
+
+    return ip_str;
 }
+NetworkManager::NetworkManager()
+{
+    if (enet_initialize() != 0)
+    {
+        std::cerr << "Failed to initialize ENET!" << std::endl;
+        throw std::runtime_error("Failed to initialize ENet.");
+    }
+}
+
 NetworkManager::~NetworkManager()
 {
-    stop();
+    stopNetwork();
 }
 
 void NetworkManager::send_packet(const Packet &packet)
 {
     outgoingPackets.push(packet);
+}
+
+void NetworkManager::network_print(const char *array)
+{
+    // Get current time as time_t (seconds since epoch)
+    auto now = std::chrono::system_clock::now();
+    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
+
+    // Convert time_t to local time (struct tm)
+    std::tm *localTime = std::localtime(&currentTime);
+    std::cout << "[" << std::put_time(localTime, "%H:%M:%S") << "] " << array;
+}
+
+void NetworkManager::startNetworkTask()
+{
+    if (running)
+        throw std::logic_error("Network Task already running! (Why would you start again?)");
+    
+    running = true;
+    networkThread = std::thread(&NetworkManager::networkLoop, this);
 }
 
 void NetworkManager::registerListener(PacketType packetType, std::function<void(const Packet &)> callback)
@@ -43,9 +86,13 @@ void NetworkManager::processIncomingPackets()
     }
 }
 
-void NetworkManager::stop()
+void NetworkManager::stopNetwork()
 {
     running = false;
+
+    enet_host_destroy(host);
+    if (networkThread.joinable())
+        networkThread.join();
 }
 
 bool NetworkManager::isRunning() const
@@ -113,7 +160,7 @@ void NetworkManager::processENetEvent(ENetEvent &event)
     {
     case ENET_EVENT_TYPE_CONNECT:
         network_print("");
-        std::cout << "[CONNECT] " << event.peer->address.host << ":" << event.peer->address.port << std::endl;
+        std::cout << "[CONNECT] " << uint32_to_ipv4(event.peer->address.host) << ":" << event.peer->address.port << std::endl;
         break;
 
     case ENET_EVENT_TYPE_RECEIVE:
@@ -126,7 +173,7 @@ void NetworkManager::processENetEvent(ENetEvent &event)
 
     case ENET_EVENT_TYPE_DISCONNECT:
         network_print("");
-        std::cout << "[DISCONNECT] " << event.peer->address.host << ":" << event.peer->address.port << std::endl;
+        std::cout << "[DISCONNECT] " << uint32_to_ipv4(event.peer->address.host) << ":" << event.peer->address.port << std::endl;
         break;
 
     default:

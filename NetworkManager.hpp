@@ -36,20 +36,17 @@ struct Packet
 class NetworkManager
 {
 private:
-    std::atomic<bool> running;           // To control the network loop
+    std::atomic<bool> running = false;           // To control the network loop
     std::queue<Packet> outgoingPackets;  // Queue for outgoing packets
     std::queue<Packet> incommingPackets; // Queue for outgoing packets
     // Map to hold listeners for specific packet types
     std::unordered_map<uint8_t, std::function<void(const Packet &)>> listeners;
 
-    // Send a packet to a specific peer
-    void sendPacketToEnet(const Packet &packet);
-
     // Process incoming packets
     void processIncomingPackets();
 
     // Stop the network loop
-    void stop();
+    void stopNetwork();
 
     // Common method: Create an ENet packet from the custom Packet structure
     ENetPacket *createENetPacket(const Packet &packet);
@@ -65,9 +62,8 @@ private:
 
 protected:
     std::thread networkThread;
-    ENetHost *host; // The ENet host, used by both server and client
+    ENetHost *host = nullptr; // The ENet host, used by both server and client
 
-    // Common method: Parse the incoming ENet packet into a custom Packet structure
     static Packet parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer);
 
     // Handle a received packet by triggering the corresponding listener
@@ -88,31 +84,17 @@ public:
     // Check if the network manager is running
     bool isRunning() const;
 
-    void startNetwrokTask()
-    {
-        networkThread = std::thread(&NetworkManager::networkLoop, this);
+    void startNetworkTask();
 
-        while (isRunning())
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-
-        enet_deinitialize();
-    }
-
-    void network_print(const char *array)
-    {
-        // Get current time as time_t (seconds since epoch)
-        auto now = std::chrono::system_clock::now();
-        std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-
-        // Convert time_t to local time (struct tm)
-        std::tm *localTime = std::localtime(&currentTime);
-        std::cout << "[" << std::put_time(localTime, "%H:%M:%S") << "] " << array;
-    }
+    void network_print(const char *array);
 
     ENetHost *getHost()
     {
         return host;
     }
+
+    // Function to convert uint32_t to IPv4 string
+    char *uint32_to_ipv4(uint32_t ip_addr);
 };
 
 #endif // NETWORK_MANAGER_HPP
