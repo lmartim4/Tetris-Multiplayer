@@ -30,10 +30,17 @@ ServerManager::ServerManager(uint16_t port)
     enet_address_set_host(&address, "0.0.0.0");
     address.port = port;
 
-    host = enet_host_create(&address, MAX_CLIENTS, CHANNELS, 0, 0);
-
-    if (!host)
-        throw std::runtime_error("Failed to create ENet server host.");
+    try
+    {
+        host = enet_host_create(&address, MAX_CLIENTS, CHANNELS, 0, 0);
+        if (!host)
+            throw std::runtime_error("Failed to create ENet server host. Is it already running? (Port busy)");
+    }
+    catch (const std::exception &ex)
+    {
+        std::cerr << "Error: " << ex.what() << std::endl;
+        return;
+    }
 
     TaskStartNetwork();
 }

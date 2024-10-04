@@ -19,12 +19,19 @@ void JoinRequestListener(const Packet &packet)
 
 int main(int argc, const char *argv[])
 {
-    server.network_print("Waiting connections...\n");
+    if (server.isRunning())
+        server.network_print("Waiting connections...\n");
+    else
+    {
+        //Port busy?
+        return -1;
+    }
 
     server.registerListener(PacketType::JOIN_REQUEST, JoinRequestListener);
     server.registerListener(PacketType::HEARTBEAT, HeartbeatListener);
 
     while (server.isRunning())
-        ;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     return 0;
 }

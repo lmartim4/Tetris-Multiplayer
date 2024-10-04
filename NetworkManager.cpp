@@ -52,10 +52,13 @@ void NetworkManager::network_print(const char *array)
 
 void NetworkManager::TaskStartNetwork()
 {
-    network_print("Initializing Network Task...\n");
     if (running)
-        throw std::logic_error("Network Task already running! (Why would you start again?)");
+    {
+        std::cout << "Error: Network Task already running! (Why would you start again?)" << std::endl;
+        return;
+    }
 
+    network_print("Initializing Network Task...\n");
     running = true;
     networkThread = std::thread(&NetworkManager::TaskNetwork, this);
 }
@@ -76,7 +79,7 @@ void NetworkManager::handlePacket(Packet &packet, ENetPeer *peer)
     else
     {
         network_print("");
-        std::cout << "[" << peer->address.host << ":" << peer->address.port << "]" << " >> \"" << PacketTypeToString(packet.type) << "\" (No listener registred)\n";
+        std::cout << "[" << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << "]" << " >> \"" << PacketTypeToString(packet.type) << "\" (No listener registred)\n";
     }
 }
 

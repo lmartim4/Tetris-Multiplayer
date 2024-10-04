@@ -13,9 +13,8 @@ int main()
 {
     client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
 
-    
     while (client.isRunning())
-        ;
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     return 0;
 }
