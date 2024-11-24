@@ -1,23 +1,32 @@
-# Variables
-SRC_FILES := main.cpp # List of source files, update as needed
-OBJ_FILES := $(SRC_FILES:.cpp=.o)     # Convert source file names to object file names
-TARGET := tout                        # Name of the final executable
+# Variáveis principais
+SRC_DIR := src
+INC_DIR := include
+TARGET := tout
 
-# Default target
+# Coleta todos os arquivos fonte em src
+SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
+OBJ_FILES := $(SRC_FILES:.cpp=.o)
+
+# Configuração do compilador
+CXX := g++
+CXXFLAGS := -I$(INC_DIR) -Wall -O2
+LDFLAGS := -lsfml-graphics -lsfml-window -lsfml-system
+
+# Regra principal
 all: $(TARGET)
 
-# Build the target executable by linking object files
+# Como gerar o executável
 $(TARGET): $(OBJ_FILES)
-	g++ -o $(TARGET) $(OBJ_FILES)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
-# Compile .cpp files to .o files (generic rule)
+# Como compilar os arquivos .cpp em .o
 %.o: %.cpp
-	g++ -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Run the executable
-run:
-	./$(TARGET)
-
-# Clean up the object files and the executable
+# Limpar os arquivos compilados
 clean:
 	rm -f $(OBJ_FILES) $(TARGET)
+
+# Executar o programa
+run: $(TARGET)
+	./$(TARGET)

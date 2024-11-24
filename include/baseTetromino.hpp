@@ -9,12 +9,12 @@ protected:
     std::vector<std::vector<int>> shape;
     int x, y;
     char type;
-    std::string color;  // Cor do tetromino
+    sf::Color color;
     
     // Tirar o atributo "type"
 public:
     // Default constructor & destructor
-    Tetromino(char type, std::string color) : type(type), x(0), y(0), color(color) {}
+    Tetromino(char type, sf::Color color) :  x(0), y(0), type(type), color(color) {}
     virtual ~Tetromino() = default;
 
     int getX(){
@@ -29,7 +29,10 @@ public:
         return type;
     }
 
-    std::vector<std::vector<int>> getShape(){
+    // The function itself cannot modify the class (shape remains
+    // untoched within getShape()) and the returned 
+    // reference cannot be used to modify the shape externally
+    std::vector<std::vector<int>> & getShape(){
         return shape;
     }
 
@@ -49,7 +52,7 @@ public:
     std::vector<std::vector<int>> getShape() const { return shape; }
     
     // Rendering
-    std::string getColor() const { return color; }
+    sf::Color getColor() const { return color; }
 };
 
 #endif

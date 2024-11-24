@@ -6,7 +6,7 @@
 class TetrominoFactory
 {
 public:                                                                            
-    static std::unique_ptr<Tetromino> createTetromino(char type, std::string color)
+    static std::unique_ptr<Tetromino> createTetromino(char type, sf::Color color)
     {
         // No need to break as it returns directly
         switch (type)
