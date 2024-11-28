@@ -3,6 +3,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "baseTetromino.hpp"
+#include <iostream>
 
 class Board
 {
@@ -18,10 +19,13 @@ private:
 public:
     Board(int W, int H, int cell_size);
 
-    void render(sf::RenderWindow &window) const;
+    void render(sf::RenderWindow &window,const Tetromino &currentTetromino) const;
 
     bool checkCollision(const Tetromino &currentTetromino);
-    bool placeTetromino(const Tetromino &currentTetromino, int x, int y); 
+    bool placeTetromino(const Tetromino &currentTetromino, bool fallen); 
+    int normalizedX(int x) const;
+    void clearFallingTetrominos();
+    std::vector<std::vector<int>> getGrid() const;
 
 };
 

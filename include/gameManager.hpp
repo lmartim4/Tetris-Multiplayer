@@ -6,6 +6,7 @@
 #include "tetrominoFactory.hpp" // Assuming this contains Tetromino and related classes
 #include "board.hpp"            // Assuming Board class for grid rendering
 #include <iostream>
+#include <ctime>
 
 class GameManager
 {
@@ -26,10 +27,10 @@ private:
     static const int NUM_TETRO = 7;
     static const int NUM_COLORS = 6;
     static const char types[NUM_TETRO]; // Declarar o array aqui
-    static const std::vector<sf::Color> GameManager::tetromino_colors;
+    static const std::vector<sf::Color> tetromino_colors;
 
     // Game constants
-    static const int gravityTimeMs = 700;
+    static const int gravityTimeMs = 1700;
     sf::Time gravityTime;
 
 public:
@@ -40,6 +41,8 @@ public:
     void renderTetromino();
 
     void spawnTetromino();
+
+    void printStatus() const;
 
     /* ---------- Game Loop functions --------- */
     

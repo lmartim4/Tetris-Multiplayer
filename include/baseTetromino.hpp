@@ -1,6 +1,7 @@
 #ifndef BASE_TETROMINO
 #define BASE_TETROMINO
 
+#include<SFML/Graphics.hpp>
 #include <string>
 #include <vector>
 
@@ -14,14 +15,14 @@ protected:
     // Tirar o atributo "type"
 public:
     // Default constructor & destructor
-    Tetromino(char type, sf::Color color) :  x(0), y(0), type(type), color(color) {}
+    Tetromino(char type, int x0, int y0, sf::Color color) :  x(x0), y(y0), type(type), color(color) {}
     virtual ~Tetromino() = default;
 
-    int getX(){
+    int getX() const {
         return x;
     }
 
-    int getY(){     
+    int getY() const {     
         return y;
     }
 
@@ -29,30 +30,30 @@ public:
         return type;
     }
 
+    // Rendering
+    sf::Color getColor() const{
+        return color;
+    }
+
     // The function itself cannot modify the class (shape remains
     // untoched within getShape()) and the returned 
     // reference cannot be used to modify the shape externally
-    std::vector<std::vector<int>> & getShape(){
+    const std::vector<std::vector<int>> & getShape() const{
         return shape;
     }
 
     // Rotations 
-    virtual void rotateLeft() = 0;
-    virtual void rotateRight() = 0;
+    void rotateLeft();
+    void rotateRight();
     
     // Translations
-    virtual void moveLeft() = 0;
-    virtual void moveRight() = 0;
+    void moveLeft();
+    void moveRight();
     
     // Fall (gravity)
-    virtual void dropSlow() = 0;
-    virtual void dropFast() = 0;
-
-    // Colision detection/control & rendering
-    std::vector<std::vector<int>> getShape() const { return shape; }
+    void dropSlow();
+    void dropFast();
     
-    // Rendering
-    sf::Color getColor() const { return color; }
 };
 
 #endif

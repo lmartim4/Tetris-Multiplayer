@@ -19,32 +19,12 @@ protected:
         }
     }
 
-    // Flag to determine if the shape is inverted
-    bool inverted;
-
 public:
     // Basically just calls the default constructor & inverts the shape
-    NonSymmetricTetromino(char type, std::string color, bool invert = false) : Tetromino(type, color), inverted(invert)
+    NonSymmetricTetromino(char type, int x0, int y0, sf::Color color, bool invert = false) : Tetromino(type, x0, y0, color)
     {
     }
 
-    void rotateLeft() override
-    {
-        // Logic for rotating left (specific to non-symmetric shapes)
-    }
-
-    void rotateRight() override
-    {
-        // Logic for rotating right (specific to non-symmetric shapes)
-    }
-
-    void moveLeft() override { x--; }
-    void moveRight() override { x++; }
-    void dropSlow() override { y++; }
-
-    // Nothing like this, the idea is to drop all the way to the bottom, but let's entertain
-    // for a moment the possibility that it's just adjusting the speed of the block
-    void dropFast() override { y += 2; }
 };
 
 #endif
