@@ -38,18 +38,18 @@ void Tetromino::rotateRight(){
 }
 
 void Tetromino::moveLeft(){
-    x--;
+    y--;
 }
 
 void Tetromino::moveRight(){
-    x++;
+    y++;
 }
 
 void Tetromino::dropSlow(){
-    y++;
+    x++;
 }
 
 // TODO (em tese a ideia seria de largar na posição final ? )
 void Tetromino::dropFast(){
-    y+=2;
+    x+=2;
 }

@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include "baseTetromino.hpp"
 #include <iostream>
+#include "cell.hpp"
 
 class Board
 {
@@ -14,18 +15,29 @@ private:
     const int HEIGHT;
     const int CELL_SIZE;
 
-    std::vector<std::vector<int>> grid; // Matriz 2D para representar a grid
+    std::vector<std::vector<Cell>> grid; // Matriz 2D para representar a grid e seus estados/logica
+
+    // Nao entendi completamente
+    // Cache para otimizar a renderização
+    std::vector<std::tuple<int, int, sf::Color>> renderCache;
+
+    // Atualiza o cache de renderização
+    void updateRenderCache();
 
 public:
     Board(int W, int H, int cell_size);
 
-    void render(sf::RenderWindow &window,const Tetromino &currentTetromino) const;
+    // Nao entendi completamente
+    // Retorna as células a serem renderizadas
+    const std::vector<std::tuple<int, int, sf::Color>> &getRenderCells() const;
+
+    void render(sf::RenderWindow &window,const Tetromino &currentTetromino) ;
 
     bool checkCollision(const Tetromino &currentTetromino);
     bool placeTetromino(const Tetromino &currentTetromino, bool fallen); 
-    int normalizedX(int x) const;
+    int  normalizedY(int y) const;
     void clearFallingTetrominos();
-    std::vector<std::vector<int>> getGrid() const;
+    std::vector<std::vector<Cell>> &getGrid();
 
 };
 

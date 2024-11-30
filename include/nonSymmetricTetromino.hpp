@@ -13,9 +13,9 @@ protected:
     void invertShape()
     {
         // Logic to invert the shape based on the tetromino type
-        for (auto &row : shape)
+        for (auto &y : shape)
         {
-            std::reverse(row.begin(), row.end());
+            std::reverse(y.begin(), y.end());
         }
     }
 
