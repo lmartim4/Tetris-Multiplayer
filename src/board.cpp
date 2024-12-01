@@ -1,13 +1,96 @@
 #include "../include/board.hpp"
 #include <stdlib.h>
 
-Board::Board(int W, int H, int cell_size) : WIDTH(W), HEIGHT(H), CELL_SIZE(cell_size), grid(HEIGHT, std::vector<Cell>(WIDTH))
+const int Board::WIDTH = 10;
+const int Board::HEIGHT = 20;
+const int Board::CELL_SIZE = 40;
+
+Board::Board() : window(sf::VideoMode(WIDTH * CELL_SIZE, HEIGHT * CELL_SIZE), "Tetris"),
+                 grid(HEIGHT, std::vector<Cell>(WIDTH))
 {
     for (int x = 0; x < HEIGHT; ++x)
     {
         for (int y = 0; y < WIDTH; ++y)
         {
-            grid[x][y] = Cell(cell_size, x, y);
+            grid[x][y] = Cell(CELL_SIZE, x, y);
+        }
+    }
+}
+
+void Board::printStatus()
+{
+    system("clear");
+
+    // Imprimir status da board
+    std::cout << "\nEstado da Board:" << std::endl;
+    for (int x = 0; x < HEIGHT; x++)
+    {
+        for (int y = 0; y < WIDTH; y++)
+        {
+            std::cout << (grid[x][y].isFalling() ? " # " : (grid[x][y].isEmpty()) ? " * " : " $ ");
+        }
+        std::cout << std::endl;
+    }
+    
+    // Separador visual
+    std::cout << std::string(40, '-') << std::endl; 
+}
+
+bool Board::windowIsOpen()
+{
+    return window.isOpen();
+}
+
+void Board::handleInput(Tetromino &currentTetromino)
+{
+    sf::Event event;
+    while (window.pollEvent(event))
+    {
+        switch (event.type)
+        {
+
+        case sf::Event::Closed:
+            window.close();
+            break;
+
+        case sf::Event::KeyPressed:
+            switch (event.key.code)
+            {
+            case sf::Keyboard::Left: 
+                currentTetromino.action(LEFT);
+                break;
+
+            case sf::Keyboard::Right: 
+                currentTetromino.action(RIGHT);
+                break;
+
+            case sf::Keyboard::Up: 
+                currentTetromino.action(ROT_RIGHT);
+                break;
+
+            case sf::Keyboard::Down:
+                currentTetromino.action(ROT_LEFT);
+                break;
+
+            case sf::Keyboard::Space:
+                currentTetromino.action(DOWN_FASTER);
+                break;
+
+                // case sf::Keyboard::Enter: // Drop it to the ground !
+                //     currentTetromino->dropToTheGround();
+                //     break;
+
+            case sf::Keyboard::Escape: 
+                window.close();
+                break;
+
+            default:
+                break;
+            }
+            break;
+
+        default:
+            break;
         }
     }
 }
@@ -17,8 +100,10 @@ std::vector<std::vector<Cell>> &Board::getGrid()
     return grid;
 }
 
-void Board::render(sf::RenderWindow &window)
+void Board::render()
 {
+    window.clear();
+
     for (int x = 0; x < HEIGHT; ++x)
     {
         for (int y = 0; y < WIDTH; ++y)
@@ -26,11 +111,10 @@ void Board::render(sf::RenderWindow &window)
             window.draw(grid[x][y].getCell());
         }
     }
+
+    window.display();
 }
 
-// Checks if the piece hit the bottom of the pit (next grid y position is bigger than
-// the size of the board OR the next y position of any part of the shape is another block
-// on the "pile" of fallen blocks)
 bool Board::checkCollision(Tetromino &currentTetromino)
 {
     currentTetromino.evolveStates(true);
@@ -38,7 +122,6 @@ bool Board::checkCollision(Tetromino &currentTetromino)
     const auto &shape = currentTetromino.getShape();
     int tetrominoX = currentTetromino.getX();
     int tetrominoY = currentTetromino.getY();
-    int lastMove = currentTetromino.getLastMove();
 
     // Percorre a matriz de "shape" do Tetromino
     for (size_t x = 0; x < shape.size(); ++x)
@@ -50,7 +133,7 @@ bool Board::checkCollision(Tetromino &currentTetromino)
                 int gridX = tetrominoX + x;
                 int gridY = normalizedY(tetrominoY + y);
 
-                if (gridX >= HEIGHT || gridX < 0)                    
+                if (gridX >= HEIGHT || gridX < 0)
                 {
                     currentTetromino.evolveStates(false);
                     return true;
@@ -61,7 +144,6 @@ bool Board::checkCollision(Tetromino &currentTetromino)
                     currentTetromino.evolveStates(false);
                     return true;
                 }
-
             }
         }
     }
@@ -69,7 +151,7 @@ bool Board::checkCollision(Tetromino &currentTetromino)
     return false;
 }
 
-int Board::normalizedY(int y) const
+int Board::normalizedY(int y) 
 {
 
     y %= WIDTH;
@@ -86,39 +168,27 @@ int Board::normalizedY(int y) const
 bool Board::placeTetromino(const Tetromino &currentTetromino, bool bottom)
 {
 
-    if (bottom)
-        std::cout << "Fui setado como fixo" << std::endl;
-    // Use os métodos virtuais de Tetromino aqui
     const auto &shape = currentTetromino.getShape();
 
     for (size_t x = 0; x < shape.size(); ++x)
     {
         for (size_t y = 0; y < shape[x].size(); ++y)
-        {
+        {   
             if (shape[x][y] != 0)
-            { // Verifica se a célula faz parte do Tetromino
+            { 
                 int gridX = currentTetromino.getX() + x;
                 int gridY = normalizedY(currentTetromino.getY() + y);
                 sf::Color tetroColor = currentTetromino.getColor();
 
-                // std::cout << "Fallen = " << fallen << std::endl;
                 if (bottom)
-                {
-                    std::cout << " (" << gridX << ", " << gridY << ") ";
                     grid[gridX][gridY].setFixed(tetroColor);
-                }
                 else
-                {
                     grid[gridX][gridY].setFalling(tetroColor);
-                }
             }
         }
     }
 
-    if (bottom)
-        std::cout << std::endl;
-
-    return true; // Substitua pela lógica de posicionamento
+    return true; 
 }
 
 void Board::clearFallingTetrominos()
@@ -127,7 +197,6 @@ void Board::clearFallingTetrominos()
     {
         for (int y = 0; y < WIDTH; ++y)
         {
-            // Limpa todas as células ocupadas por Tetrominos em queda (ID > 0)
             if (grid[x][y].isFalling())
             {
                 grid[x][y].setEmpty();

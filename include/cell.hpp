@@ -13,90 +13,41 @@ enum CELL_STATES
 class Cell
 {
 private:
-    int state;       // 0 = vazio, -1 = fixado, 1 = em queda
-    sf::Color color; // Cor do bloco
-    sf::RectangleShape cell;
-    int cellSize;
-    int x;
-    int y;
+    int state;               // 0 = vazio, -1 = fixado, 1 = em queda
+    sf::Color color;         // Cor do bloco
+    sf::RectangleShape cell; // Forma gráfica da célula
+    int cellSize;            // Tamanho da célula
+    int x;                   // Linha (posição X)
+    int y;                   // Coluna (posição Y)
 
-    /*
-    void setPosition(){
-        cell.setPosition(y * cellSize,x* cellSize);
-    }
-    */
+    // Define a posição da célula
+    void setPosition();
+
 public:
-    Cell(){}
-
     // Construtor padrão
-    Cell(int cellSize, int x, int y) : cellSize(cellSize), x(x), y(y)
-    {
-        cell = sf::RectangleShape(sf::Vector2f(cellSize, cellSize));
-        cell.setOutlineThickness(1);
-        cell.setPosition(y * cellSize, x * cellSize);
+    Cell();
 
-        setEmpty();
-    }
+    // Construtor parametrizado
+    Cell(int cellSize, int x, int y);
 
-    // Meio nojento ter q fazer isso
-    sf::RectangleShape getCell() const
-    {
-        return cell;
-    }
+    // Getter para a forma gráfica da célula
+    sf::RectangleShape getCell() const;
 
     // Getter para a cor
-    sf::Color getColor() const { return color; }
+    sf::Color getColor() const;
 
     // Setter para a cor
-    void setColor(const sf::Color &newColor) { color = newColor; }
+    void setColor(const sf::Color &newColor);
 
-    // Ao inves de fazer isso
+    // Verificadores de estado
+    bool isEmpty() const;
+    bool isFalling() const;
+    bool isFixed() const;
 
-    // int getState() const { return state; } // Getter para o estado
-
-    // Fazer isso
-
-    // Métodos auxiliares para verificar o estado
-    bool isEmpty() const { return state == CELL_EMPTY; }
-    bool isFalling() const { return state == CELL_FALLING; }
-    bool isFixed() const { return state == CELL_FALLED; }
-
-    // Ao inves disso
-
-    // void setState(int newState) { state = newState; } // Setter para o estado
-
-    // Fazer isso
-
-    // Define como vazio
-    void setEmpty()
-    {
-        state = CELL_EMPTY;
-        color = sf::Color::Black;
-        cell.setFillColor(color);
-        cell.setOutlineColor(sf::Color::White);
-        // setPosition();
-    }
-
-    // Define como "em queda"
-    void setFalling(const sf::Color &newColor)
-    {
-        state = CELL_FALLING;
-        color = newColor;
-        cell.setFillColor(color);
-        cell.setOutlineColor(sf::Color::Black);
-        // setPosition();
-    }
-
-    // Parece q tem q passar a cor, pois o estado anterior é empty
-    // Define como "fixado" na pilha
-    void setFixed(const sf::Color &newColor)
-    {
-        state = CELL_FALLED;
-        color = newColor;
-        cell.setFillColor(color);
-        cell.setOutlineColor(sf::Color::Black);
-        // setPosition();
-    }
+    // Setters de estado
+    void setEmpty();
+    void setFalling(const sf::Color &newColor);
+    void setFixed(const sf::Color &newColor);
 };
 
 #endif

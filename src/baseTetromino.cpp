@@ -1,5 +1,15 @@
 #include "../include/baseTetromino.hpp"
 
+const std::vector<sf::Color> Tetromino::tetromino_colors = {
+    sf::Color::Red,
+    sf::Color::Blue,
+    sf::Color::Yellow,
+    sf::Color::Green,
+    sf::Color::Cyan,
+    sf::Color::Magenta};
+
+const std::vector<char> Tetromino::types = {'I', 'O', 'T', 'L', 'J', 'S', 'Z'};
+
 int Tetromino::getX() const
 {
     return x;
@@ -25,7 +35,8 @@ bool Tetromino::getGravity() const
     return gravity;
 }
 
-const std::vector<std::vector<int>> & Tetromino::getShape() const{
+const std::vector<std::vector<int>> &Tetromino::getShape() const
+{
     return shape;
 }
 
@@ -89,7 +100,8 @@ void Tetromino::evolveStates(bool forward)
     }
 }
 
-void Tetromino::updateStates(){
+void Tetromino::updateStates()
+{
     lastMove = EMPTY;
     gravity = false;
 }
