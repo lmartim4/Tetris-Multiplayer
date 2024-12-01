@@ -5,54 +5,49 @@
 #include <string>
 #include <vector>
 
+enum MOVES {
+    EMPTY,
+    LEFT, 
+    RIGHT,
+    DOWN_FASTER,
+    ROT_LEFT,
+    ROT_RIGHT
+};
+
 class Tetromino {
 protected:
     std::vector<std::vector<int>> shape;
     int x, y;
-    char type;
     sf::Color color;
+    int lastMove = EMPTY; 
+    bool gravity = false;
     
-    // Tirar o atributo "type"
 public:
     // Default constructor & destructor
-    Tetromino(char type, int x0, int y0, sf::Color color) :  x(x0), y(y0), type(type), color(color) {}
+    Tetromino(int x0, int y0, sf::Color color) :  x(x0), y(y0), color(color) {}
     virtual ~Tetromino() = default;
 
-    int getX() const {
-        return x;
-    }
+    int getX() const;
 
-    int getY() const {     
-        return y;
-    }
-
-    char getType(){
-        return type;
-    }
+    int getY() const;
 
     // Rendering
-    sf::Color getColor() const{
-        return color;
-    }
+    sf::Color getColor() const;
 
-    // The function itself cannot modify the class (shape remains
-    // untoched within getShape()) and the returned 
-    // reference cannot be used to modify the shape externally
-    const std::vector<std::vector<int>> & getShape() const{
-        return shape;
-    }
+    int getLastMove() const;
 
-    // Rotations 
-    void rotateLeft();
-    void rotateRight();
-    
-    // Translations
-    void moveLeft();
-    void moveRight();
-    
+    bool getGravity() const;
+
+    const std::vector<std::vector<int>> & getShape() const;
+
+    void evolveStates(bool forward);
+
+    void updateStates();
+   
+    void action(MOVES action); 
+
     // Fall (gravity)
-    void dropSlow();
-    void dropFast();
+    void dropGravity();
     
 };
 

@@ -11,7 +11,7 @@
 class TetrominoI : public Tetromino
 {
 public:
-    TetrominoI(char type, int x0, int y0, sf::Color color) : Tetromino(type, x0, y0, color)
+    TetrominoI(int x0, int y0, sf::Color color) : Tetromino(x0, y0, color)
     {
         shape = {{1, 1, 1, 1}}; // 4-block straight line
     }
@@ -23,12 +23,11 @@ public:
 class TetrominoO : public Tetromino
 {
 public:
-    TetrominoO(char type, int x0, int y0, sf::Color color) : Tetromino(type, x0, y0, color)
+    TetrominoO(int x0, int y0, sf::Color color) : Tetromino(x0, y0, color)
     {
         shape = {{1, 1},
                  {1, 1}}; // 2x2 square
     }
-
 };
 
 /*
@@ -37,10 +36,10 @@ public:
 class TetrominoT : public Tetromino
 {
 public:
-    TetrominoT(char type, int x0, int y0, sf::Color color) : Tetromino(type, x0, y0, color)
+    TetrominoT(int x0, int y0, sf::Color color) : Tetromino(x0, y0, color)
     {
-        shape = {{1, 1, 1}
-                ,{0, 1, 0} }; // T 
+        shape = {{1, 1, 1}, 
+                 {0, 1, 0}}; // T
     }
 };
 
@@ -50,7 +49,7 @@ public:
 class TetrominoL : public NonSymmetricTetromino
 {
 public:
-    TetrominoL(char type, int x0, int y0, sf::Color color, bool inverted = false) : NonSymmetricTetromino(type, x0, y0, color, inverted)
+    TetrominoL(int x0, int y0, sf::Color color, bool inverted = false) : NonSymmetricTetromino(x0, y0, color, inverted)
     {
         shape = {{1, 0},
                  {1, 0},
@@ -67,7 +66,7 @@ public:
 class TetrominoS : public NonSymmetricTetromino
 {
 public:
-    TetrominoS(char type, int x0, int y0, sf::Color color, bool inverted = false) : NonSymmetricTetromino(type, x0, y0, color, inverted)
+    TetrominoS(int x0, int y0, sf::Color color, bool inverted = false) : NonSymmetricTetromino(x0, y0, color, inverted)
     {
         shape = {{0, 1, 1},
                  {1, 1, 0}};

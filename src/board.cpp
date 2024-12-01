@@ -17,54 +17,13 @@ std::vector<std::vector<Cell>> &Board::getGrid()
     return grid;
 }
 
-const std::vector<std::tuple<int, int, sf::Color>> &Board::getRenderCells() const
+void Board::render(sf::RenderWindow &window)
 {
-    return renderCache; // Retorna o cache já calculado
-}
-
-void Board::render(sf::RenderWindow &window, const Tetromino &currentTetromino)
-{
-
-    // system("CLS");
     for (int x = 0; x < HEIGHT; ++x)
     {
         for (int y = 0; y < WIDTH; ++y)
         {
-
-            // grid[x][y].setPosition(y* CELL_SIZE, x * CELL_SIZE);
-
-            if (!grid[x][y].isFalling())
-            { // If there's no block here
-                // std::cout << x << ", " << y << " Desenhado como vazio" << std::endl;
-
-                window.draw(grid[x][y].getCell());
-
-                // std::cout << "Desenhado " << grid[x][y].isFalling() << " em " << x << ", " << y << std::endl;
-            }
-        }
-    }
-    // std::cout << "Cabou render dos vazios" << std::endl;
-
-    // Renderizar o Tetromino atual
-    const auto &shape = currentTetromino.getShape();
-    int tetrominoX = currentTetromino.getX();
-    int tetrominoY = currentTetromino.getY();
-
-    // sf::RectangleShape block(sf::Vector2f(CELL_SIZE, CELL_SIZE));
-    // block.setFillColor(currentTetromino.getColor()); // Cor do Tetromino atual
-    // block.setOutlineThickness(1);
-    // block.setOutlineColor(sf::Color::Black); // Contorno para clareza
-
-    for (size_t x = 0; x < shape.size(); ++x)
-    {
-        for (size_t y = 0; y < shape[x].size(); ++y)
-        {
-            if (shape[x][y] != 0)
-            { // Se a célula faz parte do Tetromino
-                // grid[i][j].setPosition((size_t)(normalizedX(tetrominoX + j)) * CELL_SIZE, (tetrominoY + i) * CELL_SIZE);
-                grid[x][y].setFalling(currentTetromino.getColor());
-                window.draw(grid[tetrominoX + x][normalizedY(tetrominoY + y )].getCell());
-            }
+            window.draw(grid[x][y].getCell());
         }
     }
 }
@@ -72,11 +31,14 @@ void Board::render(sf::RenderWindow &window, const Tetromino &currentTetromino)
 // Checks if the piece hit the bottom of the pit (next grid y position is bigger than
 // the size of the board OR the next y position of any part of the shape is another block
 // on the "pile" of fallen blocks)
-bool Board::checkCollision(const Tetromino &currentTetromino)
+bool Board::checkCollision(Tetromino &currentTetromino)
 {
+    currentTetromino.evolveStates(true);
+
     const auto &shape = currentTetromino.getShape();
     int tetrominoX = currentTetromino.getX();
     int tetrominoY = currentTetromino.getY();
+    int lastMove = currentTetromino.getLastMove();
 
     // Percorre a matriz de "shape" do Tetromino
     for (size_t x = 0; x < shape.size(); ++x)
@@ -88,19 +50,18 @@ bool Board::checkCollision(const Tetromino &currentTetromino)
                 int gridX = tetrominoX + x;
                 int gridY = normalizedY(tetrominoY + y);
 
-                // Verifica se o bloco atingiu o fundo do tabuleiro
-                if (gridX + 1 >= HEIGHT)
+                if (gridX >= HEIGHT || gridX < 0)                    
                 {
-                    std::cout << "Ta no fundo" << std::endl;
-                    return true; // Colisão com o fundo
+                    currentTetromino.evolveStates(false);
+                    return true;
                 }
 
-                // Verifica se o bloco atingiu outro bloco na "pilha"
-                if (gridX + 1 >= 0 && grid[gridX + 1][gridY].isFixed())
+                if (grid[gridX][gridY].isFixed())
                 {
-                    std::cout << "Bateu em outro no fundo" << std::endl;
-                    return true; // Colisão com a pilha de blocos
+                    currentTetromino.evolveStates(false);
+                    return true;
                 }
+
             }
         }
     }
@@ -125,6 +86,8 @@ int Board::normalizedY(int y) const
 bool Board::placeTetromino(const Tetromino &currentTetromino, bool bottom)
 {
 
+    if (bottom)
+        std::cout << "Fui setado como fixo" << std::endl;
     // Use os métodos virtuais de Tetromino aqui
     const auto &shape = currentTetromino.getShape();
 
@@ -141,8 +104,8 @@ bool Board::placeTetromino(const Tetromino &currentTetromino, bool bottom)
                 // std::cout << "Fallen = " << fallen << std::endl;
                 if (bottom)
                 {
+                    std::cout << " (" << gridX << ", " << gridY << ") ";
                     grid[gridX][gridY].setFixed(tetroColor);
-                    // std::cout << "Fui setado como fixo" << std::endl;
                 }
                 else
                 {
@@ -151,6 +114,9 @@ bool Board::placeTetromino(const Tetromino &currentTetromino, bool bottom)
             }
         }
     }
+
+    if (bottom)
+        std::cout << std::endl;
 
     return true; // Substitua pela lógica de posicionamento
 }

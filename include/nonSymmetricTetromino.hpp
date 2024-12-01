@@ -21,10 +21,10 @@ protected:
 
 public:
     // Basically just calls the default constructor & inverts the shape
-    NonSymmetricTetromino(char type, int x0, int y0, sf::Color color, bool invert = false) : Tetromino(type, x0, y0, color)
+    NonSymmetricTetromino(int x0, int y0, sf::Color color, bool invert = false)
+        : Tetromino(x0, y0, color)
     {
     }
-
 };
 
 #endif

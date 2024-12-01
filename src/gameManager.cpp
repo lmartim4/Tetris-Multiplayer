@@ -31,26 +31,16 @@ GameManager::GameManager()
 void GameManager::printStatus()
 {
     system("clear");
-    // Imprimir status do Tetromino atual
-
-    const auto &shape = currentTetromino->getShape();
-    for (const auto &row : shape)
-    {
-        for (int cell : row)
-        {
-            std::cout << (cell ? "#" : ".") << " ";
-        }
-        std::cout << std::endl;
-    }
 
     // Imprimir status da board
     std::cout << "\nEstado da Board:" << std::endl;
-    for (int x=0; x < HEIGHT; x++)
+    for (int x = 0; x < HEIGHT; x++)
     {
-        for (int y = 0 ; y < WIDTH; y++)
+        for (int y = 0; y < WIDTH; y++)
         {
             auto currCell = board.getGrid()[x][y];
-            std::cout << (currCell.isFalling() ? " # " : (currCell.isEmpty()) ? " * " : " $ ");
+            std::cout << (currCell.isFalling() ? " # " : (currCell.isEmpty()) ? " * "
+                                                                              : " $ ");
         }
         std::cout << std::endl;
     }
@@ -64,6 +54,7 @@ void GameManager::runGameLoop()
 
     // Init timer
     srand((int)time(0));
+    // srand(0);
     gameClock.restart();
     spawnTetromino();
 
@@ -77,53 +68,13 @@ void GameManager::runGameLoop()
 
 void GameManager::spawnTetromino()
 {
-
     // Example of spawning a random tetromino (you can enhance this with a better randomizer)
     char randomType = types[rand() % NUM_TETRO]; // Randomly select one tetromino
     sf::Color randomColor = tetromino_colors.at(rand() % NUM_COLORS);
     int col = rand() % WIDTH;
     currentTetromino = TetrominoFactory::createTetromino(randomType, 0, col, randomColor);
-    // std::cout << "Tetromino " << randomType << " spawnado em " << col << std::endl;
+    // std::cout << "Tetromino " << randomType << " spawnado em " << col << "Com a cor numero " << num_color << std::endl;
 }
-
-/*
-void GameManager::renderTetromino()
-{
-    // Se o ponteiro é nulo, não há Tetromino para renderizar
-    if (!currentTetromino)
-    {
-        std::cout << "ERROR: No Tetromino generated!" << std::endl;
-        return;
-    }
-
-    // Obter o shape e a posição do Tetromino
-    const auto &shape = currentTetromino->getShape();
-    int tetrominoX = currentTetromino->getX();
-    int tetrominoY = currentTetromino->getY();
-
-    // Configurar um bloco representando cada célula do Tetromino
-    sf::RectangleShape block(sf::Vector2f(CELL_SIZE, CELL_SIZE));
-    block.setFillColor(currentTetromino->getColor()); // Usar a cor do Tetromino
-    block.setOutlineThickness(1);
-    block.setOutlineColor(sf::Color::Black); // Adicionar um contorno para clareza
-
-    // Percorrer a matriz do Tetromino (shape)
-    for (size_t i = 0; i < shape.size(); ++i)
-    {
-        for (size_t j = 0; j < shape[i].size(); ++j)
-        {
-            if (shape[i][j] > 0)
-            { // Se for uma célula válida (1,2,3... no shape)
-                // Calcular a posição do bloco na grid
-                block.setPosition((tetrominoX + j) * CELL_SIZE, (tetrominoY + i) * CELL_SIZE);
-
-                // Desenhar o bloco
-                window.draw(block);
-            }
-        }
-    }
-}
-*/
 
 /* ---------- Game Loop functions --------- */
 
@@ -143,28 +94,28 @@ void GameManager::handleInput()
             switch (event.key.code)
             {
             case sf::Keyboard::Left: // Move the Tetromino left
-                currentTetromino->moveLeft();
+                currentTetromino->action(LEFT);
                 break;
 
             case sf::Keyboard::Right: // Move the Tetromino right
-                currentTetromino->moveRight();
+                currentTetromino->action(RIGHT);
                 break;
 
             case sf::Keyboard::Up: // Rotate the Tetromino right
-                currentTetromino->rotateRight();
+                currentTetromino->action(ROT_RIGHT);
                 break;
 
             case sf::Keyboard::Down: // Rotate the Tetromino right
-                currentTetromino->rotateLeft();
+                currentTetromino->action(ROT_LEFT);
                 break;
 
             case sf::Keyboard::Space: // Drop the Tetromino
-                currentTetromino->dropSlow();
+                currentTetromino->action(DOWN_FASTER);
                 break;
 
-            case sf::Keyboard::Enter: // Drop the Tetromino faster
-                currentTetromino->dropFast();
-                break;
+            // case sf::Keyboard::Enter: // Drop it to the ground !
+            //     currentTetromino->dropToTheGround();
+            //     break;
 
             case sf::Keyboard::Escape: // Exit the game
                 window.close();
@@ -191,31 +142,46 @@ void GameManager::update()
     // Gravidade -> Checar mais tarde pra condições de se já ta embaixo
     if (gameClock.getElapsedTime() > gravityTime)
     {
-        currentTetromino->dropSlow();
+        currentTetromino->dropGravity();
         gameClock.restart();
     }
 
-    // Handle collision with the bottom of the board or locked pieces
-    if (board.checkCollision(*currentTetromino))
-    {
-        // std::cout << "Entrei no fundo " << std::endl;
-        // na vdd seria board.placeFalledTetromino()
-        board.placeTetromino(*currentTetromino, true); // Place tetromino on the board
-        // board.
-        currentTetromino.reset();
-        spawnTetromino(); // Spawn a new tetromino
-    } // else { place tetromino}
+    int lastMove = currentTetromino->getLastMove();
 
-    // Atualiza o Tetromino ativo no jogo (movimenta e reposiciona)
-    board.placeTetromino(*currentTetromino, false);
+    // Só deve dar updateStates depois de checar contra a board
+    if (board.checkCollision(*currentTetromino) )
+    {
+
+        if(lastMove == LEFT || lastMove == RIGHT)
+            std::cout << "Dectectei colisao lateral " << std::endl;
+        // std::cout << "Check collision : last move = " << lastMove << std::endl;
+        // na vdd seria board.placeFalledTetromino()
+        if(lastMove == DOWN_FASTER || currentTetromino->getGravity()){
+
+            // Place tetromino on the board
+            board.placeTetromino(*currentTetromino, true); 
+            currentTetromino->updateStates();
+            currentTetromino.reset();
+            std::cout << "Saiu um novo do forno" << std::endl;
+            spawnTetromino(); // Spawn a new tetromino
+        }else{ // Just invalid, just clean it's action
+            board.placeTetromino(*currentTetromino, false); 
+            currentTetromino->updateStates();
+        }
+    }else{
+        // Atualiza o Tetromino ativo no jogo (movimenta e reposiciona)
+        board.placeTetromino(*currentTetromino, false);
+        currentTetromino->updateStates();
+    }
 }
+
 void GameManager::render()
 {
-    printStatus();
+    // printStatus();
     window.clear(); // Clear the screen before drawing
 
     // Total rendering
-    board.render(window, *currentTetromino); // Render the board (grid), with all it's elements (locked tetrominos, UI elems -> score, level, next piece, etc)
+    board.render(window); // Render the board (grid), with all it's elements (locked tetrominos, UI elems -> score, level, next piece, etc)
 
     window.display(); // Display everything we just drew
 }

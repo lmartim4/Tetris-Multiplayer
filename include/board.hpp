@@ -17,23 +17,14 @@ private:
 
     std::vector<std::vector<Cell>> grid; // Matriz 2D para representar a grid e seus estados/logica
 
-    // Nao entendi completamente
-    // Cache para otimizar a renderização
-    std::vector<std::tuple<int, int, sf::Color>> renderCache;
-
-    // Atualiza o cache de renderização
-    void updateRenderCache();
-
 public:
     Board(int W, int H, int cell_size);
 
-    // Nao entendi completamente
-    // Retorna as células a serem renderizadas
-    const std::vector<std::tuple<int, int, sf::Color>> &getRenderCells() const;
+    void render(sf::RenderWindow &window) ;
 
-    void render(sf::RenderWindow &window,const Tetromino &currentTetromino) ;
-
-    bool checkCollision(const Tetromino &currentTetromino);
+    // Melhor seria se fosse const, mas é a vida, não consigo pensar em outro jeito de 
+    // checar a colisao sem mudar o objeto e ver se dá merda, na prática faz-se a ação inversa depois, então safe
+    bool checkCollision(Tetromino &currentTetromino);
     bool placeTetromino(const Tetromino &currentTetromino, bool fallen); 
     int  normalizedY(int y) const;
     void clearFallingTetrominos();

@@ -13,26 +13,26 @@ public:
         {
         /* Symmetric tetros */
         case 'I':
-            return std::make_unique<TetrominoI>(type,x0,y0, color);
+            return std::make_unique<TetrominoI>(x0,y0, color);
         case 'O':
-            return std::make_unique<TetrominoO>(type,x0,y0, color);
+            return std::make_unique<TetrominoO>(x0,y0, color);
         case 'T':
-            return std::make_unique<TetrominoT>(type,x0,y0, color);
+            return std::make_unique<TetrominoT>(x0,y0, color);
 
         /* Asymmetric tetros */
         /* L - J */
         case 'L':
-            return std::make_unique<TetrominoL>(type,x0,y0, color);
+            return std::make_unique<TetrominoL>(x0,y0, color);
         case 'J':
             // Create J from L inverted
-            return std::make_unique<TetrominoL>(type,x0,y0, color, true);
+            return std::make_unique<TetrominoL>(x0,y0, color, true);
 
         /* S - Z */
         case 'S':
-            return std::make_unique<TetrominoS>(type,x0,y0, color);
+            return std::make_unique<TetrominoS>(x0,y0, color);
         case 'Z':
             // Create Z from S inverted
-            return std::make_unique<TetrominoS>(type,x0,y0, color, true);
+            return std::make_unique<TetrominoS>(x0,y0, color, true);
 
         default:
             throw std::invalid_argument("Invalid Tetromino type");

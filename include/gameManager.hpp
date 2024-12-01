@@ -30,15 +30,13 @@ private:
     static const std::vector<sf::Color> tetromino_colors;
 
     // Game constants
-    static const int gravityTimeMs = 2700;
+    static const int gravityTimeMs = 700;
     sf::Time gravityTime;
 
 public:
     GameManager();
 
     void runGameLoop();
-
-    // void renderTetromino();
 
     void spawnTetromino();
 
