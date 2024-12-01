@@ -234,17 +234,7 @@ int Board::clearLines()
                     if(grid[x_clear-1][y].isFixed()){
                         
                         // Setar o de baixo como fixo, com a cor do de cima
-                        int x_deeper = x_clear;
-                        while(x_deeper < HEIGHT){
-                            if(!grid[x_deeper][y].isEmpty())
-                            break;
-
-                            x_deeper++;
-                        }
-
-                        // Ja temos agr o x mais fundo q não é nulo
-
-                        grid[x_deeper - 1][y].setFixed(grid[x_clear-1][y].getColor());
+                        grid[x_clear][y].setFixed(grid[x_clear-1][y].getColor());
 
                         // E deixar oq foi mudado como vazio
                         grid[x_clear-1][y].setEmpty();
