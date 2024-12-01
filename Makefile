@@ -9,7 +9,7 @@ OBJ_FILES := $(SRC_FILES:.cpp=.o)
 
 # Configuração do compilador
 CXX := g++
-CXXFLAGS := -I$(INC_DIR) -Wall 
+CXXFLAGS := -I$(INC_DIR) -Wall -O2  
 LDFLAGS := -lsfml-graphics -lsfml-window -lsfml-system
 
 # Regra principal

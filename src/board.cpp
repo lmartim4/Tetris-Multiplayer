@@ -204,3 +204,59 @@ void Board::clearFallingTetrominos()
         }
     }
 }
+
+int Board::clearLines()
+{
+    int numLinesCleared = 0;
+
+    // De baixo pra cima
+    for (int x = HEIGHT - 1; x >= 0; --x)
+    {
+        int sumLine = 0;
+        for (int y = 0; y < WIDTH; ++y)
+        {
+            if (grid[x][y].isFixed())
+                sumLine++;
+        }
+
+        // ------- Clear -------
+        if(sumLine == WIDTH){
+            // 1 - Mudar o estado de todas as celulas daquela linha pra empty
+            for(int y = 0; y < WIDTH; ++y){
+                grid[x][y].setEmpty();
+            }
+
+            // 2 - Carregar todos os fixos dali pra cima "pra baixo" 
+            for(int x_clear = x; x_clear >= 1; --x_clear){
+                for(int y = 0; y < WIDTH; ++y){
+                    
+                    // Se o de cima for algum bloco fixo
+                    if(grid[x_clear-1][y].isFixed()){
+                        
+                        // Setar o de baixo como fixo, com a cor do de cima
+                        int x_deeper = x_clear;
+                        while(x_deeper < HEIGHT){
+                            if(!grid[x_deeper][y].isEmpty())
+                            break;
+
+                            x_deeper++;
+                        }
+
+                        // Ja temos agr o x mais fundo q não é nulo
+
+                        grid[x_deeper - 1][y].setFixed(grid[x_clear-1][y].getColor());
+
+                        // E deixar oq foi mudado como vazio
+                        grid[x_clear-1][y].setEmpty();
+                    }
+                }
+            }
+
+            x++;
+            numLinesCleared ++;
+        }
+
+    }
+
+    return numLinesCleared;
+}

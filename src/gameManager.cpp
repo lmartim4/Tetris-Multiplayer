@@ -56,6 +56,8 @@ void GameManager::update()
             currentTetromino->updateStates();
             currentTetromino.reset();
             
+            board.clearLines();
+            
             // Spawn a new tetromino
             spawnTetromino(); 
 
