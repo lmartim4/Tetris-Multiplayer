@@ -17,6 +17,19 @@ Board::Board() : window(sf::VideoMode(WIDTH * CELL_SIZE, HEIGHT * CELL_SIZE), "T
     }
 }
 
+void Board::clear(){
+    window.close();
+}
+
+bool Board::reachedTop(){
+    for(int y = 0; y < WIDTH; ++y){
+        if(grid[0][y].isFixed())
+            return true;
+    }
+
+    return false;
+}
+
 void Board::printStatus()
 {
     system("clear");
@@ -27,13 +40,14 @@ void Board::printStatus()
     {
         for (int y = 0; y < WIDTH; y++)
         {
-            std::cout << (grid[x][y].isFalling() ? " # " : (grid[x][y].isEmpty()) ? " * " : " $ ");
+            std::cout << (grid[x][y].isFalling() ? " # " : (grid[x][y].isEmpty()) ? " * "
+                                                                                  : " $ ");
         }
         std::cout << std::endl;
     }
-    
+
     // Separador visual
-    std::cout << std::string(40, '-') << std::endl; 
+    std::cout << std::string(40, '-') << std::endl;
 }
 
 bool Board::windowIsOpen()
@@ -56,15 +70,15 @@ void Board::handleInput(Tetromino &currentTetromino)
         case sf::Event::KeyPressed:
             switch (event.key.code)
             {
-            case sf::Keyboard::Left: 
+            case sf::Keyboard::Left:
                 currentTetromino.setLastAction(LEFT);
                 break;
 
-            case sf::Keyboard::Right: 
+            case sf::Keyboard::Right:
                 currentTetromino.setLastAction(RIGHT);
                 break;
 
-            case sf::Keyboard::Up: 
+            case sf::Keyboard::Up:
                 currentTetromino.setLastAction(ROT_RIGHT);
                 break;
 
@@ -80,7 +94,7 @@ void Board::handleInput(Tetromino &currentTetromino)
                 //     currentTetromino->dropToTheGround();
                 //     break;
 
-            case sf::Keyboard::Escape: 
+            case sf::Keyboard::Escape:
                 window.close();
                 break;
 
@@ -151,7 +165,7 @@ bool Board::checkCollision(Tetromino &currentTetromino)
     return false;
 }
 
-int Board::normalizedY(int y) 
+int Board::normalizedY(int y)
 {
 
     y %= WIDTH;
@@ -173,9 +187,9 @@ bool Board::placeTetromino(const Tetromino &currentTetromino, bool bottom)
     for (size_t x = 0; x < shape.size(); ++x)
     {
         for (size_t y = 0; y < shape[x].size(); ++y)
-        {   
+        {
             if (shape[x][y] != 0)
-            { 
+            {
                 int gridX = currentTetromino.getX() + x;
                 int gridY = normalizedY(currentTetromino.getY() + y);
                 sf::Color tetroColor = currentTetromino.getColor();
@@ -188,7 +202,7 @@ bool Board::placeTetromino(const Tetromino &currentTetromino, bool bottom)
         }
     }
 
-    return true; 
+    return true;
 }
 
 void Board::clearFallingTetrominos()
@@ -198,6 +212,20 @@ void Board::clearFallingTetrominos()
         for (int y = 0; y < WIDTH; ++y)
         {
             if (grid[x][y].isFalling())
+            {
+                grid[x][y].setEmpty();
+            }
+        }
+    }
+}
+
+void Board::clearFalledTetrominos()
+{
+    for (int x = 0; x < HEIGHT; ++x)
+    {
+        for (int y = 0; y < WIDTH; ++y)
+        {
+            if (grid[x][y].isFixed())
             {
                 grid[x][y].setEmpty();
             }
@@ -220,32 +248,36 @@ int Board::clearLines()
         }
 
         // ------- Clear -------
-        if(sumLine == WIDTH){
+        if (sumLine == WIDTH)
+        {
             // 1 - Mudar o estado de todas as celulas daquela linha pra empty
-            for(int y = 0; y < WIDTH; ++y){
+            for (int y = 0; y < WIDTH; ++y)
+            {
                 grid[x][y].setEmpty();
             }
 
-            // 2 - Carregar todos os fixos dali pra cima "pra baixo" 
-            for(int x_clear = x; x_clear >= 1; --x_clear){
-                for(int y = 0; y < WIDTH; ++y){
-                    
+            // 2 - Carregar todos os fixos dali pra cima "pra baixo"
+            for (int x_clear = x; x_clear >= 1; --x_clear)
+            {
+                for (int y = 0; y < WIDTH; ++y)
+                {
+
                     // Se o de cima for algum bloco fixo
-                    if(grid[x_clear-1][y].isFixed()){
-                        
+                    if (grid[x_clear - 1][y].isFixed())
+                    {
+
                         // Setar o de baixo como fixo, com a cor do de cima
-                        grid[x_clear][y].setFixed(grid[x_clear-1][y].getColor());
+                        grid[x_clear][y].setFixed(grid[x_clear - 1][y].getColor());
 
                         // E deixar oq foi mudado como vazio
-                        grid[x_clear-1][y].setEmpty();
+                        grid[x_clear - 1][y].setEmpty();
                     }
                 }
             }
 
             x++;
-            numLinesCleared ++;
+            numLinesCleared++;
         }
-
     }
 
     return numLinesCleared;

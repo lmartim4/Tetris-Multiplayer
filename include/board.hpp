@@ -21,6 +21,8 @@ public:
 
     Board();
 
+    void clear();
+    bool reachedTop();
     void printStatus();
     bool windowIsOpen();
     void handleInput(Tetromino &currentTetromino);
@@ -33,6 +35,7 @@ public:
     bool placeTetromino(const Tetromino &currentTetromino, bool fallen);
     static int normalizedY(int y);
     void clearFallingTetrominos();
+    void clearFalledTetrominos();
     std::vector<std::vector<Cell>> &getGrid();
 };
 

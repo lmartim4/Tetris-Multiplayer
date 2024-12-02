@@ -16,10 +16,13 @@ private:
     bool isRunning;
     int score;
     int level;
+    int nLinesClearedThisLevel;
+    const int minTimeMs = 400;
     sf::Clock gameClock;
     
     // Game constants
-    static const int gravityTimeMs = 700;
+    int gravityTimeMs;
+    int levelUpGravityTimeMs;
     sf::Time gravityTime;
 
 public:
