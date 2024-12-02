@@ -106,7 +106,7 @@ void Tetromino::updateStates()
     gravity = false;
 }
 
-void Tetromino::action(MOVES action)
+void Tetromino::setLastAction(MOVES action)
 {
     lastMove = action;
 }

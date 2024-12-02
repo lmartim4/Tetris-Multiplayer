@@ -14,6 +14,8 @@ private:
     Board board;
     std::unique_ptr<Tetromino> currentTetromino;
     bool isRunning;
+    int score;
+    int level;
     sf::Clock gameClock;
     
     // Game constants
@@ -23,6 +25,7 @@ private:
 public:
     GameManager();
 
+    int lines2Points(int nLines); 
     void runGameLoop();
 
     void spawnTetromino();

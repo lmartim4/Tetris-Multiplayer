@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 const int Board::WIDTH = 10;
-const int Board::HEIGHT = 20;
+const int Board::HEIGHT = 16;
 const int Board::CELL_SIZE = 40;
 
 Board::Board() : window(sf::VideoMode(WIDTH * CELL_SIZE, HEIGHT * CELL_SIZE), "Tetris"),
@@ -57,23 +57,23 @@ void Board::handleInput(Tetromino &currentTetromino)
             switch (event.key.code)
             {
             case sf::Keyboard::Left: 
-                currentTetromino.action(LEFT);
+                currentTetromino.setLastAction(LEFT);
                 break;
 
             case sf::Keyboard::Right: 
-                currentTetromino.action(RIGHT);
+                currentTetromino.setLastAction(RIGHT);
                 break;
 
             case sf::Keyboard::Up: 
-                currentTetromino.action(ROT_RIGHT);
+                currentTetromino.setLastAction(ROT_RIGHT);
                 break;
 
             case sf::Keyboard::Down:
-                currentTetromino.action(ROT_LEFT);
+                currentTetromino.setLastAction(ROT_LEFT);
                 break;
 
             case sf::Keyboard::Space:
-                currentTetromino.action(DOWN_FASTER);
+                currentTetromino.setLastAction(DOWN_FASTER);
                 break;
 
                 // case sf::Keyboard::Enter: // Drop it to the ground !

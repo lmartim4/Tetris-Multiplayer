@@ -2,9 +2,14 @@
 
 const int GameManager::gravityTimeMs;
 
+#define P(x) ((280 * (x*x*x) - 1470 * (x*x) + 2630 * (x) - 1320) / 3)
+#define min(a,b) ((a > b) ? b : a)
+
 GameManager::GameManager()
     : board(), 
       isRunning(false),
+      score(0),
+      level(0),
       gravityTime(sf::milliseconds(GameManager::gravityTimeMs))
 {
 }
@@ -29,6 +34,11 @@ void GameManager::runGameLoop()
 void GameManager::spawnTetromino()
 {
     currentTetromino = TetrominoFactory::createTetromino();
+}
+
+int GameManager::lines2Points(int nLines){
+    std::cout << "P(x) = " << P(min(nLines,4)) << std::endl;
+    return (nLines > 0) ? P(min(nLines, 4)) * (level + 1) : 0;
 }
 
 void GameManager::update()
@@ -56,7 +66,8 @@ void GameManager::update()
             currentTetromino->updateStates();
             currentTetromino.reset();
             
-            board.clearLines();
+            score += lines2Points(board.clearLines());
+            std::cout << "Pontuação atual = " << score << " ! " << std::endl;
             
             // Spawn a new tetromino
             spawnTetromino(); 

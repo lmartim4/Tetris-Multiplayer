@@ -49,7 +49,7 @@ public:
 
     void updateStates();
 
-    void action(MOVES action);
+    void setLastAction(MOVES action);
 
     // Fall (gravity)
     void dropGravity();
