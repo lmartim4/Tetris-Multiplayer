@@ -1,0 +1,150 @@
+@startuml
+
+class Tetromino {
+    protected std::vector<std::vector<int>> shape
+    protected int x, y
+    protected std::string color
+    protected char type
+    + Tetromino(char type, std::string color)
+    + virtual ~Tetromino() = default
+    + int getX() 
+    + int getY()
+    + char getType()
+    + std::vector<std::vector<int>> getShape()
+    + virtual void rotateLeft() = 0
+    + virtual void rotateRight() = 0
+    + virtual void moveLeft() = 0
+    + virtual void moveRight() = 0
+    + virtual void dropSlow() = 0
+    + virtual void dropFast() = 0
+    + std::vector<std::vector<int>> getShape() const
+    + std::string getColor() const
+}
+
+
+class NonSymmetricTetromino {
+    protected bool inverted
+    + NonSymmetricTetromino(char type, std::string color, bool invert = false)
+    + void invertShape()
+    + void rotateLeft() override
+    + void rotateRight() override
+    + void moveLeft() override
+    + void moveRight() override
+    + void dropSlow() override
+    + void dropFast() override
+}
+
+NonSymmetricTetromino --|> Tetromino
+
+class TetrominoI {
+    + void rotateLeft() override
+    + void rotateRight() override
+    + void moveLeft() override
+    + void moveRight() override
+    + void dropSlow() override
+    + void dropFast() override
+}
+
+TetrominoI --|> Tetromino
+
+class TetrominoO {
+    + void rotateLeft() override
+    + void rotateRight() override
+    + void moveLeft() override
+    + void moveRight() override
+    + void dropSlow() override
+    + void dropFast() override
+}
+
+TetrominoO --|> Tetromino
+
+class TetrominoL {
+    + void rotateLeft() override
+    + void rotateRight() override
+    + void moveLeft() override
+    + void moveRight() override
+    + void dropSlow() override
+    + void dropFast() override
+}
+
+TetrominoL --|> NonSymmetricTetromino
+
+class TetrominoJ {
+    + void rotateLeft() override
+    + void rotateRight() override
+    + void moveLeft() override
+    + void moveRight() override
+    + void dropSlow() override
+    + void dropFast() override
+}
+
+TetrominoJ --|> NonSymmetricTetromino
+
+class TetrominoS {
+    + void rotateLeft() override
+    + void rotateRight() override
+    + void moveLeft() override
+    + void moveRight() override
+    + void dropSlow() override
+    + void dropFast() override
+}
+
+TetrominoS --|> NonSymmetricTetromino
+
+class TetrominoZ {
+    + void rotateLeft() override
+    + void rotateRight() override
+    + void moveLeft() override
+    + void moveRight() override
+    + void dropSlow() override
+    + void dropFast() override
+}
+
+TetrominoZ --|> NonSymmetricTetromino
+
+class TetrominoFactory {
+    + static std::unique_ptr<Tetromino> createTetromino(char type)
+}
+
+TetrominoFactory --> Tetromino
+
+class Board {
+    private int width, height
+    private std::vector<std::vector<int>> grid
+    + Board(int w, int h)
+    + bool checkCollision(const Tetromino& tetromino) const
+    + void placeTetromino(const Tetromino& tetromino)
+    + void clearLines()
+    + void render() const
+}
+
+class GameManager {
+    private Board board
+    private std::unique_ptr<Tetromino> currentTetromino
+    private bool isRunning
+    + GameManager()
+    + void runGameLoop()
+    + void spawnTetromino()
+    + void handleInput()
+    + void update()
+    + void render()
+}
+
+class NetworkManager {
+    private int socketFD
+    private sockaddr_in serverAddress, clientAddress
+    + NetworkManager()
+    + void sendGameState(const GameManager& gameState)
+    + void receiveGameState(GameManager& gameState)
+}
+
+class MultiplayerGameManager {
+    private NetworkManager networkManager
+    + MultiplayerGameManager()
+    + void runMultiplayerGameLoop()
+    + void syncGameState()
+}
+MultiplayerGameManager --|> GameManager
+MultiplayerGameManager --> NetworkManager
+
+@enduml
