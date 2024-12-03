@@ -1,0 +1,19 @@
+@startuml Tetris Server
+
+title Tetris Server
+
+participant "Client" as client
+participant "Server" as server
+
+loop Game Cycle Example
+
+client --> server : (Player 1) Move Left
+client --> server : (Player 3) Drop Instant
+client --> server : (Player 2) Move Right
+
+server --> server : Process Movements
+server --> client : Table Status Broadcast
+
+end loop 
+
+@enduml
