@@ -55,7 +55,7 @@ ClientManager::ClientManager(const std::string &serverAddress, uint16_t port)
     }
 
     TaskStartHeartbeat();
-    TaskStartSFML();
+    //TaskStartSFML();
     TaskStartNetwork();
 }
 
