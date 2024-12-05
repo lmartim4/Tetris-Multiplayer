@@ -49,25 +49,25 @@ add_executable(client ${CLIENT_SOURCES})
 target_link_libraries(client sfml-system sfml-window sfml-graphics sfml-network ${ENET_LIB})
 
 # Custom commands to run in debug or release mode
-add_custom_target(run_server_simple
+add_custom_target(run-server
     COMMAND $<TARGET_FILE:server>
     COMMENT "Running the server in simple mode (Release configuration)"
     USES_TERMINAL
 )
 
-add_custom_target(run_server_debug
+add_custom_target(run-server_debug
     COMMAND $<TARGET_FILE:server> --debug
     COMMENT "Running the server in debug mode (Debug configuration)"
     USES_TERMINAL
 )
 
-add_custom_target(run_client_simple
+add_custom_target(run-client
     COMMAND $<TARGET_FILE:client>
     COMMENT "Running the client in simple mode (Release configuration)"
     USES_TERMINAL
 )
 
-add_custom_target(run_client_debug
+add_custom_target(run-client_debug
     COMMAND $<TARGET_FILE:client> --debug
     COMMENT "Running the client in debug mode (Debug configuration)"
     USES_TERMINAL
