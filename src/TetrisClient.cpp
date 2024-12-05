@@ -19,11 +19,13 @@ int main()
 {
     client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
 
+    
     sf::RenderWindow window(sf::VideoMode(800, 600), "Multi-Threaded Screens");
     ScreenManager screenManager;
-
-    screenManager.addScreen("menu", std::make_unique<MenuScreen>());
+    
+    screenManager.addScreen("menu", std::make_unique<MenuScreen>(screenManager));
     screenManager.addScreen("game", std::make_unique<GameScreen>());
+
 
     screenManager.setActiveScreen("menu");
     screenManager.startThread();
@@ -48,7 +50,7 @@ int main()
         screenManager.render(window);
         window.display();
     }
-
+    
     while (client.isRunning())
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 

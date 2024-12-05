@@ -10,48 +10,48 @@
 #include <map>
 
 // Base class for screens
-class Screen
-{
+class Screen {
 public:
     virtual ~Screen() {}
-    virtual void handleEvent(sf::Event event, class ScreenManager &manager) = 0;
+    virtual void handleEvent(sf::Event event, class ScreenManager& manager) = 0;
     virtual void update(float deltaTime) = 0;
-    virtual void render(sf::RenderWindow &window) = 0;
+    virtual void render(sf::RenderWindow& window) = 0;
 
-    void stop()
-    {
+    void stop() {
         running = false;
     }
 
 protected:
-    std::atomic<bool> running{true};
+    std::atomic<bool> running{ true };
 };
 
 // Screen Manager
-class ScreenManager
-{
+class ScreenManager {
     std::map<std::string, std::unique_ptr<Screen>> screens;
-    Screen *activeScreen = nullptr;
+    Screen* activeScreen = nullptr;
 
     std::thread screenThread;
     std::mutex mtx;
     std::condition_variable cv;
 
-    std::atomic<bool> threadRunning{false};
+    std::atomic<bool> threadRunning{ false };
 
 public:
-    ~ScreenManager()
-    {
+    ~ScreenManager() {
         stopThread();
     }
 
-    void addScreen(const std::string &name, std::unique_ptr<Screen> screen)
-    {
+    void quit() {
+        // Logic to terminate the application
+        std::cout << "Application quitting...\n";
+        exit(0);
+    }
+
+    void addScreen(const std::string& name, std::unique_ptr<Screen> screen) {
         screens[name] = std::move(screen);
     }
 
-    void setActiveScreen(const std::string &name)
-    {
+    void setActiveScreen(const std::string& name) {
         {
             std::lock_guard<std::mutex> lock(mtx);
             activeScreen = screens[name].get();
@@ -59,35 +59,27 @@ public:
         cv.notify_one();
     }
 
-    void handleEvent(sf::Event event)
-    {
-        if (activeScreen)
-        {
+    void handleEvent(sf::Event event) {
+        if (activeScreen) {
             activeScreen->handleEvent(event, *this);
         }
     }
 
-    void update(float deltaTime)
-    {
-        if (activeScreen)
-        {
+    void update(float deltaTime) {
+        if (activeScreen) {
             activeScreen->update(deltaTime);
         }
     }
 
-    void render(sf::RenderWindow &window)
-    {
-        if (activeScreen)
-        {
+    void render(sf::RenderWindow& window) {
+        if (activeScreen) {
             activeScreen->render(window);
         }
     }
 
-    void startThread()
-    {
+    void startThread() {
         threadRunning = true;
-        screenThread = std::thread([this]()
-                                   {
+        screenThread = std::thread([this]() {
             while (threadRunning) {
                 std::unique_lock<std::mutex> lock(mtx);
                 cv.wait(lock, [this]() { return activeScreen != nullptr; });
@@ -102,11 +94,9 @@ public:
             } });
     }
 
-    void stopThread()
-    {
+    void stopThread() {
         threadRunning = false;
-        if (screenThread.joinable())
-        {
+        if (screenThread.joinable()) {
             screenThread.join();
         }
     }
