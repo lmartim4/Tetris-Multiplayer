@@ -18,6 +18,8 @@ You can install both **SFML** and **ENet** using the package manager:
 ```bash
 sudo apt-get update
 sudo apt-get install libsfml-dev libenet-dev
+sudo apt-get install build-essential
+sudo snap install cmake --classic
 ```
 
 ### Building the Project
