@@ -18,6 +18,7 @@ void ServerManager::onPeerDisconnect(ENetPeer * peer)
     network_print("");
     std::cout << "[DISCONNECTED] " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
     delete (Player *)peer->data;
+    broadcastPlayerList();
 }
 
 ServerManager::ServerManager(uint16_t port)

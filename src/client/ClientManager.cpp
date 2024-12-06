@@ -2,19 +2,16 @@
 #include <iostream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
+#include "PlayerData.hpp"
 
-ClientManager::ClientManager() {}
-ClientManager::~ClientManager() {}
-
-void ClientManager::onPeerConnect(ENetPeer * peer)
+void ClientManager::onPeerConnect(ENetPeer *peer)
 {
     isConnected = true;
     std::cout << std::endl;
     network_print("");
-    std::cout << "Connection successful to " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl
-              << std::endl;
+    std::cout << "Connection successful to " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
 }
-void ClientManager::onPeerDisconnect(ENetPeer * peer)
+void ClientManager::onPeerDisconnect(ENetPeer *peer)
 {
     isConnected = false;
     network_print("Disconnected from server\n");
@@ -25,6 +22,65 @@ void ClientManager::on_receive_heartbeat()
     auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
     last_heartbeat = now_ms;
+}
+
+void ClientManager::on_receive_player_list(const Packet &packet)
+{
+    players.clear();
+
+    nlohmann::json received;
+
+    try
+    {
+        received = packet.toJson();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Failed to parse packet as JSON: " << e.what() << std::endl;
+        return;
+    }
+
+    if (!received.is_array())
+    {
+        std::cerr << "Invalid JSON: top-level element is not an array." << std::endl;
+        return;
+    }
+
+    // Iterate over each inner array
+    for (const auto &innerArray : received)
+    {
+        if (!innerArray.is_array())
+        {
+            std::cerr << "Inner element is not an array. Skipping." << std::endl;
+            continue;
+        }
+
+        // Iterate over each player object in the inner arrays
+        for (const auto &playerObject : innerArray)
+        {
+            if (!playerObject.is_object())
+            {
+                std::cerr << "Player entry is not a valid JSON object. Skipping." << std::endl;
+                continue;
+            }
+
+            PlayerData playerData;
+
+            if (playerObject.contains("isConnected") && playerObject["isConnected"].is_boolean())
+                playerData.isConnected = playerObject["isConnected"].get<bool>();
+
+            if (playerObject.contains("playerID") && playerObject["playerID"].is_number_integer())
+                playerData.playerID = playerObject["playerID"].get<int>();
+
+            if (playerObject.contains("playerName") && playerObject["playerName"].is_string())
+                playerData.playerName = playerObject["playerName"].get<std::string>();
+
+            if (playerObject.contains("score") && playerObject["score"].is_number_integer())
+                playerData.score = playerObject["score"].get<int>();
+
+            players.emplace_back(playerData);
+        }
+    }
 }
 
 void ClientManager::TaskStartHeartbeat()
@@ -110,7 +166,7 @@ void ClientManager::disconnect()
         enet_peer_disconnect_now(serverPeer, 0);
         enet_peer_reset(serverPeer);
     }
-    
+
     TaskStopNetwork();
     TaskStopHeartbeat();
 }

@@ -9,11 +9,11 @@ class InteractiveText
     std::function<void()> onClickCallback;
 
 public:
-    InteractiveText(const sf::Font &font, const std::string &str, unsigned int charSize, sf::Color color, sf::Vector2f position)
+    InteractiveText(const sf::Font &font, const std::string &str, sf::Color color, sf::Vector2f position)
     {
         text.setFont(font);
         text.setString(str);
-        text.setCharacterSize(charSize);
+        text.setCharacterSize(str.length() * 5);
         text.setFillColor(color);
         text.setPosition(position);
     }

@@ -26,8 +26,8 @@ class WaitingConnectionScreen : public Screen
 
 public:
     WaitingConnectionScreen(ScreenManager &screenManager, ClientManager &clientManager)
-        : titleText(defaultFont, "Waiting for server...", 40, sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}),
-          backText(defaultFont, "Back", 30, sf::Color::White, {x_offset_screen + 300, y_offset_screen + 200}),
+        : titleText(defaultFont, "Waiting for server...", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}),
+          backText(defaultFont, "Back", sf::Color::White, {x_offset_screen + 300, y_offset_screen + 200}),
           screenMan(screenManager), clientMan(clientManager)
     {
         backText.setOnClick([this]()
@@ -45,9 +45,7 @@ public:
     void update(float deltaTime) override
     {
         if (clientMan.IsConnected())
-        {
             screenMan.setActiveScreen("lobby");
-        }
     }
 
     void render(sf::RenderWindow &window) override

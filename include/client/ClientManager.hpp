@@ -2,6 +2,7 @@
 
 #include "NetworkManager.hpp"
 #include <SFML/Graphics.hpp>
+#include "PlayerData.hpp"
 #include <thread>
 #include <atomic>
 
@@ -11,6 +12,8 @@ private:
     ENetPeer *serverPeer;
 
     std::atomic<bool> isConnected = false;
+
+    std::vector<PlayerData> players;
 
     std::thread ThreadHeartbeat;
     unsigned long last_heartbeat;
@@ -23,11 +26,13 @@ protected:
     void onPeerDisconnect(ENetPeer *peer) override;
 
 public:
-    ClientManager();
-    ~ClientManager();
+    ClientManager() {};
+    ~ClientManager() {};
 
     void toggleDebug();
     void on_receive_heartbeat();
+
+    void on_receive_player_list(const Packet &packet);
 
     void TaskStartHeartbeat();
     void TaskHeartbeat();
@@ -37,4 +42,9 @@ public:
     void disconnect();
 
     bool IsConnected() const { return isConnected; };
+
+    std::vector<PlayerData> &getDataPlayers()
+    {
+        return players;
+    }
 };

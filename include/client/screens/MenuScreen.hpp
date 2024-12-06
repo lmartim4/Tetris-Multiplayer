@@ -25,9 +25,9 @@ class MenuScreen : public Screen
 
 public:
     MenuScreen(ScreenManager &screenManager, ClientManager &clientManager)
-        : titleText(defaultFont, "Main Menu", 40, sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}),
-          connectText(defaultFont, "Connect", 30, sf::Color::White, {x_offset_screen + 300, y_offset_screen + 200}),
-          quitText(defaultFont, "Quit", 30, sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}),
+        : titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}),
+          connectText(defaultFont, "Connect", sf::Color::White, {x_offset_screen + 300, y_offset_screen + 200}),
+          quitText(defaultFont, "Quit", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}),
           manager(screenManager), clientMan(clientManager)
     {
         connectText.setOnClick([this]()
