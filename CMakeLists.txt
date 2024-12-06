@@ -8,9 +8,12 @@ project(TetrisProject VERSION 1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Add include directory for headers
-set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
-include_directories(${INCLUDE_DIR})
+# Add include directories for each module
+set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/common)
+set(SERVER_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/server)
+set(CLIENT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/client)
+
+include_directories(${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR})
 
 # Find SFML package (required)
 find_package(SFML 2.5 COMPONENTS system window graphics network audio REQUIRED)
@@ -24,16 +27,16 @@ include_directories(${ENET_INCLUDE_DIR})
 
 # Source files for the server
 set(SERVER_SOURCES
-    src/TetrisServer.cpp
-    src/ServerManager.cpp
-    src/NetworkManager.cpp
+    src/server/TetrisServer.cpp
+    src/server/ServerManager.cpp
+    src/common/NetworkManager.cpp
 )
 
 # Source files for the client
 set(CLIENT_SOURCES
-    src/TetrisClient.cpp
-    src/ClientManager.cpp
-    src/NetworkManager.cpp
+    src/client/TetrisClient.cpp
+    src/client/ClientManager.cpp
+    src/common/NetworkManager.cpp
 )
 
 # Configure build types
@@ -42,11 +45,13 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Select Debug or Rele
 
 # Server executable
 add_executable(server ${SERVER_SOURCES})
-target_link_libraries(server sfml-system sfml-network ${ENET_LIB})
+target_include_directories(server PRIVATE ${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR})
+target_link_libraries(server sfml-system ${ENET_LIB})
 
 # Client executable
 add_executable(client ${CLIENT_SOURCES})
-target_link_libraries(client sfml-system sfml-window sfml-graphics sfml-network ${ENET_LIB})
+target_include_directories(client PRIVATE ${COMMON_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR})
+target_link_libraries(client sfml-system sfml-window sfml-graphics ${ENET_LIB})
 
 # Custom commands to run in debug or release mode
 add_custom_target(run-server

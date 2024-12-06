@@ -22,6 +22,8 @@ enum class PacketType : char
     CONNECT,    // A packet sent upon connecting
     DISCONNECT, // A packet sent upon disconnection
 
+    PLAYER_LIST,
+
     // Error packet threating
     PARSING_ERROR // Reserved for any custom packet types
 };

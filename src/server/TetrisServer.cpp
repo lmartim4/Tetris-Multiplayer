@@ -12,9 +12,9 @@ void HeartbeatListener(const Packet &packet)
 void JoinRequestListener(const Packet &packet)
 {
     if (server.getHost()->connectedPeers < 4)
-        server.send_packet(Packet(PacketType::JOIN_ACCEPTED, {0}, packet.peer));
+        server.send_packet(Packet(PacketType::JOIN_ACCEPTED, 0, packet.peer));
     else
-        server.send_packet(Packet(PacketType::JOIN_DENIED, {0}, packet.peer));
+        server.send_packet(Packet(PacketType::JOIN_DENIED, 0, packet.peer));
 }
 
 int main(int argc, const char *argv[])
@@ -22,10 +22,7 @@ int main(int argc, const char *argv[])
     if (server.isRunning())
         server.network_print("Waiting connections...\n");
     else
-    {
-        //Port busy?
         return -1;
-    }
 
     server.registerListener(PacketType::JOIN_REQUEST, JoinRequestListener);
     server.registerListener(PacketType::HEARTBEAT, HeartbeatListener);

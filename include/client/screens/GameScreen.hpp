@@ -14,18 +14,12 @@
 // Game Screen
 class GameScreen : public Screen
 {
-    sf::Font font;
     sf::Text gameText;
 
 public:
     GameScreen()
     {
-        if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"))
-        {
-            std::cerr << "Error loading font!" << std::endl;
-        }
-
-        gameText.setFont(font);
+        gameText.setFont(defaultFont);
         gameText.setString("Game Screen");
         gameText.setCharacterSize(40);
         gameText.setFillColor(sf::Color::Green);

@@ -1,7 +1,10 @@
+#pragma once
+
 #include <SFML/Graphics.hpp>
 #include <functional>
 
-class InteractiveText {
+class InteractiveText
+{
     sf::Text text;
     std::function<void()> onClickCallback;
 
@@ -15,28 +18,17 @@ public:
         text.setPosition(position);
     }
 
-    void setOnClick(const std::function<void()> &callback)
-    {
-        onClickCallback = callback;
-    }
+    void setOnClick(const std::function<void()> &callback) { onClickCallback = callback; }
 
     void handleEvent(const sf::Event &event)
     {
         if (event.type == sf::Event::MouseButtonPressed)
-        {
             if (text.getGlobalBounds().contains(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y)))
-            {
                 if (onClickCallback)
                     onClickCallback();
-            }
-        }
     }
 
-    void render(sf::RenderWindow &window)
-    {
-        window.draw(text);
-    }
+    void render(sf::RenderWindow &window) { window.draw(text); }
 
-    // Provide access to sf::Text for customization
     sf::Text &getText() { return text; }
 };

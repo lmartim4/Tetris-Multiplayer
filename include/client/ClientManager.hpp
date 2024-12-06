@@ -10,12 +10,9 @@ class ClientManager : public NetworkManager
 private:
     ENetPeer *serverPeer;
 
+    std::atomic<bool> isConnected = false;
+
     std::thread ThreadHeartbeat;
-    std::thread ThreadSFML;
-
-    std::atomic<bool> sfml_running;
-
-    bool isConnected = false;
     unsigned long last_heartbeat;
 
     bool debugEnabled = false;
@@ -26,7 +23,7 @@ protected:
     void onPeerDisconnect(ENetPeer *peer) override;
 
 public:
-    ClientManager(const std::string &serverAddress = "localhost", uint16_t port = 12345);
+    ClientManager();
     ~ClientManager();
 
     void toggleDebug();
@@ -36,7 +33,8 @@ public:
     void TaskHeartbeat();
     void TaskStopHeartbeat();
 
-    void TaskStartSFML();
-    void TaskSFML();
-    void TaskStopSFML();
+    void connect(const std::string &serverAddress = "localhost", uint16_t port = 12345);
+    void disconnect();
+
+    bool IsConnected() const { return isConnected; };
 };

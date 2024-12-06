@@ -1,6 +1,8 @@
 #pragma once
 
 #include "PacketType.hpp"
+#include <json.hpp>
+
 #include <enet/enet.h>
 #include <queue>
 #include <vector>
@@ -8,6 +10,7 @@
 #include <unordered_map>
 #include <functional>
 #include <thread>
+#include <memory>
 
 // This struct represents a network packet. It contains information such as the packet type,
 // data payload, and the peer to which the packet is being sent or received from.
@@ -21,6 +24,16 @@ struct Packet
     Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *dest = nullptr)
         : type(t), data(d), peer(dest) {}
 
+    // New constructor that accepts a JSON object
+    Packet(PacketType t, const nlohmann::json &j, ENetPeer *dest = nullptr)
+        : type(t), peer(dest)
+    {
+        // Convert JSON to string
+        std::string jsonStr = j.dump();
+        // Store as bytes
+        data.assign(jsonStr.begin(), jsonStr.end());
+    }
+
     // Serialize the packet to raw byte data so it can be sent over the network.
     std::vector<uint8_t> toRawData() const
     {
@@ -28,6 +41,13 @@ struct Packet
         rawData.push_back(static_cast<uint8_t>(type));           // First byte stores the packet type
         rawData.insert(rawData.end(), data.begin(), data.end()); // Append the rest of the data
         return rawData;
+    }
+
+    // Helper method to parse the data vector into a JSON object
+    nlohmann::json toJson() const
+    {
+        std::string jsonStr(data.begin(), data.end());
+        return nlohmann::json::parse(jsonStr);
     }
 };
 
@@ -37,7 +57,7 @@ struct Packet
 class NetworkManager
 {
 public:
-    NetworkManager();  // Constructor: Initializes the ENet library and network manager.
+    NetworkManager();          // Constructor: Initializes the ENet library and network manager.
     virtual ~NetworkManager(); // Destructor: Cleans up network resources and stops the network loop.
 
     static const int version = 1; // NetworkManager version for debugging purposes
@@ -60,6 +80,8 @@ public:
 
     // Returns the ENetHost object, which represents either the client or server in ENet.
     ENetHost *getHost();
+    
+    std::vector<ENetPeer *> getPeers();
 
 protected:
     ENetHost *host = nullptr; // ENet host, which can either be a server or a client.
@@ -79,9 +101,12 @@ protected:
     // Starts the network event loop in a separate thread to process incoming and outgoing packets.
     void TaskStartNetwork();
 
+    // Stops the network loop and cleans up resources related to networking.
+    void TaskStopNetwork();
+
 private:
-    std::thread networkThread;  // Thread for running the network event loop.
-    std::atomic<bool> running = false;  // Atomic flag to indicate whether the network loop is active.
+    std::thread networkThread;         // Thread for running the network event loop.
+    std::atomic<bool> running = false; // Atomic flag to indicate whether the network loop is active.
 
     // Queue for outgoing packets that need to be sent to peers.
     std::queue<Packet> outgoingPackets;
@@ -106,7 +131,4 @@ private:
 
     // The main network loop that continuously processes ENet events, sends outgoing packets, and handles incoming ones.
     void TaskNetwork();
-
-    // Stops the network loop and cleans up resources related to networking.
-    void TaskStopNetwork();
 };

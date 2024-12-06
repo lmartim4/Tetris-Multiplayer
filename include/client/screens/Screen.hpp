@@ -12,6 +12,13 @@
 // Base class for screens
 class Screen {
 public:
+    Screen(){
+        // Load font
+        if (!defaultFont.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"))
+        {
+            std::cerr << "Error loading font!" << std::endl;
+        }
+    }
     virtual ~Screen() {}
     virtual void handleEvent(sf::Event event, class ScreenManager& manager) = 0;
     virtual void update(float deltaTime) = 0;
@@ -23,6 +30,7 @@ public:
 
 protected:
     std::atomic<bool> running{ true };
+    sf::Font defaultFont;
 };
 
 // Screen Manager
@@ -44,6 +52,7 @@ public:
     void quit() {
         // Logic to terminate the application
         std::cout << "Application quitting...\n";
+        stopThread();
         exit(0);
     }
 
