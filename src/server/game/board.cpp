@@ -1,20 +1,31 @@
 #include "game/board.hpp"
 #include <stdlib.h>
+#include "ServerManager.hpp"
 
 const int TetrisBoard::WIDTH = 10;
 const int TetrisBoard::HEIGHT = 16;
 
-TetrisBoard::TetrisBoard() 
-    : grid(HEIGHT, std::vector<Cell>())
+TetrisBoard::TetrisBoard(ServerManager &serverManager) : serverManager(serverManager)
 {
-    for (int x = 0; x < HEIGHT; ++x)
-        for (int y = 0; y < WIDTH; ++y)        
-            grid[x][y] = Cell(x, y);
+    for (int y = 0; y < HEIGHT; ++y)
+    {
+        std::vector<std::shared_ptr<Cell>> row;
+
+        for (int x = 0; x < WIDTH; ++x)
+        {
+            auto cell = std::make_shared<Cell>(x, y);
+            row.push_back(cell);
+        }
+
+        grid.push_back(row);
+    }
 }
 
-bool TetrisBoard::reachedTop(){
-    for(int y = 0; y < WIDTH; ++y){
-        if(grid[0][y].isFixed())
+bool TetrisBoard::reachedTop()
+{
+    for (int y = 0; y < WIDTH; ++y)
+    {
+        if (grid.at(0).at(y)->isFixed())
             return true;
     }
 
@@ -31,8 +42,8 @@ void TetrisBoard::printStatus()
     {
         for (int y = 0; y < WIDTH; y++)
         {
-            std::cout << (grid[x][y].isFalling() ? " # " : (grid[x][y].isEmpty()) ? " * "
-                                                                                  : " $ ");
+            std::cout << (grid[x][y]->isFalling() ? " # " : (grid[x][y]->isEmpty()) ? " * "
+                                                                                    : " $ ");
         }
         std::cout << std::endl;
     }
@@ -47,7 +58,7 @@ void TetrisBoard::clear()
     {
         for (int y = 0; y < WIDTH; y++)
         {
-            grid[x][y].setEmpty();
+            grid[x][y]->setEmpty();
         }
     }
 }
@@ -106,14 +117,9 @@ void TetrisBoard::handleInput(Tetromino &currentTetromino)
     */
 }
 
-std::vector<std::vector<Cell>> &TetrisBoard::getGrid()
+std::vector<std::vector<std::shared_ptr<Cell>>> &TetrisBoard::getGrid()
 {
     return grid;
-}
-
-void TetrisBoard::render()
-{
-    //Send to clients maybe?
 }
 
 bool TetrisBoard::checkCollision(Tetromino &currentTetromino)
@@ -140,7 +146,7 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino)
                     return true;
                 }
 
-                if (grid[gridX][gridY].isFixed())
+                if (grid[gridX][gridY]->isFixed())
                 {
                     currentTetromino.evolveStates(false);
                     return true;
@@ -182,9 +188,9 @@ bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
                 CellColorType tetroColor = currentTetromino.getColor();
 
                 if (bottom)
-                    grid[gridX][gridY].setFixed(tetroColor);
+                    grid[gridX][gridY]->setFixed(tetroColor);
                 else
-                    grid[gridX][gridY].setFalling(tetroColor);
+                    grid[gridX][gridY]->setFalling(tetroColor);
             }
         }
     }
@@ -198,9 +204,9 @@ void TetrisBoard::clearFallingTetrominos()
     {
         for (int y = 0; y < WIDTH; ++y)
         {
-            if (grid[x][y].isFalling())
+            if (grid[x][y]->isFalling())
             {
-                grid[x][y].setEmpty();
+                grid[x][y]->setEmpty();
             }
         }
     }
@@ -212,9 +218,9 @@ void TetrisBoard::clearFalledTetrominos()
     {
         for (int y = 0; y < WIDTH; ++y)
         {
-            if (grid[x][y].isFixed())
+            if (grid[x][y]->isFixed())
             {
-                grid[x][y].setEmpty();
+                grid[x][y]->setEmpty();
             }
         }
     }
@@ -230,7 +236,7 @@ int TetrisBoard::clearLines()
         int sumLine = 0;
         for (int y = 0; y < WIDTH; ++y)
         {
-            if (grid[x][y].isFixed())
+            if (grid[x][y]->isFixed())
                 sumLine++;
         }
 
@@ -240,7 +246,7 @@ int TetrisBoard::clearLines()
             // 1 - Mudar o estado de todas as celulas daquela linha pra empty
             for (int y = 0; y < WIDTH; ++y)
             {
-                grid[x][y].setEmpty();
+                grid[x][y]->setEmpty();
             }
 
             // 2 - Carregar todos os fixos dali pra cima "pra baixo"
@@ -250,14 +256,14 @@ int TetrisBoard::clearLines()
                 {
 
                     // Se o de cima for algum bloco fixo
-                    if (grid[x_clear - 1][y].isFixed())
+                    if (grid[x_clear - 1][y]->isFixed())
                     {
 
                         // Setar o de baixo como fixo, com a cor do de cima
-                        grid[x_clear][y].setFixed(grid[x_clear - 1][y].getColor());
+                        grid[x_clear][y]->setFixed(grid[x_clear - 1][y]->getColor());
 
                         // E deixar oq foi mudado como vazio
-                        grid[x_clear - 1][y].setEmpty();
+                        grid[x_clear - 1][y]->setEmpty();
                     }
                 }
             }
@@ -268,4 +274,38 @@ int TetrisBoard::clearLines()
     }
 
     return numLinesCleared;
+}
+
+void TetrisBoard::broadcastBoardState()
+{
+    // Create a JSON object to hold the board data
+    nlohmann::json boardJson;
+    boardJson["width"] = WIDTH;
+    boardJson["height"] = HEIGHT;
+
+    nlohmann::json cells = nlohmann::json::array();
+
+    // Iterate through the board's grid
+    for (int y = 0; y < HEIGHT; ++y)
+    {
+        nlohmann::json row = nlohmann::json::array();
+        for (int x = 0; x < WIDTH; ++x)
+        {
+            // Assume each Cell has a method getColorType() that returns an int
+            CellColorType colorType = grid.at(y).at(x)->getColor();
+
+            nlohmann::json cellObj;
+            cellObj["c"] = colorType;
+            row.push_back(cellObj);
+        }
+        cells.push_back(row);
+    }
+
+    boardJson["cells"] = cells;
+
+    // Create a packet from the JSON
+    Packet boardPacket(PacketType::GAME_SCREEN, boardJson, nullptr);
+
+    // Send the packet to all connected players (broadcast)
+    serverManager.send_packet(boardPacket);
 }

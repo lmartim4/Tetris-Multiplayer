@@ -7,36 +7,60 @@
 #define LEVEL_UP 10
 #define DOWN_FASTER 2 // Define this appropriately if not defined elsewhere
 
-GameManager::GameManager()
-    : board(),
+GameManager::GameManager(ServerManager &serverManager)
+    : 
+      board(serverManager),
       isRunning(false),
       score(0),
       level(0),
       nLinesClearedThisLevel(0),
-      levelUpGravityTimeMs(100)
+      levelUpGravityTimeMs(100),
+      threadActive(false)
 {
     // Initialize gravityTimeMs to a default, for example 800ms:
     gravityTimeMs = 800;
 }
 
+int GameManager::lines2Points(int nLines)
+{
+    return (nLines > 0) ? P(std::min(nLines, 4)) * (level + 1) : 0;
+}
+
 void GameManager::startGameLoop()
 {
-    this->isRunning = true;
-    srand((unsigned)time(NULL));
-    spawnTetromino();
-
-    // Initialize lastGravityTick
-    lastGravityTick = std::chrono::steady_clock::now();
-
-    while (isRunning)
+    if (isRunning.load())
     {
-        board.handleInput(*currentTetromino);
-        update();
-        board.render();
-
-        // Sleep a bit to avoid busy-waiting and allow input handling at ~60 FPS
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        std::cerr << "Game is already running!" << std::endl;
+        return;
     }
+
+    isRunning.store(true);
+    threadActive.store(true);
+    // Spawn a new thread that runs runGameLoop()
+    gameThread = std::thread(&GameManager::runGameLoop, this);
+    std::cout << "Game Started!";
+}
+
+void GameManager::stopGameLoop()
+{
+    // Signal the loop to stop
+    isRunning.store(false);
+
+    // Wait for thread to finish if joinable
+    if (gameThread.joinable())
+    {
+        gameThread.join();
+    }
+}
+
+bool GameManager::isGameRunning() const
+{
+    return isRunning.load();
+}
+
+bool GameManager::isThreadRunning() const
+{
+    return threadActive.load();
 }
 
 void GameManager::spawnTetromino()
@@ -44,9 +68,26 @@ void GameManager::spawnTetromino()
     currentTetromino = TetrominoFactory::createTetromino();
 }
 
-int GameManager::lines2Points(int nLines)
+void GameManager::runGameLoop()
 {
-    return (nLines > 0) ? P(std::min(nLines, 4)) * (level + 1) : 0;
+    srand((unsigned)time(NULL));
+    spawnTetromino();
+
+    // Initialize lastGravityTick
+    lastGravityTick = std::chrono::steady_clock::now();
+
+    while (isRunning.load())
+    {
+        board.handleInput(*currentTetromino);
+        update();
+        board.broadcastBoardState();
+
+        // Sleep a bit to avoid busy-waiting and allow input handling at ~60 FPS
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    }
+
+    // Loop ended
+    threadActive.store(false);
 }
 
 void GameManager::update()
@@ -58,7 +99,9 @@ void GameManager::update()
         std::cout << "You played till level: " << level << std::endl;
 
         board.clear();
-        exit(0);
+        // Exit game loop by setting isRunning to false
+        isRunning.store(false);
+        return; // Return here to stop processing
     }
 
     // Clear old tetrominos

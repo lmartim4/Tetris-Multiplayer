@@ -15,6 +15,7 @@ void ClientManager::onPeerDisconnect(ENetPeer *peer)
 {
     isConnected = false;
     network_print("Disconnected from server\n");
+    disconnect();
 }
 
 void ClientManager::on_receive_heartbeat()
@@ -174,7 +175,7 @@ void ClientManager::disconnect()
         enet_peer_disconnect_now(serverPeer, 0);
         enet_peer_reset(serverPeer);
     }
-
+    
     TaskStopNetwork();
     TaskStopHeartbeat();
 }

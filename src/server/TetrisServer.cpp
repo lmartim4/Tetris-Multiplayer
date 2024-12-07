@@ -3,6 +3,7 @@
 #include "ServerManager.hpp"
 
 ServerManager server(12345);
+GameManager gm(server);
 
 void HeartbeatListener(const Packet &packet)
 {
@@ -12,8 +13,8 @@ void HeartbeatListener(const Packet &packet)
 void StartGameListener(const Packet &packet)
 {
     server.start_game();
+    gm.startGameLoop();
 }
-
 
 void JoinRequestListener(const Packet &packet)
 {

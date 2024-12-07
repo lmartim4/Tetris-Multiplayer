@@ -18,7 +18,6 @@ private:
     int getNextAvailablePlayerID();
     void broadcastPlayerList();
     void createPlayerAndLink(ENetPeer *peer);
-    GameManager gm;
 
 protected:
     void onPeerConnect(ENetPeer *peer) override;

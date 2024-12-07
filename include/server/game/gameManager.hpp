@@ -1,11 +1,13 @@
 #pragma once
 
 #include "game/tetrominoFactory.hpp"
+#include "ServerManager.hpp"
 #include "board.hpp"
 #include <iostream>
 #include <chrono>
 #include <thread>
 #include <memory>
+#include <atomic>
 
 class GameManager
 {
@@ -13,7 +15,7 @@ private:
     TetrisBoard board;
     std::unique_ptr<Tetromino> currentTetromino;
 
-    bool isRunning;
+    std::atomic<bool> isRunning;
     int score;
     int level;
     int nLinesClearedThisLevel;
@@ -24,13 +26,28 @@ private:
 
     std::chrono::steady_clock::time_point lastGravityTick; // To track gravity intervals
 
-public:
-    GameManager();
+    std::thread gameThread;     // The thread running the game loop
+    std::atomic<bool> threadActive; // To track if the thread is active
 
-    int lines2Points(int nLines); 
+    void runGameLoop();
+    
+public:
+    GameManager(ServerManager &serverManager);
+
+    int lines2Points(int nLines);
+
+    // Starts the game loop in a separate thread
     void startGameLoop();
 
-    void spawnTetromino();
+    // Stops the game loop and waits for the thread to finish
+    void stopGameLoop();
 
+    // Checks if the game is currently running
+    bool isGameRunning() const;
+
+    // Checks if the game thread is running
+    bool isThreadRunning() const;
+
+    void spawnTetromino();
     void update();
 };
