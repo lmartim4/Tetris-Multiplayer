@@ -21,7 +21,6 @@ private:
     unsigned long last_heartbeat;
 
     bool debugEnabled = false;
-    void handleKeyPress(sf::Event keyEvent, sf::RenderWindow &window);
     
     std::mutex boardMutex;
     nlohmann::json lastReceivedBoard;
@@ -55,4 +54,6 @@ public:
 
     bool boardDataAvailable();
     void request_game_start();
+
+    void onPressKey(sf::Event::KeyEvent e);
 };

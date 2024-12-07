@@ -43,6 +43,8 @@ public:
 
     void handleEvent(sf::Event event, ScreenManager &manager) override
     {
+        handleKeyPress(event);
+        
         for (auto &row : grid)
             for (auto &cell : row)
                 cell->handleEvent(event);
@@ -96,5 +98,10 @@ public:
 
             updateBoardFromJson(newBoard);
         }
+    }
+
+    void handleKeyPress(sf::Event event){
+        if(event.type == sf::Event::KeyPressed)
+            clientManager.onPressKey(event.key);
     }
 };

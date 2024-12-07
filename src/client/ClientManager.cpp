@@ -179,19 +179,51 @@ void ClientManager::disconnect()
     TaskStopHeartbeat();
 }
 
-void ClientManager::handleKeyPress(sf::Event keyEvent, sf::RenderWindow &window)
+void ClientManager::on_receive_game_screen(const Packet &packet)
 {
-    switch (keyEvent.key.code)
+    std::cout << "Received a board\n";
+    try
     {
-    case sf::Keyboard::Escape:
-        if (debugEnabled)
-            network_print("Tecla ESC pressionada. Fechando a janela.\n");
-        window.close();
-        break;
+        nlohmann::json boardData = packet.toJson();
+        std::lock_guard<std::mutex> lock(boardMutex);
+        lastReceivedBoard = boardData;
+        hasBoardData = true;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Failed to parse game screen board JSON: " << e.what() << std::endl;
+    }
+    return;
+}
 
+nlohmann::json ClientManager::getLastBoardState()
+{
+    std::lock_guard<std::mutex> lock(boardMutex);
+    return lastReceivedBoard;
+}
+
+// SE os quadros desincronizarem pode estar aqui o problema
+bool ClientManager::boardDataAvailable()
+{
+    std::lock_guard<std::mutex> lock(boardMutex);
+    if (hasBoardData)
+    {
+        hasBoardData = false;
+        return true;
+    }
+    return false;
+}
+
+void ClientManager::request_game_start()
+{
+    send_packet(Packet(PacketType::REQUEST_START, 0, serverPeer));
+}
+
+void ClientManager::onPressKey(sf::Event::KeyEvent e){
+    switch (e.code)
+    {
     case sf::Keyboard::P:
-        if (debugEnabled)
-            network_print("Tecla P pressionada. Pausar o jogo.\n");
+        //if (debugEnabled) clientManager.network_print("Tecla P pressionada. Pausar o jogo.\n");
         send_packet(Packet(PacketType::PAUSE, 0, serverPeer));
         break;
 
@@ -200,13 +232,6 @@ void ClientManager::handleKeyPress(sf::Event keyEvent, sf::RenderWindow &window)
             network_print("Tecla R pressionada. Reiniciar o jogo.\n");
         send_packet(Packet(PacketType::RESTART, 0, serverPeer));
         break;
-
-    case sf::Keyboard::Q:
-        if (debugEnabled)
-            network_print("Tecla Q pressionada. Sair do jogo.\n");
-        window.close();
-        break;
-
     case sf::Keyboard::Up:
         if (debugEnabled)
             network_print("Tecla Cima (Up) pressionada.\n");
@@ -262,44 +287,4 @@ void ClientManager::handleKeyPress(sf::Event keyEvent, sf::RenderWindow &window)
     default:
         break;
     }
-}
-
-void ClientManager::on_receive_game_screen(const Packet &packet)
-{
-    std::cout << "Received a board\n";
-    try
-    {
-        nlohmann::json boardData = packet.toJson();
-        std::lock_guard<std::mutex> lock(boardMutex);
-        lastReceivedBoard = boardData;
-        hasBoardData = true;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Failed to parse game screen board JSON: " << e.what() << std::endl;
-    }
-    return;
-}
-
-nlohmann::json ClientManager::getLastBoardState()
-{
-    std::lock_guard<std::mutex> lock(boardMutex);
-    return lastReceivedBoard;
-}
-
-// SE os quadros desincronizarem pode estar aqui o problema
-bool ClientManager::boardDataAvailable()
-{
-    std::lock_guard<std::mutex> lock(boardMutex);
-    if (hasBoardData)
-    {
-        hasBoardData = false;
-        return true;
-    }
-    return false;
-}
-
-void ClientManager::request_game_start()
-{
-    send_packet(Packet(PacketType::REQUEST_START, 0, serverPeer));
 }
