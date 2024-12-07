@@ -13,7 +13,6 @@ private:
     int getNextAvailablePlayerID();
     void broadcastPlayerList();
     void createPlayerAndLink(ENetPeer *peer);
-
 protected:
     void onPeerConnect(ENetPeer *peer) override;
     void onPeerDisconnect(ENetPeer *peer) override;

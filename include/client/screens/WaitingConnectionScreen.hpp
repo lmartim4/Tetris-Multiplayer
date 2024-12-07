@@ -20,21 +20,20 @@ class WaitingConnectionScreen : public Screen
 
     ScreenManager &screenMan;
     ClientManager &clientMan;
-
-#define x_offset_screen 80
-#define y_offset_screen 80
+    static constexpr float x_offset_screen = 100.0f;
+    static constexpr float y_offset_screen = 120.0f;
 
 public:
     WaitingConnectionScreen(ScreenManager &screenManager, ClientManager &clientManager)
-        : titleText(defaultFont, "Waiting for server...", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}),
-          backText(defaultFont, "Back", sf::Color::White, {x_offset_screen + 300, y_offset_screen + 200}),
+        : titleText(defaultFont, "Waiting for server...", sf::Color::White, {(x_offset_screen + 100.0f), (y_offset_screen + 50.0f)}, 40),
+          backText(defaultFont, "Back", sf::Color::White, {(x_offset_screen + 300.0f), (y_offset_screen + 170.0f)}, 25),
           screenMan(screenManager), clientMan(clientManager)
     {
         backText.setOnClick([this]()
-                            {
-                                std::cout << "Getting back to main screen\n";
-                                clientMan.disconnect();
-                                screenMan.setActiveScreen("main-menu"); });
+                            {   std::cout << "Getting back to main screen\n";
+                                screenMan.setActiveScreen("main-menu");
+                                clientMan.disconnect(); 
+                            });
     }
 
     void handleEvent(sf::Event event, ScreenManager &manager) override

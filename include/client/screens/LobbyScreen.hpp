@@ -88,7 +88,7 @@ public:
                 defaultFont,
                 pd.playerName + " " + std::to_string(pd.playerID),
                 sf::Color::Red,
-                {x - circleRadius, y + 2 * circleRadius}, 2); // Centered text below circle
+                {x - circleRadius, y + 2 * circleRadius}, 20); // Centered text below circle
 
             itext.render(window);
             itext.setOnClick([&]()

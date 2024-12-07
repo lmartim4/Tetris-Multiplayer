@@ -13,6 +13,9 @@
 #include "InteractiveText.hpp"
 #include "ClientManager.hpp"
 
+constexpr float x_offset_screen = 80;
+constexpr float y_offset_screen = 120;
+
 class MenuScreen : public Screen
 {
     InteractiveText titleText;
@@ -20,27 +23,21 @@ class MenuScreen : public Screen
     InteractiveText quitText;
     ScreenManager &manager; // Reference to ScreenManager
     ClientManager &clientMan;
-#define x_offset_screen 80
-#define y_offset_screen 80
 
 public:
     MenuScreen(ScreenManager &screenManager, ClientManager &clientManager)
-        : titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}),
-          connectText(defaultFont, "Connect", sf::Color::White, {x_offset_screen + 300, y_offset_screen + 200}),
-          quitText(defaultFont, "Quit", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}),
+        : titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}, 40),
+          connectText(defaultFont, "Connect", sf::Color::White, {x_offset_screen + 330, y_offset_screen + 200}, 25),
+          quitText(defaultFont, "Quit", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}, 25),
           manager(screenManager), clientMan(clientManager)
     {
         connectText.setOnClick([this]()
                                {
-                                std::cout << "Trying to connect\n";
                                 manager.setActiveScreen("waiting-connection");
                                 clientMan.connect(); });
 
         quitText.setOnClick([this]()
-                            {
-                                std::cout << "Quit button clicked!\n";
-                                // manager.quit(); // Example: add a quit method to ScreenManager
-                            });
+                            { manager.quit(); });
     }
 
     void handleEvent(sf::Event event, ScreenManager &manager) override

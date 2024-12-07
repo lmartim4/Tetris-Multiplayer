@@ -28,7 +28,6 @@ public:
 
     void handleEvent(sf::Event event, ScreenManager &manager) override
     {
-        // Handle game events
         if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
         {
             std::cout << "Game event: escape pressed" << std::endl;
@@ -37,11 +36,6 @@ public:
 
     void update(float deltaTime) override
     {
-        // Game update logic
-        if (!running)
-            return;
-        // Simulate some work
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     void render(sf::RenderWindow &window) override

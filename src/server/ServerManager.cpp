@@ -5,7 +5,7 @@
 #define MAX_CLIENTS 32
 #define CHANNELS 2
 
-void ServerManager::onPeerConnect(ENetPeer * peer)
+void ServerManager::onPeerConnect(ENetPeer *peer)
 {
     network_print("");
     std::cout << "[CONNECTED] " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
@@ -13,7 +13,7 @@ void ServerManager::onPeerConnect(ENetPeer * peer)
     createPlayerAndLink(peer);
     broadcastPlayerList();
 }
-void ServerManager::onPeerDisconnect(ENetPeer * peer)
+void ServerManager::onPeerDisconnect(ENetPeer *peer)
 {
     network_print("");
     std::cout << "[DISCONNECTED] " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
@@ -57,7 +57,7 @@ int ServerManager::getNextAvailablePlayerID()
     return currentID++;
 }
 
-void ServerManager::createPlayerAndLink(ENetPeer * peer)
+void ServerManager::createPlayerAndLink(ENetPeer *peer)
 {
     Player *newPlayer = new Player(getNextAvailablePlayerID(), "Unnamed");
     peer->data = (void *)newPlayer;
@@ -68,7 +68,7 @@ void ServerManager::broadcastPlayerList()
 {
     nlohmann::json message = nlohmann::json::array();
 
-    for (ENetPeer * entry : getPeers())
+    for (ENetPeer *entry : getPeers())
     {
         if (!entry->data)
         {

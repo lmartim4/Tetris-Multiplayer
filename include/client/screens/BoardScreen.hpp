@@ -26,7 +26,7 @@ public:
                 auto cell = std::make_shared<TetrisCell>(
                     sf::Vector2f(CELL_SIZE, CELL_SIZE),
                     sf::Vector2f(x * CELL_SIZE, y * CELL_SIZE),
-                    sf::Color::Red // Default color
+                    sf::Color::Red 
                 );
 
                 row.push_back(cell);

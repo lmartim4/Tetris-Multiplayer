@@ -91,8 +91,9 @@ void ClientManager::TaskStartHeartbeat()
 
 void ClientManager::TaskHeartbeat()
 {
+    HeartBeatRunningFlag = true;
     int heartbeat_frequencie = 1; // Hertz
-    while (isRunning())
+    while (HeartBeatRunningFlag)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / heartbeat_frequencie));
         send_packet(Packet(PacketType::HEARTBEAT, 0, serverPeer)); // Set destination as the server serverPeer
@@ -110,6 +111,13 @@ void ClientManager::toggleDebug()
 
 void ClientManager::TaskStopHeartbeat()
 {
+    if (!HeartBeatRunningFlag)
+    {
+        std::cout << "Heartbeat was not running. Why would you stop it?\n";
+        return;
+    }
+    HeartBeatRunningFlag = false;
+
     if (ThreadHeartbeat.joinable())
         ThreadHeartbeat.join();
 }

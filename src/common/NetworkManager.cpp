@@ -97,7 +97,6 @@ void NetworkManager::TaskStopNetwork()
 {
     running = false;
 
-    enet_host_destroy(host);
     if (networkThread.joinable())
         networkThread.join();
 }
@@ -140,6 +139,7 @@ void NetworkManager::TaskNetwork()
         sendOutgoingPackets();
         processIncomingPackets();
     }
+    enet_host_destroy(host);
 }
 
 void NetworkManager::sendOutgoingPackets()

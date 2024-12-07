@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include "NetworkManager.hpp"
 #include <SFML/Graphics.hpp>
 #include "PlayerData.hpp"
@@ -16,6 +17,7 @@ private:
     std::vector<PlayerData> players;
 
     std::thread ThreadHeartbeat;
+    std::atomic<bool> HeartBeatRunningFlag = false;
     unsigned long last_heartbeat;
 
     bool debugEnabled = false;

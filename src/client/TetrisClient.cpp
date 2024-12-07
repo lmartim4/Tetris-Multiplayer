@@ -44,24 +44,21 @@ int main()
     while (window.isOpen())
     {
         sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-            {
-                window.close();
-            }
-            screenManager.handleEvent(event);
-        }
 
         float deltaTime = clock.restart().asSeconds();
 
         window.clear(sf::Color::Black);
         screenManager.render(window);
         window.display();
+
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            screenManager.handleEvent(event);
+        }
     }
 
-    while (client.isRunning())
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
+    client.disconnect();
     return 0;
 }
