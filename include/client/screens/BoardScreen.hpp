@@ -44,7 +44,7 @@ public:
     void handleEvent(sf::Event event, ScreenManager &manager) override
     {
         handleKeyPress(event);
-        
+
         for (auto &row : grid)
             for (auto &cell : row)
                 cell->handleEvent(event);
@@ -93,15 +93,13 @@ public:
         if (clientManager.boardDataAvailable())
         {
             nlohmann::json newBoard = clientManager.getLastBoardState();
-
-            std::cout << newBoard << std::endl;
-
             updateBoardFromJson(newBoard);
         }
     }
 
-    void handleKeyPress(sf::Event event){
-        if(event.type == sf::Event::KeyPressed)
+    void handleKeyPress(sf::Event event)
+    {
+        if (event.type == sf::Event::KeyPressed)
             clientManager.onPressKey(event.key);
     }
 };

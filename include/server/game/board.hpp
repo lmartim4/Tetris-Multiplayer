@@ -25,7 +25,7 @@ public:
     void printStatus();
     void clear();
 
-    void handleInput(Tetromino &currentTetromino);
+    void handleInput(Tetromino &currentTetromino, TetrisAction action);
 
     // Melhor seria se fosse const, mas é a vida, não consigo pensar em outro jeito de
     // checar a colisao sem mudar o objeto e ver se dá merda, na prática faz-se a ação inversa depois, então safe
@@ -38,5 +38,4 @@ public:
     std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid();
 
     void broadcastBoardState();
-
 };

@@ -3,16 +3,7 @@
 #include <string>
 #include <vector>
 #include "CellColorType.hpp"
-
-enum MOVES
-{
-    EMPTY,
-    LEFT,
-    RIGHT,
-    DOWN_FASTER,
-    ROT_LEFT,
-    ROT_RIGHT
-};
+#include "TetrisAction.hpp"
 
 class Tetromino
 {
@@ -20,7 +11,7 @@ protected:
     std::vector<std::vector<int>> shape;
     int x, y;
     CellColorType color;
-    int lastMove = EMPTY;
+    TetrisAction lastMove = TetrisAction::EMPTY;
     bool gravity = false;
 
 public:
@@ -32,13 +23,12 @@ public:
     virtual ~Tetromino() = default;
 
     int getX() const;
-
     int getY() const;
 
     // Rendering
     CellColorType getColor() const;
 
-    int getLastMove() const;
+    TetrisAction getLastMove() const;
 
     bool getGravity() const;
 
@@ -48,7 +38,7 @@ public:
 
     void updateStates();
 
-    void setLastAction(MOVES action);
+    void setLastAction(TetrisAction action);
 
     // Fall (gravity)
     void dropGravity();

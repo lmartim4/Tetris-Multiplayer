@@ -1,9 +1,48 @@
 #include <enet/enet.h>
 #include <iostream>
 #include "ServerManager.hpp"
+#include "TetrisAction.hpp"
 
 ServerManager server(12345);
 GameManager gm(server);
+
+TetrisAction getActionFromPacketType(PacketType type)
+{
+    TetrisAction action = TetrisAction::EMPTY;
+    switch (type)
+    {
+    case PacketType::LEFT:
+        action = TetrisAction::LEFT;
+        break;
+    case PacketType::RIGHT:
+        action = TetrisAction::RIGHT;
+        break;
+    case PacketType::ROTATE_LEFT:
+        action = TetrisAction::ROTATE_LEFT;
+        break;
+    case PacketType::ROTATE_RIGHT:
+        action = TetrisAction::ROTATE_RIGHT;
+        break;
+    case PacketType::DROP_FASTER:
+        action = TetrisAction::DROP_FASTER;
+        break;
+    case PacketType::DROP_INSTANT:
+        action = TetrisAction::DROP_INSTANT;
+        break;
+    default:
+        break;
+    }
+
+    return action;
+}
+
+// Might get player from packt id
+void onReceiveArrow(const Packet &packet)
+{
+    TetrisAction action = getActionFromPacketType(packet.type);
+
+    gm.handleInput(action);
+}
 
 void HeartbeatListener(const Packet &packet)
 {
@@ -34,6 +73,13 @@ int main(int argc, const char *argv[])
     server.registerListener(PacketType::JOIN_REQUEST, JoinRequestListener);
     server.registerListener(PacketType::HEARTBEAT, HeartbeatListener);
     server.registerListener(PacketType::REQUEST_START, StartGameListener);
+
+    server.registerListener(PacketType::LEFT, onReceiveArrow);
+    server.registerListener(PacketType::RIGHT, onReceiveArrow);
+    server.registerListener(PacketType::ROTATE_LEFT, onReceiveArrow);
+    server.registerListener(PacketType::ROTATE_RIGHT, onReceiveArrow);
+    server.registerListener(PacketType::DROP_FASTER, onReceiveArrow);
+    server.registerListener(PacketType::DROP_INSTANT, onReceiveArrow);
 
     while (server.isRunning())
         std::this_thread::sleep_for(std::chrono::milliseconds(10));

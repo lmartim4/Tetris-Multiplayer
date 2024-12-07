@@ -8,8 +8,7 @@
 #define DOWN_FASTER 2 // Define this appropriately if not defined elsewhere
 
 GameManager::GameManager(ServerManager &serverManager)
-    : 
-      board(serverManager),
+    : board(serverManager),
       isRunning(false),
       score(0),
       level(0),
@@ -70,18 +69,16 @@ void GameManager::spawnTetromino()
 
 void GameManager::runGameLoop()
 {
-    srand((unsigned)time(NULL));
+    srand(time(NULL));
     spawnTetromino();
 
     // Initialize lastGravityTick
     lastGravityTick = std::chrono::steady_clock::now();
 
-    while (isRunning.load())
+    while (isRunning)
     {
-        board.handleInput(*currentTetromino);
         update();
         board.broadcastBoardState();
-
         // Sleep a bit to avoid busy-waiting and allow input handling at ~60 FPS
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
@@ -115,12 +112,12 @@ void GameManager::update()
         lastGravityTick = now;
     }
 
-    int lastMove = currentTetromino->getLastMove();
+    TetrisAction lastMove = currentTetromino->getLastMove();
 
     // Check collision after gravity or moves
     if (board.checkCollision(*currentTetromino))
     {
-        if (lastMove == DOWN_FASTER || currentTetromino->getGravity())
+        if (lastMove == TetrisAction::DROP_FASTER || currentTetromino->getGravity())
         {
             // Place and lock tetromino
             board.placeTetromino(*currentTetromino, true);
@@ -159,4 +156,9 @@ void GameManager::update()
         board.placeTetromino(*currentTetromino, false);
         currentTetromino->updateStates();
     }
+}
+
+void GameManager::handleInput(TetrisAction action)
+{
+    board.handleInput(*currentTetromino, action);
 }

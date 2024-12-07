@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game/tetrominoFactory.hpp"
+#include "TetrisAction.hpp"
 #include "ServerManager.hpp"
 #include "board.hpp"
 #include <iostream>
@@ -50,4 +51,6 @@ public:
 
     void spawnTetromino();
     void update();
+
+    void handleInput(TetrisAction action);
 };

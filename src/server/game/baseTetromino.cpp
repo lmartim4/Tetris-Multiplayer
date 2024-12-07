@@ -4,8 +4,7 @@ const std::vector<CellColorType> Tetromino::tetromino_colors = {
     CellColorType::Red,
     CellColorType::Blue,
     CellColorType::Yellow,
-    CellColorType::Green
-};
+    CellColorType::Green};
 
 const std::vector<char> Tetromino::types = {'I', 'O', 'T', 'L', 'J', 'S', 'Z'};
 
@@ -24,7 +23,7 @@ CellColorType Tetromino::getColor() const
     return color;
 }
 
-int Tetromino::getLastMove() const
+TetrisAction Tetromino::getLastMove() const
 {
     return lastMove;
 }
@@ -51,13 +50,13 @@ void Tetromino::evolveStates(bool forward)
     switch (lastMove)
     {
 
-    case LEFT:
+    case TetrisAction::LEFT:
         y -= sign;
         break;
-    case RIGHT:
+    case TetrisAction::RIGHT:
         y += sign;
         break;
-    case DOWN_FASTER:
+    case TetrisAction::DROP_FASTER:
         x += sign;
         break;
 
@@ -71,7 +70,7 @@ void Tetromino::evolveStates(bool forward)
     // Cria a matriz rotacionada
     std::vector<std::vector<int>> rotated(cols, std::vector<int>(rows));
 
-    if ((lastMove == ROT_LEFT && forward) || (lastMove == ROT_RIGHT && !forward))
+    if ((lastMove == TetrisAction::ROTATE_LEFT && forward) || (lastMove == TetrisAction::ROTATE_RIGHT && !forward))
     {
 
         for (size_t i = 0; i < rows; ++i)
@@ -85,7 +84,7 @@ void Tetromino::evolveStates(bool forward)
         shape = rotated;
     }
 
-    if ((lastMove == ROT_RIGHT && forward) || (lastMove == ROT_LEFT && !forward))
+    if ((lastMove == TetrisAction::ROTATE_RIGHT && forward) || (lastMove == TetrisAction::ROTATE_LEFT && !forward))
     {
         for (size_t i = 0; i < rows; ++i)
         {
@@ -101,11 +100,11 @@ void Tetromino::evolveStates(bool forward)
 
 void Tetromino::updateStates()
 {
-    lastMove = EMPTY;
+    lastMove = TetrisAction::EMPTY;
     gravity = false;
 }
 
-void Tetromino::setLastAction(MOVES action)
+void Tetromino::setLastAction(TetrisAction action)
 {
     lastMove = action;
 }

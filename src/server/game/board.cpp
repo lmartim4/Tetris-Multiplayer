@@ -62,59 +62,9 @@ void TetrisBoard::clear()
         }
     }
 }
-void TetrisBoard::handleInput(Tetromino &currentTetromino)
+void TetrisBoard::handleInput(Tetromino &currentTetromino, TetrisAction action)
 {
-    /*sf::Event event;
-    while (window.pollEvent(event))
-    {
-        switch (event.type)
-        {
-
-        case sf::Event::Closed:
-            window.close();
-            break;
-
-        case sf::Event::KeyPressed:
-            switch (event.key.code)
-            {
-            case sf::Keyboard::Left:
-                currentTetromino.setLastAction(LEFT);
-                break;
-
-            case sf::Keyboard::Right:
-                currentTetromino.setLastAction(RIGHT);
-                break;
-
-            case sf::Keyboard::Up:
-                currentTetromino.setLastAction(ROT_RIGHT);
-                break;
-
-            case sf::Keyboard::Down:
-                currentTetromino.setLastAction(ROT_LEFT);
-                break;
-
-            case sf::Keyboard::Space:
-                currentTetromino.setLastAction(DOWN_FASTER);
-                break;
-
-                // case sf::Keyboard::Enter: // Drop it to the ground !
-                //     currentTetromino->dropToTheGround();
-                //     break;
-
-            case sf::Keyboard::Escape:
-                window.close();
-                break;
-
-            default:
-                break;
-            }
-            break;
-
-        default:
-            break;
-        }
-    }
-    */
+    currentTetromino.setLastAction(action);
 }
 
 std::vector<std::vector<std::shared_ptr<Cell>>> &TetrisBoard::getGrid()
