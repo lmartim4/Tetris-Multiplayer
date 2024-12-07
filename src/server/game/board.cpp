@@ -73,30 +73,28 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastM
     currentTetromino.evolveStates(true, lastMove);
 
     const auto &shape = currentTetromino.getShape();
+
     int tetrominoX = currentTetromino.getX();
     int tetrominoY = currentTetromino.getY();
 
-    // Percorre a matriz de "shape" do Tetromino
     for (size_t x = 0; x < shape.size(); ++x)
     {
         for (size_t y = 0; y < shape[x].size(); ++y)
         {
             if (shape[x][y] != 0)
-            { // Se a célula faz parte do Tetromino
+            {
                 int gridX = tetrominoX + x;
                 int gridY = normalizedY(tetrominoY + y);
 
                 if (gridX >= HEIGHT || gridX < 0)
                 {
                     currentTetromino.evolveStates(false, lastMove);
-                    std::cout << "bloqueei pois last move = " <<  TetrisActionToString(lastMove)  << "e passou dos limites"; 
                     return true;
                 }
 
                 if (grid[gridX][gridY]->isFixed())
                 {
                     currentTetromino.evolveStates(false, lastMove);
-                    std::cout << "bloqueei pois last move = " << TetrisActionToString(lastMove) << "e ia trombar em (" << gridX << ", " << gridY << ")"; 
                     return true;
                 }
             }
@@ -108,13 +106,10 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastM
 
 int TetrisBoard::normalizedY(int y)
 {
-
     y %= WIDTH;
 
     if (y < 0)
-    {
         y += WIDTH;
-    }
 
     return y;
 }
@@ -226,34 +221,115 @@ int TetrisBoard::clearLines()
 
 void TetrisBoard::broadcastBoardState()
 {
-    // Create a JSON object to hold the board data
-    nlohmann::json boardJson;
-    boardJson["width"] = WIDTH;
-    boardJson["height"] = HEIGHT;
 
-    nlohmann::json cells = nlohmann::json::array();
-
-    // Iterate through the board's grid
-    for (int y = 0; y < HEIGHT; ++y)
+    if (!gridsAreEqual(grid, lastBroadcastedGrid))
     {
-        nlohmann::json row = nlohmann::json::array();
-        for (int x = 0; x < WIDTH; ++x)
-        {
-            // Assume each Cell has a method getColorType() that returns an int
-            CellColorType colorType = grid.at(y).at(x)->getColor();
+        // Grids are different; proceed to broadcast
 
-            nlohmann::json cellObj;
-            cellObj["c"] = colorType;
-            row.push_back(cellObj);
+        // Deep copy grid to lastBroadcastedGrid
+        lastBroadcastedGrid.clear();
+        lastBroadcastedGrid.reserve(grid.size());
+
+        for (const auto &row : grid)
+        {
+            std::vector<std::shared_ptr<Cell>> newRow;
+            newRow.reserve(row.size());
+
+            for (const auto &cellPtr : row)
+            {
+                if (cellPtr)
+                {
+                    newRow.emplace_back(std::make_shared<Cell>(*cellPtr));
+                }
+                else
+                {
+                    newRow.emplace_back(nullptr);
+                }
+            }
+
+            lastBroadcastedGrid.emplace_back(std::move(newRow));
         }
-        cells.push_back(row);
+
+        nlohmann::json boardJson;
+        boardJson["width"] = WIDTH;
+        boardJson["height"] = HEIGHT;
+
+        nlohmann::json cells = nlohmann::json::array();
+
+        // Iterate through the board's grid
+        for (int y = 0; y < HEIGHT; ++y)
+        {
+            nlohmann::json row = nlohmann::json::array();
+            for (int x = 0; x < WIDTH; ++x)
+            {
+                CellColorType colorType = grid.at(y).at(x)->getColor();
+
+                nlohmann::json cellObj;
+                cellObj["c"] = colorType;
+                row.push_back(cellObj);
+            }
+            cells.push_back(row);
+        }
+
+        boardJson["cells"] = cells;
+        //std::cout << "Out: " << boardJson << std::endl;
+        serverManager.send_packet(Packet(PacketType::GAME_SCREEN, boardJson, nullptr));
+        /*------------------------------------*/
+        // Clear the lastBroadcastedGrid to prepare for the new copy
+        lastBroadcastedGrid.clear();
+        lastBroadcastedGrid.reserve(grid.size());
+
+        for (const auto &row : grid)
+        {
+            std::vector<std::shared_ptr<Cell>> newRow;
+            newRow.reserve(row.size());
+
+            for (const auto &cellPtr : row)
+            {
+                if (cellPtr)
+                {
+                    // Assuming Cell has a copy constructor
+                    newRow.emplace_back(std::make_shared<Cell>(*cellPtr));
+                }
+                else
+                {
+                    newRow.emplace_back(nullptr); // Handle empty cells if necessary
+                }
+            }
+
+            lastBroadcastedGrid.emplace_back(std::move(newRow));
+        }
+    }
+    else
+    {
+        // Grids are identical; no need to broadcast
+        // Optionally, you can log or handle this case as needed
+    }
+}
+
+// Implementation of gridsAreEqual
+bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
+                                const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const
+{
+    if (grid1.size() != grid2.size())
+        return false;
+
+    for (size_t i = 0; i < grid1.size(); ++i)
+    {
+        if (grid1[i].size() != grid2[i].size())
+            return false;
+
+        for (size_t j = 0; j < grid1[i].size(); ++j)
+        {
+            // Handle nullptrs if cells can be null
+            if (grid1[i][j] == nullptr && grid2[i][j] == nullptr)
+                continue;
+            if ((grid1[i][j] == nullptr) != (grid2[i][j] == nullptr))
+                return false;
+            if (*grid1[i][j] != *grid2[i][j])
+                return false;
+        }
     }
 
-    boardJson["cells"] = cells;
-
-    // Create a packet from the JSON
-    Packet boardPacket(PacketType::GAME_SCREEN, boardJson, nullptr);
-
-    // Send the packet to all connected players (broadcast)
-    serverManager.send_packet(boardPacket);
+    return true;
 }

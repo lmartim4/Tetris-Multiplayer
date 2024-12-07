@@ -175,14 +175,13 @@ void ClientManager::disconnect()
         enet_peer_disconnect_now(serverPeer, 0);
         enet_peer_reset(serverPeer);
     }
-    
+
     TaskStopNetwork();
     TaskStopHeartbeat();
 }
 
 void ClientManager::on_receive_game_screen(const Packet &packet)
 {
-    std::cout << "Received a board\n";
     try
     {
         nlohmann::json boardData = packet.toJson();
@@ -194,7 +193,6 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
     {
         std::cerr << "Failed to parse game screen board JSON: " << e.what() << std::endl;
     }
-    return;
 }
 
 nlohmann::json ClientManager::getLastBoardState()
@@ -220,11 +218,12 @@ void ClientManager::request_game_start()
     send_packet(Packet(PacketType::REQUEST_START, 0, serverPeer));
 }
 
-void ClientManager::onPressKey(sf::Event::KeyEvent e){
+void ClientManager::onPressKey(sf::Event::KeyEvent e)
+{
     switch (e.code)
     {
     case sf::Keyboard::P:
-        //if (debugEnabled) clientManager.network_print("Tecla P pressionada. Pausar o jogo.\n");
+        // if (debugEnabled) clientManager.network_print("Tecla P pressionada. Pausar o jogo.\n");
         send_packet(Packet(PacketType::PAUSE, 0, serverPeer));
         break;
 
@@ -257,7 +256,7 @@ void ClientManager::onPressKey(sf::Event::KeyEvent e){
         send_packet(Packet(PacketType::RIGHT, 0, serverPeer));
         break;
 
-    case sf::Keyboard::Space: 
+    case sf::Keyboard::Space:
         if (debugEnabled)
             network_print("Tecla Espaco (Space) pressionada.\n");
         send_packet(Packet(PacketType::DROP_FASTER, 0, serverPeer));

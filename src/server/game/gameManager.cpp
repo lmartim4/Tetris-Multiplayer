@@ -17,7 +17,7 @@ GameManager::GameManager(ServerManager &serverManager)
       threadActive(false)
 {
     // Initialize gravityTimeMs to a default, for example 800ms:
-    gravityTimeMs = 800;
+    gravityTimeMs = 600;
 }
 
 int GameManager::lines2Points(int nLines)
@@ -79,9 +79,9 @@ void GameManager::runGameLoop()
     {
         update();
         board.broadcastBoardState();
-        board.printStatus();
+        //board.printStatus();
         // Sleep a bit to avoid busy-waiting and allow input handling at ~60 FPS
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
     }
 
     // Loop ended
@@ -106,7 +106,6 @@ void GameManager::update()
     board.clearFallingTetrominos();
 
     TetrisAction lastMovereceived = this->lastM;
-    this->lastM = TetrisAction::EMPTY;
 
     // Check if it's time to apply gravity
     auto now = std::chrono::steady_clock::now();
@@ -116,6 +115,8 @@ void GameManager::update()
         lastGravityTick = now;
         lastMovereceived = TetrisAction::EMPTY;
 
+    }else{
+        this->lastM = TetrisAction::EMPTY;
     }
 
     // Check collision after gravity or moves

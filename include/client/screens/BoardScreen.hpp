@@ -58,11 +58,41 @@ public:
 
     void updateBoardFromJson(const nlohmann::json &boardData)
     {
-        std::cout << "Calling update tetris cells" << std::endl;
+        // Check for required keys in the JSON
+        if (!boardData.contains("width") || !boardData.contains("height") || !boardData.contains("cells"))
+        {
+            std::cerr << "Error: JSON is missing required keys (width, height, or cells)" << std::endl;
+            return;
+        }
 
+        // Check that width and height are valid integers
+        if (!boardData.at("width").is_number_integer() || !boardData.at("height").is_number_integer())
+        {
+            std::cerr << "Error: JSON width or height is not an integer" << std::endl;
+            return;
+        }
+
+        // Extract width and height
         int newWidth = boardData.at("width").get<int>();
         int newHeight = boardData.at("height").get<int>();
 
+        // Check that cells is a valid 2D array
+        if (!boardData.at("cells").is_array() || boardData.at("cells").size() != newHeight)
+        {
+            std::cerr << "Error: JSON cells array does not match the specified height" << std::endl;
+            return;
+        }
+
+        for (const auto &row : boardData.at("cells"))
+        {
+            if (!row.is_array() || row.size() != newWidth)
+            {
+                std::cerr << "Error: JSON cells array does not match the specified width" << std::endl;
+                return;
+            }
+        }
+
+        // Proceed with processing the data
         if ((int)grid.size() != newHeight || (int)grid.at(0).size() != newWidth)
         {
             BOARD_WIDTH = newWidth;
@@ -71,6 +101,7 @@ public:
             setupCells();
         }
 
+        // Update cell colors
         auto cells = boardData.at("cells");
         for (int y = 0; y < BOARD_HEIGHT; y++)
         {
@@ -78,6 +109,7 @@ public:
             {
                 sf::Color cellColor = sf::Color::White;
 
+                // Check if cell contains "c" and process color
                 if (cells[y][x].contains("c"))
                 {
                     cellColor = TetrisCell::getColorFromType(cells[y][x]["c"]);

@@ -6,36 +6,6 @@
 ServerManager server(12345);
 GameManager gm(server);
 
-TetrisAction getActionFromPacketType(PacketType type)
-{
-    TetrisAction action = TetrisAction::EMPTY;
-    switch (type)
-    {
-    case PacketType::LEFT:
-        action = TetrisAction::LEFT;
-        break;
-    case PacketType::RIGHT:
-        action = TetrisAction::RIGHT;
-        break;
-    case PacketType::ROTATE_LEFT:
-        action = TetrisAction::ROTATE_LEFT;
-        break;
-    case PacketType::ROTATE_RIGHT:
-        action = TetrisAction::ROTATE_RIGHT;
-        break;
-    case PacketType::DROP_FASTER:
-        action = TetrisAction::DROP_FASTER;
-        break;
-    case PacketType::DROP_INSTANT:
-        action = TetrisAction::DROP_INSTANT;
-        break;
-    default:
-        break;
-    }
-
-    return action;
-}
-
 // Might get player from packt id
 void onReceiveArrow(const Packet &packet)
 {

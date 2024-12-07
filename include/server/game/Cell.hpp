@@ -20,16 +20,23 @@ private:
 public:
     Cell(int x, int y);
 
-    // Setter para a cor
-    //void setColor(const CellColorType &newColor);
-    CellColorType getColor() const {return color;};
-    // Verificadores de estado
+    CellColorType getColor() const { return color; };
+
     bool isEmpty() const;
     bool isFalling() const;
     bool isFixed() const;
 
-    // Setters de estado
     void setEmpty();
     void setFalling(const CellColorType &newColor);
     void setFixed(const CellColorType &newColor);
+
+    bool operator==(const Cell &other) const
+    {
+        return color == other.color;
+    }
+
+    bool operator!=(const Cell &other) const
+    {
+        return !(*this == other);
+    }
 };

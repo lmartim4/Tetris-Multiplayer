@@ -3,7 +3,7 @@
 #include <memory>
 #include "baseTetromino.hpp"
 #include <iostream>
-#include "game/cell.hpp"
+#include "game/Cell.hpp"
 #include "json.hpp"
 
 class ServerManager;
@@ -11,7 +11,9 @@ class ServerManager;
 class TetrisBoard
 {
 private:
-    std::vector<std::vector<std::shared_ptr<Cell>>> grid; // Matriz 2D para representar a grid e seus estados/logica
+    std::vector<std::vector<std::shared_ptr<Cell>>> grid;                // Matriz 2D para representar a grid e seus estados/logica
+    std::vector<std::vector<std::shared_ptr<Cell>>> lastBroadcastedGrid; // Matriz 2D para representar a grid e seus estados/logica
+
     ServerManager &serverManager;
 
 public:
@@ -31,9 +33,14 @@ public:
     int clearLines();
     bool placeTetromino(const Tetromino &currentTetromino, bool fallen);
     static int normalizedY(int y);
+
     void clearFallingTetrominos();
     void clearFalledTetrominos();
+
     std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid();
+
+    bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
+                       const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const;
 
     void broadcastBoardState();
 };

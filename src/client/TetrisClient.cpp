@@ -1,14 +1,14 @@
 #include <iostream>
+#include <enet/enet.h>
+
 #include "TetrisCell.hpp"
+#include "ClientManager.hpp"
 
 #include "screens/WaitingConnectionScreen.hpp"
 #include "screens/GameScreen.hpp"
 #include "screens/MenuScreen.hpp"
 #include "screens/LobbyScreen.hpp"
 #include "screens/BoardScreen.hpp"
-
-#include <enet/enet.h>
-#include "ClientManager.hpp"
 
 ScreenManager screenManager;
 ClientManager client;
@@ -40,7 +40,7 @@ int main()
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);
     client.registerListener(PacketType::STARTING_GAME, onGameStartPacket);
 
-    sf::RenderWindow window(sf::VideoMode(500, 540), "Multi-Threaded Screens");
+    sf::RenderWindow window(sf::VideoMode(800, 480), "Multi-Threaded Screens");
 
     screenManager.addScreen("main-menu", std::make_unique<MenuScreen>(screenManager, client));
     screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(client));

@@ -1,14 +1,15 @@
 #pragma once
 
-#include "game/tetrominoFactory.hpp"
-#include "TetrisAction.hpp"
-#include "ServerManager.hpp"
-#include "board.hpp"
 #include <iostream>
 #include <chrono>
 #include <thread>
 #include <memory>
 #include <atomic>
+
+#include "game/tetrominoFactory.hpp"
+#include "TetrisAction.hpp"
+#include "ServerManager.hpp"
+#include "board.hpp"
 
 class GameManager
 {
@@ -22,18 +23,18 @@ private:
     int nLinesClearedThisLevel;
 
     const int minTimeMs = 400;
-    int gravityTimeMs;          // Current gravity time in ms
-    int levelUpGravityTimeMs;   // How much to reduce gravity time on level up
+    int gravityTimeMs;        // Current gravity time in ms
+    int levelUpGravityTimeMs; // How much to reduce gravity time on level up
 
     std::chrono::steady_clock::time_point lastGravityTick; // To track gravity intervals
 
-    std::thread gameThread;     // The thread running the game loop
+    std::thread gameThread;         // The thread running the game loop
     std::atomic<bool> threadActive; // To track if the thread is active
 
     TetrisAction lastM = TetrisAction::EMPTY;
 
     void runGameLoop();
-    
+
 public:
     GameManager(ServerManager &serverManager);
 
