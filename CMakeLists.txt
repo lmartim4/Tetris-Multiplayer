@@ -25,6 +25,9 @@ find_path(ENET_INCLUDE_DIR enet/enet.h REQUIRED)
 # Add include directories for ENet
 include_directories(${ENET_INCLUDE_DIR})
 
+# **NOVO**: Procurar por threads (pthread) 
+find_package(Threads REQUIRED)
+
 # Source files for the server
 set(SERVER_SOURCES
     src/server/TetrisServer.cpp
@@ -52,12 +55,12 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Select Debug or Rele
 # Server executable
 add_executable(server ${SERVER_SOURCES})
 target_include_directories(server PRIVATE ${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR})
-target_link_libraries(server sfml-system ${ENET_LIB})
+target_link_libraries(server sfml-system ${ENET_LIB} Threads::Threads)
 
 # Client executable
 add_executable(client ${CLIENT_SOURCES})
 target_include_directories(client PRIVATE ${COMMON_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR})
-target_link_libraries(client sfml-system sfml-window sfml-graphics ${ENET_LIB})
+target_link_libraries(client sfml-system sfml-window sfml-graphics ${ENET_LIB} Threads::Threads)
 
 # Custom commands to run in debug or release mode
 add_custom_target(run-server
