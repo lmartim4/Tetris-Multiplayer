@@ -87,7 +87,8 @@ void ServerManager::broadcastPlayerList()
 }
 
 void ServerManager::start_game()
-{
+{   
+    gm.startGameLoop();
     send_packet(Packet(PacketType::STARTING_GAME, 0, nullptr));
     int width = 10;
     int height = 10;

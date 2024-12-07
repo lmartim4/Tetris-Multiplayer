@@ -30,6 +30,12 @@ set(SERVER_SOURCES
     src/server/TetrisServer.cpp
     src/server/ServerManager.cpp
     src/common/NetworkManager.cpp
+    
+    #Tetris Single Player
+    src/server/game/baseTetromino.cpp
+    src/server/game/board.cpp
+    src/server/game/cell.cpp
+    src/server/game/gameManager.cpp
 )
 
 # Source files for the client

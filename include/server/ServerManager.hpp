@@ -5,6 +5,7 @@
 #include <map>
 
 #include "NetworkManager.hpp"
+#include "game/gameManager.hpp"
 #include "Player.hpp"
 
 // In ServerManager.hpp or a suitable header
@@ -17,6 +18,7 @@ private:
     int getNextAvailablePlayerID();
     void broadcastPlayerList();
     void createPlayerAndLink(ENetPeer *peer);
+    GameManager gm;
 
 protected:
     void onPeerConnect(ENetPeer *peer) override;
