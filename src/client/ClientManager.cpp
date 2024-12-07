@@ -263,3 +263,43 @@ void ClientManager::handleKeyPress(sf::Event keyEvent, sf::RenderWindow &window)
         break;
     }
 }
+
+void ClientManager::on_receive_game_screen(const Packet &packet)
+{
+    std::cout << "Received a board\n";
+    try
+    {
+        nlohmann::json boardData = packet.toJson();
+        std::lock_guard<std::mutex> lock(boardMutex);
+        lastReceivedBoard = boardData;
+        hasBoardData = true;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Failed to parse game screen board JSON: " << e.what() << std::endl;
+    }
+    return;
+}
+
+nlohmann::json ClientManager::getLastBoardState()
+{
+    std::lock_guard<std::mutex> lock(boardMutex);
+    return lastReceivedBoard;
+}
+
+// SE os quadros desincronizarem pode estar aqui o problema
+bool ClientManager::boardDataAvailable()
+{
+    std::lock_guard<std::mutex> lock(boardMutex);
+    if (hasBoardData)
+    {
+        hasBoardData = false;
+        return true;
+    }
+    return false;
+}
+
+void ClientManager::request_game_start()
+{
+    send_packet(Packet(PacketType::REQUEST_START, 0, serverPeer));
+}

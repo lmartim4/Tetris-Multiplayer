@@ -6,7 +6,8 @@ enum class PacketType : char
     JOIN_REQUEST,
     JOIN_ACCEPTED,
     JOIN_DENIED,
-    START,
+    REQUEST_START,
+    STARTING_GAME,
     RESTART,
     PAUSE,
     RESUME,
@@ -22,6 +23,7 @@ enum class PacketType : char
     CONNECT,    // A packet sent upon connecting
     DISCONNECT, // A packet sent upon disconnection
 
+    GAME_SCREEN,
     PLAYER_LIST,
 
     // Error packet threating
@@ -39,7 +41,7 @@ inline const char *PacketTypeToString(PacketType type)
         return "JOIN_ACCEPTED";
     case PacketType::JOIN_DENIED:
         return "JOIN_DENIED";
-    case PacketType::START:
+    case PacketType::REQUEST_START:
         return "START";
     case PacketType::RESTART:
         return "RESTART";

@@ -9,6 +9,12 @@ void HeartbeatListener(const Packet &packet)
     server.send_packet(packet);
 }
 
+void StartGameListener(const Packet &packet)
+{
+    server.start_game();
+}
+
+
 void JoinRequestListener(const Packet &packet)
 {
     if (server.getHost()->connectedPeers < 4)
@@ -26,6 +32,7 @@ int main(int argc, const char *argv[])
 
     server.registerListener(PacketType::JOIN_REQUEST, JoinRequestListener);
     server.registerListener(PacketType::HEARTBEAT, HeartbeatListener);
+    server.registerListener(PacketType::REQUEST_START, StartGameListener);
 
     while (server.isRunning())
         std::this_thread::sleep_for(std::chrono::milliseconds(10));

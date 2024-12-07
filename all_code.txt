@@ -1,926 +1,3 @@
-// File: ./CMakeFiles/3.31.1/CompilerIdCXX/CMakeCXXCompilerId.cpp
-/* This source file must have a .cpp extension so that all C++ compilers
-   recognize the extension without flags.  Borland does not know .cxx for
-   example.  */
-#ifndef __cplusplus
-# error "A C compiler has been selected for C++."
-#endif
-
-#if !defined(__has_include)
-/* If the compiler does not have __has_include, pretend the answer is
-   always no.  */
-#  define __has_include(x) 0
-#endif
-
-
-/* Version number components: V=Version, R=Revision, P=Patch
-   Version date components:   YYYY=Year, MM=Month,   DD=Day  */
-
-#if defined(__INTEL_COMPILER) || defined(__ICC)
-# define COMPILER_ID "Intel"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_ID "GNU"
-# endif
-  /* __INTEL_COMPILER = VRP prior to 2021, and then VVVV for 2021 and later,
-     except that a few beta releases use the old format with V=2021.  */
-# if __INTEL_COMPILER < 2021 || __INTEL_COMPILER == 202110 || __INTEL_COMPILER == 202111
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER/100)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER/10 % 10)
-#  if defined(__INTEL_COMPILER_UPDATE)
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER_UPDATE)
-#  else
-#   define COMPILER_VERSION_PATCH DEC(__INTEL_COMPILER   % 10)
-#  endif
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__INTEL_COMPILER)
-#  define COMPILER_VERSION_MINOR DEC(__INTEL_COMPILER_UPDATE)
-   /* The third version component from --version is an update index,
-      but no macro is provided for it.  */
-#  define COMPILER_VERSION_PATCH DEC(0)
-# endif
-# if defined(__INTEL_COMPILER_BUILD_DATE)
-   /* __INTEL_COMPILER_BUILD_DATE = YYYYMMDD */
-#  define COMPILER_VERSION_TWEAK DEC(__INTEL_COMPILER_BUILD_DATE)
-# endif
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# if defined(__GNUC__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-# elif defined(__GNUG__)
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif (defined(__clang__) && defined(__INTEL_CLANG_COMPILER)) || defined(__INTEL_LLVM_COMPILER)
-# define COMPILER_ID "IntelLLVM"
-#if defined(_MSC_VER)
-# define SIMULATE_ID "MSVC"
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_ID "GNU"
-#endif
-/* __INTEL_LLVM_COMPILER = VVVVRP prior to 2021.2.0, VVVVRRPP for 2021.2.0 and
- * later.  Look for 6 digit vs. 8 digit version number to decide encoding.
- * VVVV is no smaller than the current year when a version is released.
- */
-#if __INTEL_LLVM_COMPILER < 1000000L
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/100)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER    % 10)
-#else
-# define COMPILER_VERSION_MAJOR DEC(__INTEL_LLVM_COMPILER/10000)
-# define COMPILER_VERSION_MINOR DEC(__INTEL_LLVM_COMPILER/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__INTEL_LLVM_COMPILER     % 100)
-#endif
-#if defined(_MSC_VER)
-  /* _MSC_VER = VVRR */
-# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-#endif
-#if defined(__GNUC__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#elif defined(__GNUG__)
-# define SIMULATE_VERSION_MAJOR DEC(__GNUG__)
-#endif
-#if defined(__GNUC_MINOR__)
-# define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#endif
-#if defined(__GNUC_PATCHLEVEL__)
-# define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#endif
-
-#elif defined(__PATHCC__)
-# define COMPILER_ID "PathScale"
-# define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
-# define COMPILER_VERSION_MINOR DEC(__PATHCC_MINOR__)
-# if defined(__PATHCC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PATHCC_PATCHLEVEL__)
-# endif
-
-#elif defined(__BORLANDC__) && defined(__CODEGEARC_VERSION__)
-# define COMPILER_ID "Embarcadero"
-# define COMPILER_VERSION_MAJOR HEX(__CODEGEARC_VERSION__>>24 & 0x00FF)
-# define COMPILER_VERSION_MINOR HEX(__CODEGEARC_VERSION__>>16 & 0x00FF)
-# define COMPILER_VERSION_PATCH DEC(__CODEGEARC_VERSION__     & 0xFFFF)
-
-#elif defined(__BORLANDC__)
-# define COMPILER_ID "Borland"
-  /* __BORLANDC__ = 0xVRR */
-# define COMPILER_VERSION_MAJOR HEX(__BORLANDC__>>8)
-# define COMPILER_VERSION_MINOR HEX(__BORLANDC__ & 0xFF)
-
-#elif defined(__WATCOMC__) && __WATCOMC__ < 1200
-# define COMPILER_ID "Watcom"
-   /* __WATCOMC__ = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(__WATCOMC__ / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__WATCOMC__)
-# define COMPILER_ID "OpenWatcom"
-   /* __WATCOMC__ = VVRP + 1100 */
-# define COMPILER_VERSION_MAJOR DEC((__WATCOMC__ - 1100) / 100)
-# define COMPILER_VERSION_MINOR DEC((__WATCOMC__ / 10) % 10)
-# if (__WATCOMC__ % 10) > 0
-#  define COMPILER_VERSION_PATCH DEC(__WATCOMC__ % 10)
-# endif
-
-#elif defined(__SUNPRO_CC)
-# define COMPILER_ID "SunPro"
-# if __SUNPRO_CC >= 0x5100
-   /* __SUNPRO_CC = 0xVRRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>12)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xFF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# else
-   /* __SUNPRO_CC = 0xVRP */
-#  define COMPILER_VERSION_MAJOR HEX(__SUNPRO_CC>>8)
-#  define COMPILER_VERSION_MINOR HEX(__SUNPRO_CC>>4 & 0xF)
-#  define COMPILER_VERSION_PATCH HEX(__SUNPRO_CC    & 0xF)
-# endif
-
-#elif defined(__HP_aCC)
-# define COMPILER_ID "HP"
-  /* __HP_aCC = VVRRPP */
-# define COMPILER_VERSION_MAJOR DEC(__HP_aCC/10000)
-# define COMPILER_VERSION_MINOR DEC(__HP_aCC/100 % 100)
-# define COMPILER_VERSION_PATCH DEC(__HP_aCC     % 100)
-
-#elif defined(__DECCXX)
-# define COMPILER_ID "Compaq"
-  /* __DECCXX_VER = VVRRTPPPP */
-# define COMPILER_VERSION_MAJOR DEC(__DECCXX_VER/10000000)
-# define COMPILER_VERSION_MINOR DEC(__DECCXX_VER/100000  % 100)
-# define COMPILER_VERSION_PATCH DEC(__DECCXX_VER         % 10000)
-
-#elif defined(__IBMCPP__) && defined(__COMPILER_VER__)
-# define COMPILER_ID "zOS"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__open_xl__) && defined(__clang__)
-# define COMPILER_ID "IBMClang"
-# define COMPILER_VERSION_MAJOR DEC(__open_xl_version__)
-# define COMPILER_VERSION_MINOR DEC(__open_xl_release__)
-# define COMPILER_VERSION_PATCH DEC(__open_xl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__open_xl_ptf_fix_level__)
-
-
-#elif defined(__ibmxl__) && defined(__clang__)
-# define COMPILER_ID "XLClang"
-# define COMPILER_VERSION_MAJOR DEC(__ibmxl_version__)
-# define COMPILER_VERSION_MINOR DEC(__ibmxl_release__)
-# define COMPILER_VERSION_PATCH DEC(__ibmxl_modification__)
-# define COMPILER_VERSION_TWEAK DEC(__ibmxl_ptf_fix_level__)
-
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ >= 800
-# define COMPILER_ID "XL"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__IBMCPP__) && !defined(__COMPILER_VER__) && __IBMCPP__ < 800
-# define COMPILER_ID "VisualAge"
-  /* __IBMCPP__ = VRP */
-# define COMPILER_VERSION_MAJOR DEC(__IBMCPP__/100)
-# define COMPILER_VERSION_MINOR DEC(__IBMCPP__/10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__IBMCPP__    % 10)
-
-#elif defined(__NVCOMPILER)
-# define COMPILER_ID "NVHPC"
-# define COMPILER_VERSION_MAJOR DEC(__NVCOMPILER_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__NVCOMPILER_MINOR__)
-# if defined(__NVCOMPILER_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__NVCOMPILER_PATCHLEVEL__)
-# endif
-
-#elif defined(__PGI)
-# define COMPILER_ID "PGI"
-# define COMPILER_VERSION_MAJOR DEC(__PGIC__)
-# define COMPILER_VERSION_MINOR DEC(__PGIC_MINOR__)
-# if defined(__PGIC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__PGIC_PATCHLEVEL__)
-# endif
-
-#elif defined(__clang__) && defined(__cray__)
-# define COMPILER_ID "CrayClang"
-# define COMPILER_VERSION_MAJOR DEC(__cray_major__)
-# define COMPILER_VERSION_MINOR DEC(__cray_minor__)
-# define COMPILER_VERSION_PATCH DEC(__cray_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(_CRAYC)
-# define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
-# define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
-
-#elif defined(__TI_COMPILER_VERSION__)
-# define COMPILER_ID "TI"
-  /* __TI_COMPILER_VERSION__ = VVVRRRPPP */
-# define COMPILER_VERSION_MAJOR DEC(__TI_COMPILER_VERSION__/1000000)
-# define COMPILER_VERSION_MINOR DEC(__TI_COMPILER_VERSION__/1000   % 1000)
-# define COMPILER_VERSION_PATCH DEC(__TI_COMPILER_VERSION__        % 1000)
-
-#elif defined(__CLANG_FUJITSU)
-# define COMPILER_ID "FujitsuClang"
-# define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-# define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-# define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# define COMPILER_VERSION_INTERNAL_STR __clang_version__
-
-
-#elif defined(__FUJITSU)
-# define COMPILER_ID "Fujitsu"
-# if defined(__FCC_version__)
-#   define COMPILER_VERSION __FCC_version__
-# elif defined(__FCC_major__)
-#   define COMPILER_VERSION_MAJOR DEC(__FCC_major__)
-#   define COMPILER_VERSION_MINOR DEC(__FCC_minor__)
-#   define COMPILER_VERSION_PATCH DEC(__FCC_patchlevel__)
-# endif
-# if defined(__fcc_version)
-#   define COMPILER_VERSION_INTERNAL DEC(__fcc_version)
-# elif defined(__FCC_VERSION)
-#   define COMPILER_VERSION_INTERNAL DEC(__FCC_VERSION)
-# endif
-
-
-#elif defined(__ghs__)
-# define COMPILER_ID "GHS"
-/* __GHS_VERSION_NUMBER = VVVVRP */
-# ifdef __GHS_VERSION_NUMBER
-# define COMPILER_VERSION_MAJOR DEC(__GHS_VERSION_NUMBER / 100)
-# define COMPILER_VERSION_MINOR DEC(__GHS_VERSION_NUMBER / 10 % 10)
-# define COMPILER_VERSION_PATCH DEC(__GHS_VERSION_NUMBER      % 10)
-# endif
-
-#elif defined(__TASKING__)
-# define COMPILER_ID "Tasking"
-  # define COMPILER_VERSION_MAJOR DEC(__VERSION__/1000)
-  # define COMPILER_VERSION_MINOR DEC(__VERSION__ % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__VERSION__)
-
-#elif defined(__ORANGEC__)
-# define COMPILER_ID "OrangeC"
-# define COMPILER_VERSION_MAJOR DEC(__ORANGEC_MAJOR__)
-# define COMPILER_VERSION_MINOR DEC(__ORANGEC_MINOR__)
-# define COMPILER_VERSION_PATCH DEC(__ORANGEC_PATCHLEVEL__)
-
-#elif defined(__SCO_VERSION__)
-# define COMPILER_ID "SCO"
-
-#elif defined(__ARMCC_VERSION) && !defined(__clang__)
-# define COMPILER_ID "ARMCC"
-#if __ARMCC_VERSION >= 1000000
-  /* __ARMCC_VERSION = VRRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION     % 10000)
-#else
-  /* __ARMCC_VERSION = VRPPPP */
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCC_VERSION/100000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCC_VERSION/10000 % 10)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCC_VERSION    % 10000)
-#endif
-
-
-#elif defined(__clang__) && defined(__apple_build_version__)
-# define COMPILER_ID "AppleClang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-# define COMPILER_VERSION_TWEAK DEC(__apple_build_version__)
-
-#elif defined(__clang__) && defined(__ARMCOMPILER_VERSION)
-# define COMPILER_ID "ARMClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ARMCOMPILER_VERSION/1000000)
-  # define COMPILER_VERSION_MINOR DEC(__ARMCOMPILER_VERSION/10000 % 100)
-  # define COMPILER_VERSION_PATCH DEC(__ARMCOMPILER_VERSION/100   % 100)
-# define COMPILER_VERSION_INTERNAL DEC(__ARMCOMPILER_VERSION)
-
-#elif defined(__clang__) && defined(__ti__)
-# define COMPILER_ID "TIClang"
-  # define COMPILER_VERSION_MAJOR DEC(__ti_major__)
-  # define COMPILER_VERSION_MINOR DEC(__ti_minor__)
-  # define COMPILER_VERSION_PATCH DEC(__ti_patchlevel__)
-# define COMPILER_VERSION_INTERNAL DEC(__ti_version__)
-
-#elif defined(__clang__)
-# define COMPILER_ID "Clang"
-# if defined(_MSC_VER)
-#  define SIMULATE_ID "MSVC"
-# endif
-# define COMPILER_VERSION_MAJOR DEC(__clang_major__)
-# define COMPILER_VERSION_MINOR DEC(__clang_minor__)
-# define COMPILER_VERSION_PATCH DEC(__clang_patchlevel__)
-# if defined(_MSC_VER)
-   /* _MSC_VER = VVRR */
-#  define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
-#  define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
-# endif
-
-#elif defined(__LCC__) && (defined(__GNUC__) || defined(__GNUG__) || defined(__MCST__))
-# define COMPILER_ID "LCC"
-# define COMPILER_VERSION_MAJOR DEC(__LCC__ / 100)
-# define COMPILER_VERSION_MINOR DEC(__LCC__ % 100)
-# if defined(__LCC_MINOR__)
-#  define COMPILER_VERSION_PATCH DEC(__LCC_MINOR__)
-# endif
-# if defined(__GNUC__) && defined(__GNUC_MINOR__)
-#  define SIMULATE_ID "GNU"
-#  define SIMULATE_VERSION_MAJOR DEC(__GNUC__)
-#  define SIMULATE_VERSION_MINOR DEC(__GNUC_MINOR__)
-#  if defined(__GNUC_PATCHLEVEL__)
-#   define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-#  endif
-# endif
-
-#elif defined(__GNUC__) || defined(__GNUG__)
-# define COMPILER_ID "GNU"
-# if defined(__GNUC__)
-#  define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# else
-#  define COMPILER_VERSION_MAJOR DEC(__GNUG__)
-# endif
-# if defined(__GNUC_MINOR__)
-#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
-# endif
-# if defined(__GNUC_PATCHLEVEL__)
-#  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
-# endif
-
-#elif defined(_MSC_VER)
-# define COMPILER_ID "MSVC"
-  /* _MSC_VER = VVRR */
-# define COMPILER_VERSION_MAJOR DEC(_MSC_VER / 100)
-# define COMPILER_VERSION_MINOR DEC(_MSC_VER % 100)
-# if defined(_MSC_FULL_VER)
-#  if _MSC_VER >= 1400
-    /* _MSC_FULL_VER = VVRRPPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 100000)
-#  else
-    /* _MSC_FULL_VER = VVRRPPPP */
-#   define COMPILER_VERSION_PATCH DEC(_MSC_FULL_VER % 10000)
-#  endif
-# endif
-# if defined(_MSC_BUILD)
-#  define COMPILER_VERSION_TWEAK DEC(_MSC_BUILD)
-# endif
-
-#elif defined(_ADI_COMPILER)
-# define COMPILER_ID "ADSP"
-#if defined(__VERSIONNUM__)
-  /* __VERSIONNUM__ = 0xVVRRPPTT */
-#  define COMPILER_VERSION_MAJOR DEC(__VERSIONNUM__ >> 24 & 0xFF)
-#  define COMPILER_VERSION_MINOR DEC(__VERSIONNUM__ >> 16 & 0xFF)
-#  define COMPILER_VERSION_PATCH DEC(__VERSIONNUM__ >> 8 & 0xFF)
-#  define COMPILER_VERSION_TWEAK DEC(__VERSIONNUM__ & 0xFF)
-#endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# define COMPILER_ID "IAR"
-# if defined(__VER__) && defined(__ICCARM__)
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 1000000)
-#  define COMPILER_VERSION_MINOR DEC(((__VER__) / 1000) % 1000)
-#  define COMPILER_VERSION_PATCH DEC((__VER__) % 1000)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# elif defined(__VER__) && (defined(__ICCAVR__) || defined(__ICCRX__) || defined(__ICCRH850__) || defined(__ICCRL78__) || defined(__ICC430__) || defined(__ICCRISCV__) || defined(__ICCV850__) || defined(__ICC8051__) || defined(__ICCSTM8__))
-#  define COMPILER_VERSION_MAJOR DEC((__VER__) / 100)
-#  define COMPILER_VERSION_MINOR DEC((__VER__) - (((__VER__) / 100)*100))
-#  define COMPILER_VERSION_PATCH DEC(__SUBVERSION__)
-#  define COMPILER_VERSION_INTERNAL DEC(__IAR_SYSTEMS_ICC__)
-# endif
-
-
-/* These compilers are either not known or too old to define an
-  identification macro.  Try to identify the platform and guess that
-  it is the native compiler.  */
-#elif defined(__hpux) || defined(__hpua)
-# define COMPILER_ID "HP"
-
-#else /* unknown compiler */
-# define COMPILER_ID ""
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";
-#ifdef SIMULATE_ID
-char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";
-#endif
-
-#ifdef __QNXNTO__
-char const* qnxnto = "INFO" ":" "qnxnto[]";
-#endif
-
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";
-#endif
-
-#define STRINGIFY_HELPER(X) #X
-#define STRINGIFY(X) STRINGIFY_HELPER(X)
-
-/* Identify known platforms by name.  */
-#if defined(__linux) || defined(__linux__) || defined(linux)
-# define PLATFORM_ID "Linux"
-
-#elif defined(__MSYS__)
-# define PLATFORM_ID "MSYS"
-
-#elif defined(__CYGWIN__)
-# define PLATFORM_ID "Cygwin"
-
-#elif defined(__MINGW32__)
-# define PLATFORM_ID "MinGW"
-
-#elif defined(__APPLE__)
-# define PLATFORM_ID "Darwin"
-
-#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-# define PLATFORM_ID "Windows"
-
-#elif defined(__FreeBSD__) || defined(__FreeBSD)
-# define PLATFORM_ID "FreeBSD"
-
-#elif defined(__NetBSD__) || defined(__NetBSD)
-# define PLATFORM_ID "NetBSD"
-
-#elif defined(__OpenBSD__) || defined(__OPENBSD)
-# define PLATFORM_ID "OpenBSD"
-
-#elif defined(__sun) || defined(sun)
-# define PLATFORM_ID "SunOS"
-
-#elif defined(_AIX) || defined(__AIX) || defined(__AIX__) || defined(__aix) || defined(__aix__)
-# define PLATFORM_ID "AIX"
-
-#elif defined(__hpux) || defined(__hpux__)
-# define PLATFORM_ID "HP-UX"
-
-#elif defined(__HAIKU__)
-# define PLATFORM_ID "Haiku"
-
-#elif defined(__BeOS) || defined(__BEOS__) || defined(_BEOS)
-# define PLATFORM_ID "BeOS"
-
-#elif defined(__QNX__) || defined(__QNXNTO__)
-# define PLATFORM_ID "QNX"
-
-#elif defined(__tru64) || defined(_tru64) || defined(__TRU64__)
-# define PLATFORM_ID "Tru64"
-
-#elif defined(__riscos) || defined(__riscos__)
-# define PLATFORM_ID "RISCos"
-
-#elif defined(__sinix) || defined(__sinix__) || defined(__SINIX__)
-# define PLATFORM_ID "SINIX"
-
-#elif defined(__UNIX_SV__)
-# define PLATFORM_ID "UNIX_SV"
-
-#elif defined(__bsdos__)
-# define PLATFORM_ID "BSDOS"
-
-#elif defined(_MPRAS) || defined(MPRAS)
-# define PLATFORM_ID "MP-RAS"
-
-#elif defined(__osf) || defined(__osf__)
-# define PLATFORM_ID "OSF1"
-
-#elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
-# define PLATFORM_ID "SCO_SV"
-
-#elif defined(__ultrix) || defined(__ultrix__) || defined(_ULTRIX)
-# define PLATFORM_ID "ULTRIX"
-
-#elif defined(__XENIX__) || defined(_XENIX) || defined(XENIX)
-# define PLATFORM_ID "Xenix"
-
-#elif defined(__WATCOMC__)
-# if defined(__LINUX__)
-#  define PLATFORM_ID "Linux"
-
-# elif defined(__DOS__)
-#  define PLATFORM_ID "DOS"
-
-# elif defined(__OS2__)
-#  define PLATFORM_ID "OS2"
-
-# elif defined(__WINDOWS__)
-#  define PLATFORM_ID "Windows3x"
-
-# elif defined(__VXWORKS__)
-#  define PLATFORM_ID "VxWorks"
-
-# else /* unknown platform */
-#  define PLATFORM_ID
-# endif
-
-#elif defined(__INTEGRITY)
-# if defined(INT_178B)
-#  define PLATFORM_ID "Integrity178"
-
-# else /* regular Integrity */
-#  define PLATFORM_ID "Integrity"
-# endif
-
-# elif defined(_ADI_COMPILER)
-#  define PLATFORM_ID "ADSP"
-
-#else /* unknown platform */
-# define PLATFORM_ID
-
-#endif
-
-/* For windows compilers MSVC and Intel we can determine
-   the architecture of the compiler being used.  This is because
-   the compilers do not have flags that can change the architecture,
-   but rather depend on which compiler is being used
-*/
-#if defined(_WIN32) && defined(_MSC_VER)
-# if defined(_M_IA64)
-#  define ARCHITECTURE_ID "IA64"
-
-# elif defined(_M_ARM64EC)
-#  define ARCHITECTURE_ID "ARM64EC"
-
-# elif defined(_M_X64) || defined(_M_AMD64)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# elif defined(_M_ARM64)
-#  define ARCHITECTURE_ID "ARM64"
-
-# elif defined(_M_ARM)
-#  if _M_ARM == 4
-#   define ARCHITECTURE_ID "ARMV4I"
-#  elif _M_ARM == 5
-#   define ARCHITECTURE_ID "ARMV5I"
-#  else
-#   define ARCHITECTURE_ID "ARMV" STRINGIFY(_M_ARM)
-#  endif
-
-# elif defined(_M_MIPS)
-#  define ARCHITECTURE_ID "MIPS"
-
-# elif defined(_M_SH)
-#  define ARCHITECTURE_ID "SHx"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__WATCOMC__)
-# if defined(_M_I86)
-#  define ARCHITECTURE_ID "I86"
-
-# elif defined(_M_IX86)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__IAR_SYSTEMS_ICC__) || defined(__IAR_SYSTEMS_ICC)
-# if defined(__ICCARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__ICCRX__)
-#  define ARCHITECTURE_ID "RX"
-
-# elif defined(__ICCRH850__)
-#  define ARCHITECTURE_ID "RH850"
-
-# elif defined(__ICCRL78__)
-#  define ARCHITECTURE_ID "RL78"
-
-# elif defined(__ICCRISCV__)
-#  define ARCHITECTURE_ID "RISCV"
-
-# elif defined(__ICCAVR__)
-#  define ARCHITECTURE_ID "AVR"
-
-# elif defined(__ICC430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__ICCV850__)
-#  define ARCHITECTURE_ID "V850"
-
-# elif defined(__ICC8051__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__ICCSTM8__)
-#  define ARCHITECTURE_ID "STM8"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__ghs__)
-# if defined(__PPC64__)
-#  define ARCHITECTURE_ID "PPC64"
-
-# elif defined(__ppc__)
-#  define ARCHITECTURE_ID "PPC"
-
-# elif defined(__ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__x86_64__)
-#  define ARCHITECTURE_ID "x64"
-
-# elif defined(__i386__)
-#  define ARCHITECTURE_ID "X86"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__clang__) && defined(__ti__)
-# if defined(__ARM_ARCH)
-#  define ARCHITECTURE_ID "Arm"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-#elif defined(__TI_COMPILER_VERSION__)
-# if defined(__TI_ARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__MSP430__)
-#  define ARCHITECTURE_ID "MSP430"
-
-# elif defined(__TMS320C28XX__)
-#  define ARCHITECTURE_ID "TMS320C28x"
-
-# elif defined(__TMS320C6X__) || defined(_TMS320C6X)
-#  define ARCHITECTURE_ID "TMS320C6x"
-
-# else /* unknown architecture */
-#  define ARCHITECTURE_ID ""
-# endif
-
-# elif defined(__ADSPSHARC__)
-#  define ARCHITECTURE_ID "SHARC"
-
-# elif defined(__ADSPBLACKFIN__)
-#  define ARCHITECTURE_ID "Blackfin"
-
-#elif defined(__TASKING__)
-
-# if defined(__CTC__) || defined(__CPTC__)
-#  define ARCHITECTURE_ID "TriCore"
-
-# elif defined(__CMCS__)
-#  define ARCHITECTURE_ID "MCS"
-
-# elif defined(__CARM__)
-#  define ARCHITECTURE_ID "ARM"
-
-# elif defined(__CARC__)
-#  define ARCHITECTURE_ID "ARC"
-
-# elif defined(__C51__)
-#  define ARCHITECTURE_ID "8051"
-
-# elif defined(__CPCP__)
-#  define ARCHITECTURE_ID "PCP"
-
-# else
-#  define ARCHITECTURE_ID ""
-# endif
-
-#else
-#  define ARCHITECTURE_ID
-#endif
-
-/* Convert integer to decimal digit literals.  */
-#define DEC(n)                   \
-  ('0' + (((n) / 10000000)%10)), \
-  ('0' + (((n) / 1000000)%10)),  \
-  ('0' + (((n) / 100000)%10)),   \
-  ('0' + (((n) / 10000)%10)),    \
-  ('0' + (((n) / 1000)%10)),     \
-  ('0' + (((n) / 100)%10)),      \
-  ('0' + (((n) / 10)%10)),       \
-  ('0' +  ((n) % 10))
-
-/* Convert integer to hex digit literals.  */
-#define HEX(n)             \
-  ('0' + ((n)>>28 & 0xF)), \
-  ('0' + ((n)>>24 & 0xF)), \
-  ('0' + ((n)>>20 & 0xF)), \
-  ('0' + ((n)>>16 & 0xF)), \
-  ('0' + ((n)>>12 & 0xF)), \
-  ('0' + ((n)>>8  & 0xF)), \
-  ('0' + ((n)>>4  & 0xF)), \
-  ('0' + ((n)     & 0xF))
-
-/* Construct a string literal encoding the version number. */
-#ifdef COMPILER_VERSION
-char const* info_version = "INFO" ":" "compiler_version[" COMPILER_VERSION "]";
-
-/* Construct a string literal encoding the version number components. */
-#elif defined(COMPILER_VERSION_MAJOR)
-char const info_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','[',
-  COMPILER_VERSION_MAJOR,
-# ifdef COMPILER_VERSION_MINOR
-  '.', COMPILER_VERSION_MINOR,
-#  ifdef COMPILER_VERSION_PATCH
-   '.', COMPILER_VERSION_PATCH,
-#   ifdef COMPILER_VERSION_TWEAK
-    '.', COMPILER_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct a string literal encoding the internal version number. */
-#ifdef COMPILER_VERSION_INTERNAL
-char const info_version_internal[] = {
-  'I', 'N', 'F', 'O', ':',
-  'c','o','m','p','i','l','e','r','_','v','e','r','s','i','o','n','_',
-  'i','n','t','e','r','n','a','l','[',
-  COMPILER_VERSION_INTERNAL,']','\0'};
-#elif defined(COMPILER_VERSION_INTERNAL_STR)
-char const* info_version_internal = "INFO" ":" "compiler_version_internal[" COMPILER_VERSION_INTERNAL_STR "]";
-#endif
-
-/* Construct a string literal encoding the version number components. */
-#ifdef SIMULATE_VERSION_MAJOR
-char const info_simulate_version[] = {
-  'I', 'N', 'F', 'O', ':',
-  's','i','m','u','l','a','t','e','_','v','e','r','s','i','o','n','[',
-  SIMULATE_VERSION_MAJOR,
-# ifdef SIMULATE_VERSION_MINOR
-  '.', SIMULATE_VERSION_MINOR,
-#  ifdef SIMULATE_VERSION_PATCH
-   '.', SIMULATE_VERSION_PATCH,
-#   ifdef SIMULATE_VERSION_TWEAK
-    '.', SIMULATE_VERSION_TWEAK,
-#   endif
-#  endif
-# endif
-  ']','\0'};
-#endif
-
-/* Construct the string literal in pieces to prevent the source from
-   getting matched.  Store it in a pointer rather than an array
-   because some compilers will just produce instructions to fill the
-   array rather than assigning a pointer to a static array.  */
-char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";
-char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
-
-
-
-#define CXX_STD_98 199711L
-#define CXX_STD_11 201103L
-#define CXX_STD_14 201402L
-#define CXX_STD_17 201703L
-#define CXX_STD_20 202002L
-#define CXX_STD_23 202302L
-
-#if defined(__INTEL_COMPILER) && defined(_MSVC_LANG)
-#  if _MSVC_LANG > CXX_STD_17
-#    define CXX_STD _MSVC_LANG
-#  elif _MSVC_LANG == CXX_STD_17 && defined(__cpp_aggregate_paren_init)
-#    define CXX_STD CXX_STD_20
-#  elif _MSVC_LANG > CXX_STD_14 && __cplusplus > CXX_STD_17
-#    define CXX_STD CXX_STD_20
-#  elif _MSVC_LANG > CXX_STD_14
-#    define CXX_STD CXX_STD_17
-#  elif defined(__INTEL_CXX11_MODE__) && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  elif defined(__INTEL_CXX11_MODE__)
-#    define CXX_STD CXX_STD_11
-#  else
-#    define CXX_STD CXX_STD_98
-#  endif
-#elif defined(_MSC_VER) && defined(_MSVC_LANG)
-#  if _MSVC_LANG > __cplusplus
-#    define CXX_STD _MSVC_LANG
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif defined(__NVCOMPILER)
-#  if __cplusplus == CXX_STD_17 && defined(__cpp_aggregate_paren_init)
-#    define CXX_STD CXX_STD_20
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif defined(__INTEL_COMPILER) || defined(__PGI)
-#  if __cplusplus == CXX_STD_11 && defined(__cpp_namespace_attributes)
-#    define CXX_STD CXX_STD_17
-#  elif __cplusplus == CXX_STD_11 && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif (defined(__IBMCPP__) || defined(__ibmxl__)) && defined(__linux__)
-#  if __cplusplus == CXX_STD_11 && defined(__cpp_aggregate_nsdmi)
-#    define CXX_STD CXX_STD_14
-#  else
-#    define CXX_STD __cplusplus
-#  endif
-#elif __cplusplus == 1 && defined(__GXX_EXPERIMENTAL_CXX0X__)
-#  define CXX_STD CXX_STD_11
-#else
-#  define CXX_STD __cplusplus
-#endif
-
-const char* info_language_standard_default = "INFO" ":" "standard_default["
-#if CXX_STD > CXX_STD_23
-  "26"
-#elif CXX_STD > CXX_STD_20
-  "23"
-#elif CXX_STD > CXX_STD_17
-  "20"
-#elif CXX_STD > CXX_STD_14
-  "17"
-#elif CXX_STD > CXX_STD_11
-  "14"
-#elif CXX_STD >= CXX_STD_11
-  "11"
-#else
-  "98"
-#endif
-"]";
-
-const char* info_language_extensions_default = "INFO" ":" "extensions_default["
-#if (defined(__clang__) || defined(__GNUC__) || defined(__xlC__) ||           \
-     defined(__TI_COMPILER_VERSION__)) &&                                     \
-  !defined(__STRICT_ANSI__)
-  "ON"
-#else
-  "OFF"
-#endif
-"]";
-
-/*--------------------------------------------------------------------------*/
-
-int main(int argc, char* argv[])
-{
-  int require = 0;
-  require += info_compiler[argc];
-  require += info_platform[argc];
-  require += info_arch[argc];
-#ifdef COMPILER_VERSION_MAJOR
-  require += info_version[argc];
-#endif
-#ifdef COMPILER_VERSION_INTERNAL
-  require += info_version_internal[argc];
-#endif
-#ifdef SIMULATE_ID
-  require += info_simulate[argc];
-#endif
-#ifdef SIMULATE_VERSION_MAJOR
-  require += info_simulate_version[argc];
-#endif
-#if defined(__CRAYXT_COMPUTE_LINUX_TARGET)
-  require += info_cray[argc];
-#endif
-  require += info_language_standard_default[argc];
-  require += info_language_extensions_default[argc];
-  (void)argv;
-  return require;
-}
-
-
-
 // File: ./include/common/ISerializable.hpp
 #pragma once
 #include <json.hpp>
@@ -1289,11 +366,10 @@ class ServerManager : public NetworkManager
 private:
     int getNextAvailablePlayerID();
     void broadcastPlayerList();
-    void createPlayerAndLink(ENetPeer *  peer);
-
+    void createPlayerAndLink(ENetPeer *peer);
 protected:
-    void onPeerConnect(ENetPeer *  peer) override;
-    void onPeerDisconnect(ENetPeer *  peer) override;
+    void onPeerConnect(ENetPeer *peer) override;
+    void onPeerDisconnect(ENetPeer *peer) override;
 
 public:
     ServerManager(uint16_t port = 12345);
@@ -1373,7 +449,6 @@ public:
 
     void handleEvent(sf::Event event, ScreenManager &manager) override
     {
-        // Handle game events
         if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
         {
             std::cout << "Game event: escape pressed" << std::endl;
@@ -1382,11 +457,6 @@ public:
 
     void update(float deltaTime) override
     {
-        // Game update logic
-        if (!running)
-            return;
-        // Simulate some work
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     void render(sf::RenderWindow &window) override
@@ -1409,73 +479,29 @@ public:
 
 class LobbyScreen : public Screen
 {
-    sf::Text lobbyText;
-    std::vector<sf::CircleShape> playerCircles;
-    std::map<int, std::string> players; // Map of player IDs and their names (or other details)
-    const float circleRadius = 30.0f;   // Radius of each player circle
-    const float padding = 10.0f;        // Padding between circles
+    InteractiveText mainText;
+
+    ClientManager &clientMan;
+
+    const float circleRadius = 30.0f;
+    const float padding = 100.0f;
+    std::vector<InteractiveText> clickableTexts;
 
 public:
-    LobbyScreen()
+    LobbyScreen(ClientManager &clientManager)
+        : clientMan(clientManager),
+          mainText(defaultFont, "Tetris Lobby", sf::Color::Blue, {230, 20}, 50)
     {
-        // Set lobby header text
-        lobbyText.setFont(defaultFont);
-        lobbyText.setString("Lobby Screen");
-        lobbyText.setCharacterSize(40);
-        lobbyText.setFillColor(sf::Color::Blue);
-        lobbyText.setPosition(230, 20);
-    }
-
-    // Function to add a new player
-    void addPlayer(int playerId, const std::string &playerName)
-    {
-        players[playerId] = playerName;
-
-        sf::CircleShape circle(circleRadius);
-        circle.setFillColor(sf::Color::Cyan);
-        circle.setOutlineThickness(2.0f);
-        circle.setOutlineColor(sf::Color::Black);
-
-        // Calculate position based on the current number of players
-        int index = playerCircles.size();
-        float x = (index % 5) * (2 * circleRadius + padding) + 100; // Adjust columns
-        float y = (index / 5) * (2 * circleRadius + padding) + 100; // Adjust rows
-
-        circle.setPosition(x, y);
-        playerCircles.push_back(circle);
-    }
-
-    // Function to remove a player
-    void removePlayer(int playerId)
-    {
-        if (players.erase(playerId) > 0)
-        {
-            playerCircles.clear();
-            int index = 0;
-            for (const auto &[id, name] : players)
-            {
-                sf::CircleShape circle(circleRadius);
-                circle.setFillColor(sf::Color::Cyan);
-                circle.setOutlineThickness(2.0f);
-                circle.setOutlineColor(sf::Color::Black);
-
-                float x = (index % 5) * (2 * circleRadius + padding) + 100;
-                float y = (index / 5) * (2 * circleRadius + padding) + 100;
-
-                circle.setPosition(x, y);
-                playerCircles.push_back(circle);
-                ++index;
-            }
-        }
     }
 
     void handleEvent(sf::Event event, ScreenManager &manager) override
     {
+        for (InteractiveText ct : clickableTexts)
+            ct.handleEvent(event);
+
         // Example: Handle "Escape" key to leave the lobby
         if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-        {
             std::cout << "Lobby event: escape pressed" << std::endl;
-        }
     }
 
     void update(float deltaTime) override
@@ -1485,13 +511,57 @@ public:
 
     void render(sf::RenderWindow &window) override
     {
-        // Draw the lobby text
-        window.draw(lobbyText);
+        mainText.render(window);
 
-        // Draw all player circles
-        for (auto &circle : playerCircles)
+        int index = 0;
+        int maxColumns = 5; // Max number of circles per row
+        int numPlayers = clientMan.getDataPlayers().size();
+
+        // Calculate the number of rows needed
+        int rows = (numPlayers + maxColumns - 1) / maxColumns;
+
+        // Calculate the total width and height of the grid
+        float totalWidth = maxColumns * (2 * circleRadius + padding) - padding;
+        float totalHeight = rows * (2 * circleRadius + padding) - padding;
+
+        // Get window size
+        sf::Vector2u windowSize = window.getSize();
+
+        // Calculate starting position to center the grid
+        float startX = (windowSize.x - totalWidth) / 2;
+        float startY = (windowSize.y - totalHeight) / 2;
+
+        clickableTexts.clear();
+        for (auto &pd : clientMan.getDataPlayers())
         {
+            sf::CircleShape circle(circleRadius);
+
+            circle.setFillColor(sf::Color::Cyan);
+            circle.setOutlineThickness(2.0f);
+            circle.setOutlineColor(sf::Color::Black);
+
+            // Calculate position for the circle
+            float x = startX + (index % maxColumns) * (2 * circleRadius + padding);
+            float y = startY + (index / maxColumns) * (2 * circleRadius + padding);
+
+            // Set circle position
+            circle.setPosition(x, y);
             window.draw(circle);
+
+            // Create and position the text
+            InteractiveText itext(
+                defaultFont,
+                pd.playerName + " " + std::to_string(pd.playerID),
+                sf::Color::Red,
+                {x - circleRadius, y + 2 * circleRadius}, 20); // Centered text below circle
+
+            itext.render(window);
+            itext.setOnClick([&]()
+                             { std::cout << " clicked " << pd.playerID << std::endl; });
+
+            clickableTexts.emplace_back(itext);
+
+            index++;
         }
     }
 };
@@ -1514,6 +584,9 @@ public:
 #include "InteractiveText.hpp"
 #include "ClientManager.hpp"
 
+constexpr float x_offset_screen = 80;
+constexpr float y_offset_screen = 120;
+
 class MenuScreen : public Screen
 {
     InteractiveText titleText;
@@ -1521,27 +594,21 @@ class MenuScreen : public Screen
     InteractiveText quitText;
     ScreenManager &manager; // Reference to ScreenManager
     ClientManager &clientMan;
-#define x_offset_screen 80
-#define y_offset_screen 80
 
 public:
     MenuScreen(ScreenManager &screenManager, ClientManager &clientManager)
-        : titleText(defaultFont, "Main Menu", 40, sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}),
-          connectText(defaultFont, "Connect", 30, sf::Color::White, {x_offset_screen + 300, y_offset_screen + 200}),
-          quitText(defaultFont, "Quit", 30, sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}),
+        : titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}, 40),
+          connectText(defaultFont, "Connect", sf::Color::White, {x_offset_screen + 330, y_offset_screen + 200}, 25),
+          quitText(defaultFont, "Quit", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}, 25),
           manager(screenManager), clientMan(clientManager)
     {
         connectText.setOnClick([this]()
                                {
-                                std::cout << "Trying to connect\n";
                                 manager.setActiveScreen("waiting-connection");
                                 clientMan.connect(); });
 
         quitText.setOnClick([this]()
-                            {
-                                std::cout << "Quit button clicked!\n";
-                                // manager.quit(); // Example: add a quit method to ScreenManager
-                            });
+                            { manager.quit(); });
     }
 
     void handleEvent(sf::Event event, ScreenManager &manager) override
@@ -1588,21 +655,20 @@ class WaitingConnectionScreen : public Screen
 
     ScreenManager &screenMan;
     ClientManager &clientMan;
-
-#define x_offset_screen 80
-#define y_offset_screen 80
+    static constexpr float x_offset_screen = 100.0f;
+    static constexpr float y_offset_screen = 120.0f;
 
 public:
     WaitingConnectionScreen(ScreenManager &screenManager, ClientManager &clientManager)
-        : titleText(defaultFont, "Waiting for server...", 40, sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}),
-          backText(defaultFont, "Back", 30, sf::Color::White, {x_offset_screen + 300, y_offset_screen + 200}),
+        : titleText(defaultFont, "Waiting for server...", sf::Color::White, {(x_offset_screen + 100.0f), (y_offset_screen + 50.0f)}, 40),
+          backText(defaultFont, "Back", sf::Color::White, {(x_offset_screen + 300.0f), (y_offset_screen + 170.0f)}, 25),
           screenMan(screenManager), clientMan(clientManager)
     {
         backText.setOnClick([this]()
-                            {
-                                std::cout << "Getting back to main screen\n";
-                                clientMan.disconnect();
-                                screenMan.setActiveScreen("main-menu"); });
+                            {   std::cout << "Getting back to main screen\n";
+                                screenMan.setActiveScreen("main-menu");
+                                clientMan.disconnect(); 
+                            });
     }
 
     void handleEvent(sf::Event event, ScreenManager &manager) override
@@ -1613,9 +679,7 @@ public:
     void update(float deltaTime) override
     {
         if (clientMan.IsConnected())
-        {
             screenMan.setActiveScreen("lobby");
-        }
     }
 
     void render(sf::RenderWindow &window) override
@@ -1639,11 +703,11 @@ class InteractiveText
     std::function<void()> onClickCallback;
 
 public:
-    InteractiveText(const sf::Font &font, const std::string &str, unsigned int charSize, sf::Color color, sf::Vector2f position)
+    InteractiveText(const sf::Font &font, const std::string &str, sf::Color color, sf::Vector2f position, int fontSize)
     {
         text.setFont(font);
         text.setString(str);
-        text.setCharacterSize(charSize);
+        text.setCharacterSize(fontSize);
         text.setFillColor(color);
         text.setPosition(position);
     }
@@ -1678,9 +742,11 @@ public:
 #include <map>
 
 // Base class for screens
-class Screen {
+class Screen
+{
 public:
-    Screen(){
+    Screen()
+    {
         // Load font
         if (!defaultFont.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"))
         {
@@ -1688,47 +754,51 @@ public:
         }
     }
     virtual ~Screen() {}
-    virtual void handleEvent(sf::Event event, class ScreenManager& manager) = 0;
+    virtual void handleEvent(sf::Event event, class ScreenManager &manager) = 0;
     virtual void update(float deltaTime) = 0;
-    virtual void render(sf::RenderWindow& window) = 0;
+    virtual void render(sf::RenderWindow &window) = 0;
 
-    void stop() {
+    void stop()
+    {
         running = false;
     }
 
 protected:
-    std::atomic<bool> running{ true };
+    std::atomic<bool> running{true};
     sf::Font defaultFont;
 };
 
 // Screen Manager
-class ScreenManager {
+class ScreenManager
+{
     std::map<std::string, std::unique_ptr<Screen>> screens;
-    Screen* activeScreen = nullptr;
+    Screen *activeScreen = nullptr;
 
     std::thread screenThread;
     std::mutex mtx;
     std::condition_variable cv;
 
-    std::atomic<bool> threadRunning{ false };
+    std::atomic<bool> threadRunning{false};
 
 public:
-    ~ScreenManager() {
+    ~ScreenManager()
+    {
         stopThread();
     }
 
-    void quit() {
-        // Logic to terminate the application
-        std::cout << "Application quitting...\n";
-        stopThread();
+    void quit()
+    {
+        //stopThread();
         exit(0);
     }
 
-    void addScreen(const std::string& name, std::unique_ptr<Screen> screen) {
+    void addScreen(const std::string &name, std::unique_ptr<Screen> screen)
+    {
         screens[name] = std::move(screen);
     }
 
-    void setActiveScreen(const std::string& name) {
+    void setActiveScreen(const std::string &name)
+    {
         {
             std::lock_guard<std::mutex> lock(mtx);
             activeScreen = screens[name].get();
@@ -1736,27 +806,35 @@ public:
         cv.notify_one();
     }
 
-    void handleEvent(sf::Event event) {
-        if (activeScreen) {
+    void handleEvent(sf::Event event)
+    {
+        if (activeScreen)
+        {
             activeScreen->handleEvent(event, *this);
         }
     }
 
-    void update(float deltaTime) {
-        if (activeScreen) {
+    void update(float deltaTime)
+    {
+        if (activeScreen)
+        {
             activeScreen->update(deltaTime);
         }
     }
 
-    void render(sf::RenderWindow& window) {
-        if (activeScreen) {
+    void render(sf::RenderWindow &window)
+    {
+        if (activeScreen)
+        {
             activeScreen->render(window);
         }
     }
 
-    void startThread() {
+    void startThread()
+    {
         threadRunning = true;
-        screenThread = std::thread([this]() {
+        screenThread = std::thread([this]()
+                                   {
             while (threadRunning) {
                 std::unique_lock<std::mutex> lock(mtx);
                 cv.wait(lock, [this]() { return activeScreen != nullptr; });
@@ -1771,9 +849,11 @@ public:
             } });
     }
 
-    void stopThread() {
+    void stopThread()
+    {
         threadRunning = false;
-        if (screenThread.joinable()) {
+        if (screenThread.joinable())
+        {
             screenThread.join();
         }
     }
@@ -1809,7 +889,7 @@ public:
                 auto cell = std::make_shared<TetrisCell>(
                     sf::Vector2f(CELL_SIZE, CELL_SIZE),
                     sf::Vector2f(x * CELL_SIZE, y * CELL_SIZE),
-                    sf::Color::Red // Default color
+                    sf::Color::Red 
                 );
 
                 row.push_back(cell);
@@ -1840,8 +920,10 @@ public:
 // File: ./include/client/ClientManager.hpp
 #pragma once
 
+#include <iostream>
 #include "NetworkManager.hpp"
 #include <SFML/Graphics.hpp>
+#include "PlayerData.hpp"
 #include <thread>
 #include <atomic>
 
@@ -1849,10 +931,13 @@ class ClientManager : public NetworkManager
 {
 private:
     ENetPeer *serverPeer;
-
+    
     std::atomic<bool> isConnected = false;
 
+    std::vector<PlayerData> players;
+
     std::thread ThreadHeartbeat;
+    std::atomic<bool> HeartBeatRunningFlag = false;
     unsigned long last_heartbeat;
 
     bool debugEnabled = false;
@@ -1863,11 +948,14 @@ protected:
     void onPeerDisconnect(ENetPeer *peer) override;
 
 public:
-    ClientManager();
-    ~ClientManager();
+    ClientManager() {};
+    ~ClientManager() {};
 
     void toggleDebug();
     void on_receive_heartbeat();
+
+    void on_receive_player_list(const Packet &packet);
+    void on_receive_game_screen(const Packet &packet);
 
     void TaskStartHeartbeat();
     void TaskHeartbeat();
@@ -1877,6 +965,11 @@ public:
     void disconnect();
 
     bool IsConnected() const { return isConnected; };
+
+    std::vector<PlayerData> &getDataPlayers()
+    {
+        return players;
+    }
 };
 
 
@@ -1980,7 +1073,6 @@ void NetworkManager::TaskStopNetwork()
 {
     running = false;
 
-    enet_host_destroy(host);
     if (networkThread.joinable())
         networkThread.join();
 }
@@ -2023,6 +1115,7 @@ void NetworkManager::TaskNetwork()
         sendOutgoingPackets();
         processIncomingPackets();
     }
+    enet_host_destroy(host);
 }
 
 void NetworkManager::sendOutgoingPackets()
@@ -2148,7 +1241,7 @@ int main(int argc, const char *argv[])
 #define MAX_CLIENTS 32
 #define CHANNELS 2
 
-void ServerManager::onPeerConnect(ENetPeer * peer)
+void ServerManager::onPeerConnect(ENetPeer *peer)
 {
     network_print("");
     std::cout << "[CONNECTED] " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
@@ -2156,11 +1249,12 @@ void ServerManager::onPeerConnect(ENetPeer * peer)
     createPlayerAndLink(peer);
     broadcastPlayerList();
 }
-void ServerManager::onPeerDisconnect(ENetPeer * peer)
+void ServerManager::onPeerDisconnect(ENetPeer *peer)
 {
     network_print("");
     std::cout << "[DISCONNECTED] " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
     delete (Player *)peer->data;
+    broadcastPlayerList();
 }
 
 ServerManager::ServerManager(uint16_t port)
@@ -2199,7 +1293,7 @@ int ServerManager::getNextAvailablePlayerID()
     return currentID++;
 }
 
-void ServerManager::createPlayerAndLink(ENetPeer * peer)
+void ServerManager::createPlayerAndLink(ENetPeer *peer)
 {
     Player *newPlayer = new Player(getNextAvailablePlayerID(), "Unnamed");
     peer->data = (void *)newPlayer;
@@ -2210,7 +1304,7 @@ void ServerManager::broadcastPlayerList()
 {
     nlohmann::json message = nlohmann::json::array();
 
-    for (ENetPeer * entry : getPeers())
+    for (ENetPeer *entry : getPeers())
     {
         if (!entry->data)
         {
@@ -2222,9 +1316,10 @@ void ServerManager::broadcastPlayerList()
 
         nlohmann::json playerJson = player->getData().serialize();
 
-        message.push_back(nlohmann::json::array({player->getData().playerID, playerJson}));
+        message.push_back(nlohmann::json::array({playerJson}));
     }
-    // send_packet(Packet(PacketType::PLAYER_LIST, message, nullptr));
+    std::cout << message << std::endl;
+    send_packet(Packet(PacketType::PLAYER_LIST, message, nullptr));
 }
 
 
@@ -2233,19 +1328,16 @@ void ServerManager::broadcastPlayerList()
 #include <iostream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
+#include "PlayerData.hpp"
 
-ClientManager::ClientManager() {}
-ClientManager::~ClientManager() {}
-
-void ClientManager::onPeerConnect(ENetPeer * peer)
+void ClientManager::onPeerConnect(ENetPeer *peer)
 {
     isConnected = true;
     std::cout << std::endl;
     network_print("");
-    std::cout << "Connection successful to " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl
-              << std::endl;
+    std::cout << "Connection successful to " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
 }
-void ClientManager::onPeerDisconnect(ENetPeer * peer)
+void ClientManager::onPeerDisconnect(ENetPeer *peer)
 {
     isConnected = false;
     network_print("Disconnected from server\n");
@@ -2258,6 +1350,70 @@ void ClientManager::on_receive_heartbeat()
     last_heartbeat = now_ms;
 }
 
+void ClientManager::on_receive_player_list(const Packet &packet)
+{
+    players.clear();
+
+    nlohmann::json received;
+
+    try
+    {
+        received = packet.toJson();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Failed to parse packet as JSON: " << e.what() << std::endl;
+        return;
+    }
+
+    if (!received.is_array())
+    {
+        std::cerr << "Invalid JSON: top-level element is not an array." << std::endl;
+        return;
+    }
+
+    // Iterate over each inner array
+    for (const auto &innerArray : received)
+    {
+        if (!innerArray.is_array())
+        {
+            std::cerr << "Inner element is not an array. Skipping." << std::endl;
+            continue;
+        }
+
+        // Iterate over each player object in the inner arrays
+        for (const auto &playerObject : innerArray)
+        {
+            if (!playerObject.is_object())
+            {
+                std::cerr << "Player entry is not a valid JSON object. Skipping." << std::endl;
+                continue;
+            }
+
+            PlayerData playerData;
+
+            if (playerObject.contains("isConnected") && playerObject["isConnected"].is_boolean())
+                playerData.isConnected = playerObject["isConnected"].get<bool>();
+
+            if (playerObject.contains("playerID") && playerObject["playerID"].is_number_integer())
+                playerData.playerID = playerObject["playerID"].get<int>();
+
+            if (playerObject.contains("playerName") && playerObject["playerName"].is_string())
+                playerData.playerName = playerObject["playerName"].get<std::string>();
+
+            if (playerObject.contains("score") && playerObject["score"].is_number_integer())
+                playerData.score = playerObject["score"].get<int>();
+
+            players.emplace_back(playerData);
+        }
+    }
+}
+
+void ClientManager::on_receive_game_screen(const Packet &packet)
+{
+    
+}
+
 void ClientManager::TaskStartHeartbeat()
 {
     network_print("Initializing Heartbeat Task...\n");
@@ -2266,8 +1422,9 @@ void ClientManager::TaskStartHeartbeat()
 
 void ClientManager::TaskHeartbeat()
 {
+    HeartBeatRunningFlag = true;
     int heartbeat_frequencie = 1; // Hertz
-    while (isRunning())
+    while (HeartBeatRunningFlag)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / heartbeat_frequencie));
         send_packet(Packet(PacketType::HEARTBEAT, 0, serverPeer)); // Set destination as the server serverPeer
@@ -2285,6 +1442,13 @@ void ClientManager::toggleDebug()
 
 void ClientManager::TaskStopHeartbeat()
 {
+    if (!HeartBeatRunningFlag)
+    {
+        std::cout << "Heartbeat was not running. Why would you stop it?\n";
+        return;
+    }
+    HeartBeatRunningFlag = false;
+
     if (ThreadHeartbeat.joinable())
         ThreadHeartbeat.join();
 }
@@ -2341,7 +1505,7 @@ void ClientManager::disconnect()
         enet_peer_disconnect_now(serverPeer, 0);
         enet_peer_reset(serverPeer);
     }
-    
+
     TaskStopNetwork();
     TaskStopHeartbeat();
 }
@@ -2454,20 +1618,9 @@ void heartbeat_listener(const Packet &packet)
     client.on_receive_heartbeat();
 }
 
-// In your registered listener for PLAYER_LIST
 void onPlayerListPacket(const Packet &packet)
 {
-    nlohmann::json received = packet.toJson();
-    if (received.contains("action") && received["action"] == "updatePlayerList")
-    {
-        auto players = received["players"];
-        for (auto &p : players)
-        {
-            int id = p["playerID"];
-            std::string name = p["name"];
-            std::cout << "Player ID: " << id << ", Name: " << name << "\n";
-        }
-    }
+    client.on_receive_player_list(packet);
 }
 
 int main()
@@ -2479,7 +1632,7 @@ int main()
     ScreenManager screenManager;
 
     screenManager.addScreen("main-menu", std::make_unique<MenuScreen>(screenManager, client));
-    screenManager.addScreen("lobby", std::make_unique<LobbyScreen>());
+    screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(client));
     screenManager.addScreen("waiting-connection", std::make_unique<WaitingConnectionScreen>(screenManager, client));
     screenManager.addScreen("game", std::make_unique<BoardScreen>());
 
@@ -2491,25 +1644,22 @@ int main()
     while (window.isOpen())
     {
         sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-            {
-                window.close();
-            }
-            screenManager.handleEvent(event);
-        }
 
         float deltaTime = clock.restart().asSeconds();
 
         window.clear(sf::Color::Black);
         screenManager.render(window);
         window.display();
+
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            screenManager.handleEvent(event);
+        }
     }
 
-    while (client.isRunning())
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
+    client.disconnect();
     return 0;
 }
 

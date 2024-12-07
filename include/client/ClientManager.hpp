@@ -6,12 +6,12 @@
 #include "PlayerData.hpp"
 #include <thread>
 #include <atomic>
+#include <mutex>
 
 class ClientManager : public NetworkManager
 {
 private:
     ENetPeer *serverPeer;
-
     std::atomic<bool> isConnected = false;
 
     std::vector<PlayerData> players;
@@ -22,6 +22,10 @@ private:
 
     bool debugEnabled = false;
     void handleKeyPress(sf::Event keyEvent, sf::RenderWindow &window);
+    
+    std::mutex boardMutex;
+    nlohmann::json lastReceivedBoard;
+    bool hasBoardData = false;
 
 protected:
     void onPeerConnect(ENetPeer *peer) override;
@@ -32,9 +36,10 @@ public:
     ~ClientManager() {};
 
     void toggleDebug();
-    void on_receive_heartbeat();
 
+    void on_receive_heartbeat();
     void on_receive_player_list(const Packet &packet);
+    void on_receive_game_screen(const Packet &packet);
 
     void TaskStartHeartbeat();
     void TaskHeartbeat();
@@ -44,9 +49,10 @@ public:
     void disconnect();
 
     bool IsConnected() const { return isConnected; };
+    std::vector<PlayerData> &getDataPlayers() { return players; }
 
-    std::vector<PlayerData> &getDataPlayers()
-    {
-        return players;
-    }
+    nlohmann::json getLastBoardState();
+
+    bool boardDataAvailable();
+    void request_game_start();
 };

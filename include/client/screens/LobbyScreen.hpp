@@ -10,9 +10,11 @@
 
 class LobbyScreen : public Screen
 {
-    sf::Text lobbyText;
+    InteractiveText mainText;
 
-    ClientManager &clientMan; // Reference to the ClientManager
+    InteractiveText startGameText;
+
+    ClientManager &clientMan;
 
     const float circleRadius = 30.0f;
     const float padding = 100.0f;
@@ -20,21 +22,22 @@ class LobbyScreen : public Screen
 
 public:
     LobbyScreen(ClientManager &clientManager)
-        : clientMan(clientManager)
+        : clientMan(clientManager),
+          mainText(defaultFont, "Tetris Lobby", sf::Color::Blue, {230, 20}, 50),
+          startGameText(defaultFont, "Start Game", sf::Color::Green, {230, 380}, 40)
     {
-        lobbyText.setFont(defaultFont);
-        lobbyText.setString("Lobby Screen");
-        lobbyText.setCharacterSize(40);
-        lobbyText.setFillColor(sf::Color::Blue);
-        lobbyText.setPosition(230, 20);
+        startGameText.setOnClick([&clientManager]() {
+            clientManager.request_game_start();
+        });
     }
 
     void handleEvent(sf::Event event, ScreenManager &manager) override
     {
+        startGameText.handleEvent(event);
+
         for (InteractiveText ct : clickableTexts)
             ct.handleEvent(event);
-
-        // Example: Handle "Escape" key to leave the lobby
+            
         if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
             std::cout << "Lobby event: escape pressed" << std::endl;
     }
@@ -46,7 +49,8 @@ public:
 
     void render(sf::RenderWindow &window) override
     {
-        window.draw(lobbyText);
+        startGameText.render(window);
+        mainText.render(window);
 
         int index = 0;
         int maxColumns = 5; // Max number of circles per row
@@ -66,7 +70,7 @@ public:
         float startX = (windowSize.x - totalWidth) / 2;
         float startY = (windowSize.y - totalHeight) / 2;
 
-        clickableTexts.clear();        
+        clickableTexts.clear();
         for (auto &pd : clientMan.getDataPlayers())
         {
             sf::CircleShape circle(circleRadius);

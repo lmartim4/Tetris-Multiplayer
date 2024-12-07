@@ -7,10 +7,11 @@
             "command": "cmake",
             "args": [
                 "-DCMAKE_BUILD_TYPE=Debug",
-                ".",
-                "&&",
-                "make"
+                ".."
             ],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -26,10 +27,11 @@
             "command": "cmake",
             "args": [
                 "-DCMAKE_BUILD_TYPE=Release",
-                ".",
-                "&&",
-                "make"
+                ".."
             ],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
             "group": {
                 "kind": "build",
                 "isDefault": false
@@ -43,6 +45,9 @@
             "label": "Run Server",
             "type": "shell",
             "command": "./server",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
             "group": "test",
             "presentation": {
                 "reveal": "always",
@@ -54,6 +59,9 @@
             "label": "Run Client",
             "type": "shell",
             "command": "./client",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
             "group": "test",
             "presentation": {
                 "reveal": "always",

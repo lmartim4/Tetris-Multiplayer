@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <functional>
+#include "CellColorType.hpp"
 
 class TetrisCell
 {
@@ -33,4 +34,23 @@ public:
     void setColor(const sf::Color &color) { cellShape.setFillColor(color); }
 
     sf::RectangleShape &getShape() { return cellShape; }
+
+    static sf::Color getColorFromType(CellColorType type)
+    {
+        switch (type)
+        {
+        case CellColorType::Empty:
+            return sf::Color(50, 50, 50);
+        case CellColorType::Red:
+            return sf::Color::Red;
+        case CellColorType::Green:
+            return sf::Color::Green;
+        case CellColorType::Blue:
+            return sf::Color::Blue;
+        case CellColorType::Yellow:
+            return sf::Color::Yellow;
+        default:
+            return sf::Color::Magenta;
+        }
+    }
 };

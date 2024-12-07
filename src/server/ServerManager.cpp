@@ -85,3 +85,13 @@ void ServerManager::broadcastPlayerList()
     std::cout << message << std::endl;
     send_packet(Packet(PacketType::PLAYER_LIST, message, nullptr));
 }
+
+void ServerManager::start_game()
+{
+    send_packet(Packet(PacketType::STARTING_GAME, 0, nullptr));
+    int width = 10;
+    int height = 10;
+    nlohmann::json boardJson = createRandomBoard(width, height);
+    Packet boardPacket(PacketType::GAME_SCREEN, boardJson, nullptr);
+    send_packet(boardPacket);
+}

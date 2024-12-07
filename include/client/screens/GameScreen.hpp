@@ -11,7 +11,6 @@
 
 #include "Screen.hpp"
 
-// Game Screen
 class GameScreen : public Screen
 {
     sf::Text gameText;
@@ -29,9 +28,7 @@ public:
     void handleEvent(sf::Event event, ScreenManager &manager) override
     {
         if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-        {
             std::cout << "Game event: escape pressed" << std::endl;
-        }
     }
 
     void update(float deltaTime) override

@@ -56,7 +56,6 @@ public:
 
     void quit()
     {
-        //stopThread();
         exit(0);
     }
 
@@ -93,9 +92,7 @@ public:
     void render(sf::RenderWindow &window)
     {
         if (activeScreen)
-        {
             activeScreen->render(window);
-        }
     }
 
     void startThread()
