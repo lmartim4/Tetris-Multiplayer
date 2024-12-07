@@ -10,15 +10,15 @@
 
 class LobbyScreen : public Screen
 {
-    InteractiveText mainText;
+    Button mainText;
 
-    InteractiveText startGameText;
+    Button startGameText;
 
     ClientManager &clientMan;
 
     const float circleRadius = 30.0f;
     const float padding = 100.0f;
-    std::vector<InteractiveText> clickableTexts;
+    std::vector<Button> clickableTexts;
 
 public:
     LobbyScreen(ClientManager &clientManager)
@@ -35,7 +35,7 @@ public:
     {
         startGameText.handleEvent(event);
 
-        for (InteractiveText ct : clickableTexts)
+        for (Button ct : clickableTexts)
             ct.handleEvent(event);
             
         if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
@@ -88,7 +88,7 @@ public:
             window.draw(circle);
 
             // Create and position the text
-            InteractiveText itext(
+            Button itext(
                 defaultFont,
                 pd.playerName + " " + std::to_string(pd.playerID),
                 sf::Color::Red,

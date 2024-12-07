@@ -10,7 +10,7 @@
 #include <map>
 
 #include "Screen.hpp"
-#include "InteractiveText.hpp"
+#include "Button.hpp"
 #include "ClientManager.hpp"
 
 constexpr float x_offset_screen = 80;
@@ -18,9 +18,9 @@ constexpr float y_offset_screen = 120;
 
 class MenuScreen : public Screen
 {
-    InteractiveText titleText;
-    InteractiveText connectText;
-    InteractiveText quitText;
+    Button titleText;
+    Button connectText;
+    Button quitText;
     ScreenManager &manager; // Reference to ScreenManager
     ClientManager &clientMan;
 

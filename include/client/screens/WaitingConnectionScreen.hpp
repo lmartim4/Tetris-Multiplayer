@@ -10,13 +10,13 @@
 #include <map>
 
 #include "Screen.hpp"
-#include "InteractiveText.hpp"
+#include "Button.hpp"
 #include "ClientManager.hpp"
 
 class WaitingConnectionScreen : public Screen
 {
-    InteractiveText titleText;
-    InteractiveText backText;
+    Button titleText;
+    Button backText;
 
     ScreenManager &screenMan;
     ClientManager &clientMan;
@@ -32,8 +32,7 @@ public:
         backText.setOnClick([this]()
                             {   std::cout << "Getting back to main screen\n";
                                 screenMan.setActiveScreen("main-menu");
-                                clientMan.disconnect(); 
-                            });
+                                clientMan.disconnect(); });
     }
 
     void handleEvent(sf::Event event, ScreenManager &manager) override
