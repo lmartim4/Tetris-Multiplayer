@@ -79,8 +79,9 @@ void GameManager::runGameLoop()
     {
         update();
         board.broadcastBoardState();
+        board.printStatus();
         // Sleep a bit to avoid busy-waiting and allow input handling at ~60 FPS
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
     // Loop ended
@@ -104,24 +105,35 @@ void GameManager::update()
     // Clear old tetrominos
     board.clearFallingTetrominos();
 
+    TetrisAction lastMovereceived = this->lastM;
+    this->lastM = TetrisAction::EMPTY;
+
     // Check if it's time to apply gravity
     auto now = std::chrono::steady_clock::now();
     if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastGravityTick).count() > gravityTimeMs)
     {
         currentTetromino->dropGravity();
         lastGravityTick = now;
+        lastMovereceived = TetrisAction::EMPTY;
+
     }
 
-    TetrisAction lastMove = currentTetromino->getLastMove();
-
     // Check collision after gravity or moves
-    if (board.checkCollision(*currentTetromino))
+    if (board.checkCollision(*currentTetromino, lastMovereceived))
     {
-        if (lastMove == TetrisAction::DROP_FASTER || currentTetromino->getGravity())
+        if (lastMovereceived == TetrisAction::DROP_FASTER || currentTetromino->getGravity())
         {
             // Place and lock tetromino
+            std::cout << "Last move received = " << TetrisActionToString(lastMovereceived) << " e gravidade = " << currentTetromino->getGravity() << std::endl; 
             board.placeTetromino(*currentTetromino, true);
-            currentTetromino->updateStates();
+
+
+            // GRAVIDADE TEM Q SAIR DO TETROMINO, é uyma propriedade GLOBAL agr
+            currentTetromino->gravity = false;
+
+
+
+            // std::cout << "Encaixei" << std::endl; 
             currentTetromino.reset();
 
             nLinesClearedThisLevel += board.clearLines();
@@ -147,18 +159,18 @@ void GameManager::update()
         {
             // Invalid move, revert
             board.placeTetromino(*currentTetromino, false);
-            currentTetromino->updateStates();
+            currentTetromino->gravity = false;
         }
     }
     else
     {
         // Valid move, place without locking
         board.placeTetromino(*currentTetromino, false);
-        currentTetromino->updateStates();
+        currentTetromino->gravity = false;
     }
 }
 
 void GameManager::handleInput(TetrisAction action)
 {
-    board.handleInput(*currentTetromino, action);
+    lastM = action;
 }

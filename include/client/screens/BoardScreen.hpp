@@ -7,13 +7,12 @@
 #include "Screen.hpp"
 #include "TetrisCell.hpp"
 
-constexpr int CELL_SIZE = 40;
-
 class BoardScreen : public Screen
 {
 private:
     int BOARD_WIDTH = 10;
     int BOARD_HEIGHT = 10;
+    int CELL_SIZE = 30;
     ClientManager &clientManager;
 
     std::vector<std::vector<std::shared_ptr<TetrisCell>>> grid;

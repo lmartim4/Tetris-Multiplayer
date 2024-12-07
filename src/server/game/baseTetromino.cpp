@@ -23,11 +23,6 @@ CellColorType Tetromino::getColor() const
     return color;
 }
 
-TetrisAction Tetromino::getLastMove() const
-{
-    return lastMove;
-}
-
 bool Tetromino::getGravity() const
 {
     return gravity;
@@ -38,7 +33,7 @@ const std::vector<std::vector<int>> &Tetromino::getShape() const
     return shape;
 }
 
-void Tetromino::evolveStates(bool forward)
+void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
 {
     int sign = (forward) ? 1 : -1;
 
@@ -96,17 +91,6 @@ void Tetromino::evolveStates(bool forward)
 
         shape = rotated;
     }
-}
-
-void Tetromino::updateStates()
-{
-    lastMove = TetrisAction::EMPTY;
-    gravity = false;
-}
-
-void Tetromino::setLastAction(TetrisAction action)
-{
-    lastMove = action;
 }
 
 void Tetromino::dropGravity()

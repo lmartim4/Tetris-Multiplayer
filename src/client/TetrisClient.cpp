@@ -40,7 +40,7 @@ int main()
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);
     client.registerListener(PacketType::STARTING_GAME, onGameStartPacket);
 
-    sf::RenderWindow window(sf::VideoMode(800, 600), "Multi-Threaded Screens");
+    sf::RenderWindow window(sf::VideoMode(500, 540), "Multi-Threaded Screens");
 
     screenManager.addScreen("main-menu", std::make_unique<MenuScreen>(screenManager, client));
     screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(client));

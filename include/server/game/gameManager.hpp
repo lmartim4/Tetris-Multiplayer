@@ -30,6 +30,8 @@ private:
     std::thread gameThread;     // The thread running the game loop
     std::atomic<bool> threadActive; // To track if the thread is active
 
+    TetrisAction lastM = TetrisAction::EMPTY;
+
     void runGameLoop();
     
 public:

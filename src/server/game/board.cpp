@@ -62,19 +62,15 @@ void TetrisBoard::clear()
         }
     }
 }
-void TetrisBoard::handleInput(Tetromino &currentTetromino, TetrisAction action)
-{
-    currentTetromino.setLastAction(action);
-}
 
 std::vector<std::vector<std::shared_ptr<Cell>>> &TetrisBoard::getGrid()
 {
     return grid;
 }
 
-bool TetrisBoard::checkCollision(Tetromino &currentTetromino)
+bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastMove)
 {
-    currentTetromino.evolveStates(true);
+    currentTetromino.evolveStates(true, lastMove);
 
     const auto &shape = currentTetromino.getShape();
     int tetrominoX = currentTetromino.getX();
@@ -92,13 +88,15 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino)
 
                 if (gridX >= HEIGHT || gridX < 0)
                 {
-                    currentTetromino.evolveStates(false);
+                    currentTetromino.evolveStates(false, lastMove);
+                    std::cout << "bloqueei pois last move = " <<  TetrisActionToString(lastMove)  << "e passou dos limites"; 
                     return true;
                 }
 
                 if (grid[gridX][gridY]->isFixed())
                 {
-                    currentTetromino.evolveStates(false);
+                    currentTetromino.evolveStates(false, lastMove);
+                    std::cout << "bloqueei pois last move = " << TetrisActionToString(lastMove) << "e ia trombar em (" << gridX << ", " << gridY << ")"; 
                     return true;
                 }
             }
