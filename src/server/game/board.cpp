@@ -221,90 +221,72 @@ int TetrisBoard::clearLines()
 
 void TetrisBoard::broadcastBoardState()
 {
-
     if (!gridsAreEqual(grid, lastBroadcastedGrid))
     {
-        // Grids are different; proceed to broadcast
-
-        // Deep copy grid to lastBroadcastedGrid
-        lastBroadcastedGrid.clear();
-        lastBroadcastedGrid.reserve(grid.size());
-
-        for (const auto &row : grid)
-        {
-            std::vector<std::shared_ptr<Cell>> newRow;
-            newRow.reserve(row.size());
-
-            for (const auto &cellPtr : row)
-            {
-                if (cellPtr)
-                {
-                    newRow.emplace_back(std::make_shared<Cell>(*cellPtr));
-                }
-                else
-                {
-                    newRow.emplace_back(nullptr);
-                }
-            }
-
-            lastBroadcastedGrid.emplace_back(std::move(newRow));
-        }
-
-        nlohmann::json boardJson;
-        boardJson["width"] = WIDTH;
-        boardJson["height"] = HEIGHT;
-
-        nlohmann::json cells = nlohmann::json::array();
-
-        // Iterate through the board's grid
-        for (int y = 0; y < HEIGHT; ++y)
-        {
-            nlohmann::json row = nlohmann::json::array();
-            for (int x = 0; x < WIDTH; ++x)
-            {
-                CellColorType colorType = grid.at(y).at(x)->getColor();
-
-                nlohmann::json cellObj;
-                cellObj["c"] = colorType;
-                row.push_back(cellObj);
-            }
-            cells.push_back(row);
-        }
-
-        boardJson["cells"] = cells;
-        //std::cout << "Out: " << boardJson << std::endl;
-        serverManager.send_packet(Packet(PacketType::GAME_SCREEN, boardJson, nullptr));
-        /*------------------------------------*/
-        // Clear the lastBroadcastedGrid to prepare for the new copy
-        lastBroadcastedGrid.clear();
-        lastBroadcastedGrid.reserve(grid.size());
-
-        for (const auto &row : grid)
-        {
-            std::vector<std::shared_ptr<Cell>> newRow;
-            newRow.reserve(row.size());
-
-            for (const auto &cellPtr : row)
-            {
-                if (cellPtr)
-                {
-                    // Assuming Cell has a copy constructor
-                    newRow.emplace_back(std::make_shared<Cell>(*cellPtr));
-                }
-                else
-                {
-                    newRow.emplace_back(nullptr); // Handle empty cells if necessary
-                }
-            }
-
-            lastBroadcastedGrid.emplace_back(std::move(newRow));
-        }
+        updateLastBroadcastedGrid();                     // Step 1: Update lastBroadcastedGrid to match the current grid
+        nlohmann::json boardJson = constructBoardJson(); // Step 2: Construct the JSON object
+        sendBoardState(boardJson);                       // Step 3: Broadcast the JSON object
     }
-    else
+}
+
+// Updates lastBroadcastedGrid with a deep copy of the current grid
+void TetrisBoard::updateLastBroadcastedGrid()
+{
+    lastBroadcastedGrid.clear();
+    lastBroadcastedGrid.reserve(grid.size());
+
+    for (const auto &row : grid)
     {
-        // Grids are identical; no need to broadcast
-        // Optionally, you can log or handle this case as needed
+        std::vector<std::shared_ptr<Cell>> newRow;
+        newRow.reserve(row.size());
+
+        for (const auto &cellPtr : row)
+        {
+            if (cellPtr)
+            {
+                newRow.emplace_back(std::make_shared<Cell>(*cellPtr));
+            }
+            else
+            {
+                newRow.emplace_back(nullptr);
+            }
+        }
+
+        lastBroadcastedGrid.emplace_back(std::move(newRow));
     }
+}
+
+// Constructs a JSON representation of the board's current state
+nlohmann::json TetrisBoard::constructBoardJson() const
+{
+    nlohmann::json boardJson;
+    boardJson["width"] = WIDTH;
+    boardJson["height"] = HEIGHT;
+
+    nlohmann::json cells = nlohmann::json::array();
+
+    for (int y = 0; y < HEIGHT; ++y)
+    {
+        nlohmann::json row = nlohmann::json::array();
+        for (int x = 0; x < WIDTH; ++x)
+        {
+            CellColorType colorType = grid.at(y).at(x)->getColor();
+
+            nlohmann::json cellObj;
+            cellObj["c"] = colorType;
+            row.push_back(cellObj);
+        }
+        cells.push_back(row);
+    }
+
+    boardJson["cells"] = cells;
+    return boardJson;
+}
+
+// Sends the JSON board state using the server manager
+void TetrisBoard::sendBoardState(const nlohmann::json &boardJson) const
+{
+    serverManager.send_packet(Packet(PacketType::GAME_SCREEN, boardJson, nullptr));
 }
 
 // Implementation of gridsAreEqual

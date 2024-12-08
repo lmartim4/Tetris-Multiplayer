@@ -6,14 +6,19 @@
 #include <memory>
 #include <atomic>
 
+#include "ThreadSafeQueue.hpp"
 #include "game/tetrominoFactory.hpp"
 #include "TetrisAction.hpp"
 #include "ServerManager.hpp"
 #include "board.hpp"
+#include <mutex>
 
 class GameManager
 {
 private:
+    std::mutex gameStateMutex;
+    ThreadSafeQueue<TetrisAction> actionQueue;
+
     TetrisBoard board;
     std::unique_ptr<Tetromino> currentTetromino;
 
@@ -33,6 +38,7 @@ private:
 
     TetrisAction lastM = TetrisAction::EMPTY;
 
+    void handleInput(TetrisAction action);
     void runGameLoop();
 
 public:
@@ -55,5 +61,8 @@ public:
     void spawnTetromino();
     void update();
 
-    void handleInput(TetrisAction action);
+    void enqueueAction(TetrisAction action)
+    {
+        actionQueue.push(action);
+    }
 };

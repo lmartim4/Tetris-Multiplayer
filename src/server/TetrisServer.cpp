@@ -10,8 +10,7 @@ GameManager gm(server);
 void onReceiveArrow(const Packet &packet)
 {
     TetrisAction action = getActionFromPacketType(packet.type);
-
-    gm.handleInput(action);
+    gm.enqueueAction(action);
 }
 
 void HeartbeatListener(const Packet &packet)

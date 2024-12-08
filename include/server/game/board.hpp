@@ -11,13 +11,12 @@ class ServerManager;
 class TetrisBoard
 {
 private:
-    std::vector<std::vector<std::shared_ptr<Cell>>> grid;                // Matriz 2D para representar a grid e seus estados/logica
-    std::vector<std::vector<std::shared_ptr<Cell>>> lastBroadcastedGrid; // Matriz 2D para representar a grid e seus estados/logica
+    std::vector<std::vector<std::shared_ptr<Cell>>> grid;
+    std::vector<std::vector<std::shared_ptr<Cell>>> lastBroadcastedGrid;
 
     ServerManager &serverManager;
 
 public:
-    // In terms of the number of cells
     static const int WIDTH;
     static const int HEIGHT;
 
@@ -39,8 +38,12 @@ public:
 
     std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid();
 
+    void sendBoardState(const nlohmann::json &boardJson) const;
+
     bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
                        const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const;
 
     void broadcastBoardState();
+    void updateLastBroadcastedGrid();
+    nlohmann::json constructBoardJson() const;
 };

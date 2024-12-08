@@ -77,10 +77,14 @@ void GameManager::runGameLoop()
 
     while (isRunning)
     {
+        TetrisAction action;
+        while (actionQueue.pop(action))
+            handleInput(action);
+    
         update();
         board.broadcastBoardState();
-        //board.printStatus();
-        // Sleep a bit to avoid busy-waiting and allow input handling at ~60 FPS
+        // board.printStatus();
+        //  Sleep a bit to avoid busy-waiting and allow input handling at ~60 FPS
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
     }
 
@@ -90,6 +94,8 @@ void GameManager::runGameLoop()
 
 void GameManager::update()
 {
+    std::lock_guard<std::mutex> lock(gameStateMutex);
+
     if (board.reachedTop())
     {
         std::cout << "(GAME OVER) !!!" << std::endl;
@@ -114,8 +120,9 @@ void GameManager::update()
         currentTetromino->dropGravity();
         lastGravityTick = now;
         lastMovereceived = TetrisAction::EMPTY;
-
-    }else{
+    }
+    else
+    {
         this->lastM = TetrisAction::EMPTY;
     }
 
@@ -125,16 +132,13 @@ void GameManager::update()
         if (lastMovereceived == TetrisAction::DROP_FASTER || currentTetromino->getGravity())
         {
             // Place and lock tetromino
-            std::cout << "Last move received = " << TetrisActionToString(lastMovereceived) << " e gravidade = " << currentTetromino->getGravity() << std::endl; 
+            std::cout << "Last move received = " << TetrisActionToString(lastMovereceived) << " e gravidade = " << currentTetromino->getGravity() << std::endl;
             board.placeTetromino(*currentTetromino, true);
-
 
             // GRAVIDADE TEM Q SAIR DO TETROMINO, é uyma propriedade GLOBAL agr
             currentTetromino->gravity = false;
 
-
-
-            // std::cout << "Encaixei" << std::endl; 
+            // std::cout << "Encaixei" << std::endl;
             currentTetromino.reset();
 
             nLinesClearedThisLevel += board.clearLines();
@@ -173,5 +177,6 @@ void GameManager::update()
 
 void GameManager::handleInput(TetrisAction action)
 {
+    std::lock_guard<std::mutex> lock(gameStateMutex);
     lastM = action;
 }
