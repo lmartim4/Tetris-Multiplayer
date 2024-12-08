@@ -1,4 +1,4 @@
-#include "game/board.hpp"
+#include "game/TetrisBoard.hpp"
 #include <stdlib.h>
 #include "ServerManager.hpp"
 

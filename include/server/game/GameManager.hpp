@@ -10,7 +10,7 @@
 #include "game/tetrominoFactory.hpp"
 #include "TetrisAction.hpp"
 #include "ServerManager.hpp"
-#include "board.hpp"
+#include "TetrisBoard.hpp"
 #include <mutex>
 
 class GameManager

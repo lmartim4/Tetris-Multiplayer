@@ -1,6 +1,6 @@
 #pragma once
 
-#include "board.hpp"
+#include "TetrisBoard.hpp"
 #include "tetrominos.hpp"
 
 class TetrominoFactory

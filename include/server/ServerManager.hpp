@@ -5,7 +5,7 @@
 #include <map>
 
 #include "NetworkManager.hpp"
-#include "game/gameManager.hpp"
+#include "game/GameManager.hpp"
 #include "Player.hpp"
 #include <json.hpp>
 #include <random>

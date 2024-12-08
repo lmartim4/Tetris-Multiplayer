@@ -2,7 +2,7 @@
 
 // Needed for std::reverse
 #include "algorithm"
-#include "baseTetromino.hpp"
+#include "Tetromino.hpp"
 
 class NonSymmetricTetromino : public Tetromino
 {

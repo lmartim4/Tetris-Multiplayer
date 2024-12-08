@@ -1,4 +1,4 @@
-#include "game/gameManager.hpp"
+#include "game/GameManager.hpp"
 #include <cstdlib>
 #include <ctime>
 #include <algorithm> // for std::max, std::min

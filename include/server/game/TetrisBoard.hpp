@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "baseTetromino.hpp"
+#include "Tetromino.hpp"
 #include <iostream>
 #include "game/Cell.hpp"
 #include "json.hpp"
