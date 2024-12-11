@@ -377,3 +377,12 @@ MigrationBackup/
 
 # End of https://www.toptal.com/developers/gitignore/api/cmake,vs
 all_code.txt
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/

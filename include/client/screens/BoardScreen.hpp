@@ -53,7 +53,7 @@ public:
     {
         for (auto &row : grid)
             for (auto &cell : row)
-                cell->render(window);
+                window.draw(*cell);
     }
 
     void updateBoardFromJson(const nlohmann::json &boardData)
@@ -113,7 +113,7 @@ public:
                 if (cells[y][x].contains("c"))
                 {
                     cellColor = TetrisCell::getColorFromType(cells[y][x]["c"]);
-                    grid.at(y).at(x)->setColor(cellColor);
+                    grid.at(y).at(x)->setFillColor(cellColor);
                 }
             }
         }
