@@ -29,6 +29,7 @@ enum class CellColorType : uint8_t
 
 // File: ./include/common/PlayerData.hpp
 #pragma once
+
 #include <string>
 #include "ISerializable.hpp"
 #include "json.hpp"
@@ -40,22 +41,9 @@ struct PlayerData : public ISerializable
     int score = 0;
     bool isConnected = false;
 
-    nlohmann::json serialize() const override
-    {
-        return {
-            {"playerID", playerID},
-            {"playerName", playerName},
-            {"score", score},
-            {"isConnected", isConnected}};
-    }
+    nlohmann::json serialize() const override;
 
-    void deserialize(const nlohmann::json &data) override
-    {
-        playerID = data.at("playerID").get<int>();
-        playerName = data.at("playerName").get<std::string>();
-        score = data.at("score").get<int>();
-        isConnected = data.at("isConnected").get<bool>();
-    }
+    void deserialize(const nlohmann::json &data) override;
 };
 
 
@@ -140,6 +128,8 @@ inline const char *PacketTypeToString(PacketType type)
 
 // File: ./include/common/TetrisAction.hpp
 #pragma once
+
+#include <string>
 #include "PacketType.hpp"
 
 enum class TetrisAction
@@ -182,7 +172,8 @@ inline const TetrisAction getActionFromPacketType(PacketType type)
 
     return action;
 }
-inline const char *TetrisActionToString(TetrisAction action)
+
+inline std::string TetrisActionToString(TetrisAction action)
 {
     switch (action)
     {
@@ -289,7 +280,7 @@ public:
 
     // Returns the ENetHost object, which represents either the client or server in ENet.
     ENetHost *getHost();
-    
+
     std::vector<ENetPeer *> getPeers();
 
 protected:
@@ -394,7 +385,157 @@ public:
 };
 
 
-// File: ./include/server/game/baseTetromino.hpp
+// File: ./include/common/Debuggable.hpp
+#pragma once
+
+#include <iostream>
+#include <string>
+#include <iomanip>
+#include <bits/chrono.h>
+
+class Debuggable
+{
+private:
+    std::string className;
+
+protected:
+    void console_log(const std::string &msg) const;
+    Debuggable(std::string name);
+    ~Debuggable();
+};
+
+
+// File: ./include/server/game/Game.hpp
+#pragma once
+
+#include "Debuggable.hpp"
+
+#include "ThreadSafeQueue.hpp"
+#include "Player.hpp"
+#include "TetrisBoard.hpp"
+#include <vector>
+#include <memory>
+#include <atomic>
+#include <thread>
+#include <map>
+
+enum GameState
+{
+    INITIALIZING,    // WAITING CLASS CREATION
+    WAITING_PLAYERS, // SETTING UP PLAYER LIST
+    STARTING,        // STARTING THREADS (not running yet)
+    RUNNNING,        // THREADS ARE RUNNING
+    ENDING,          // THREADS ARE STOPING
+    ENDED            // EVERYTHING IS ENDED
+};
+
+class Game : public Debuggable
+{
+private:
+    static int instanceCount;
+    const int this_instance;
+
+    std::atomic<GameState> gameState = INITIALIZING;
+    std::vector<Player *> players;
+
+    ThreadSafeQueue<TetrisAction> actionQueue;
+
+    TetrisBoard board;
+
+    int calculateLinesToPoints(int nLines, int level);
+
+    void handleInput(TetrisAction action);
+
+    std::thread gameThread; // The thread running the game loop
+    void loop();
+
+public:
+    Game();
+    ~Game();
+
+    void addPlayer(Player *player);
+
+    void enqueueAction(TetrisAction action);
+
+    void startGameLoop();
+    void endGameLoop();
+};
+
+
+// File: ./include/server/game/GameManager.hpp
+#pragma once
+
+#include "Game.hpp"
+#include "ServerManager.hpp"
+#include "Debuggable.hpp"
+#include "TetrisAction.hpp"
+
+class GameManager : public Debuggable
+{
+private:
+    ServerManager &server;
+
+    Game *game; 
+
+public:
+    void StartGameListener(const Packet &);
+    void enqueueAction(Player *player, TetrisAction action);
+
+    GameManager(ServerManager &server);
+    ~GameManager();
+};
+
+
+
+// File: ./include/server/game/TetrisBoard.hpp
+#pragma once
+
+#include <memory>
+#include <iostream>
+#include "json.hpp"
+#include "Tetromino.hpp"
+#include "game/Cell.hpp"
+
+class ServerManager;
+
+class TetrisBoard
+{
+private:
+    std::vector<std::vector<std::shared_ptr<Cell>>> grid;
+    std::vector<std::vector<std::shared_ptr<Cell>>> lastBroadcastedGrid;
+
+public:
+    static const int WIDTH;
+    static const int HEIGHT;
+
+    TetrisBoard();
+
+    bool reachedTop();
+    void printStatus();
+    void clear();
+
+    // Melhor seria se fosse const, mas é a vida, não consigo pensar em outro jeito de
+    // checar a colisao sem mudar o objeto e ver se dá merda, na prática faz-se a ação inversa depois, então safe
+    bool checkCollision(Tetromino &currentTetromino, TetrisAction action);
+    int clearLines();
+    bool placeTetromino(const Tetromino &currentTetromino, bool fallen);
+    static int normalizedY(int y);
+
+    void clearFallingTetrominos();
+    void clearFalledTetrominos();
+
+    std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid();
+    
+    bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
+                       const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const;
+
+    void updateLastBroadcastedGrid();
+
+    nlohmann::json constructBoardJson() const;
+};
+
+
+// File: ./include/server/game/Tetromino.hpp
 #pragma once
 
 #include <string>
@@ -433,130 +574,6 @@ public:
 };
 
 
-// File: ./include/server/game/board.hpp
-#pragma once
-
-#include <memory>
-#include "Tetromino.hpp"
-#include <iostream>
-#include "game/Cell.hpp"
-#include "json.hpp"
-
-class ServerManager;
-
-class TetrisBoard
-{
-private:
-    std::vector<std::vector<std::shared_ptr<Cell>>> grid;
-    std::vector<std::vector<std::shared_ptr<Cell>>> lastBroadcastedGrid;
-
-    ServerManager &serverManager;
-
-public:
-    static const int WIDTH;
-    static const int HEIGHT;
-
-    TetrisBoard(ServerManager &serverManager);
-
-    bool reachedTop();
-    void printStatus();
-    void clear();
-
-    // Melhor seria se fosse const, mas é a vida, não consigo pensar em outro jeito de
-    // checar a colisao sem mudar o objeto e ver se dá merda, na prática faz-se a ação inversa depois, então safe
-    bool checkCollision(Tetromino &currentTetromino, TetrisAction action);
-    int clearLines();
-    bool placeTetromino(const Tetromino &currentTetromino, bool fallen);
-    static int normalizedY(int y);
-
-    void clearFallingTetrominos();
-    void clearFalledTetrominos();
-
-    std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid();
-
-    void sendBoardState(const nlohmann::json &boardJson) const;
-
-    bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
-                       const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const;
-
-    void broadcastBoardState();
-    void updateLastBroadcastedGrid();
-    nlohmann::json constructBoardJson() const;
-};
-
-
-// File: ./include/server/game/gameManager.hpp
-#pragma once
-
-#include <iostream>
-#include <chrono>
-#include <thread>
-#include <memory>
-#include <atomic>
-
-#include "ThreadSafeQueue.hpp"
-#include "game/tetrominoFactory.hpp"
-#include "TetrisAction.hpp"
-#include "ServerManager.hpp"
-#include "board.hpp"
-#include <mutex>
-
-class GameManager
-{
-private:
-    std::mutex gameStateMutex;
-    ThreadSafeQueue<TetrisAction> actionQueue;
-
-    TetrisBoard board;
-    std::unique_ptr<Tetromino> currentTetromino;
-
-    std::atomic<bool> isRunning;
-    int score;
-    int level;
-    int nLinesClearedThisLevel;
-
-    const int minTimeMs = 400;
-    int gravityTimeMs;        // Current gravity time in ms
-    int levelUpGravityTimeMs; // How much to reduce gravity time on level up
-
-    std::chrono::steady_clock::time_point lastGravityTick; // To track gravity intervals
-
-    std::thread gameThread;         // The thread running the game loop
-    std::atomic<bool> threadActive; // To track if the thread is active
-
-    TetrisAction lastM = TetrisAction::EMPTY;
-
-    void handleInput(TetrisAction action);
-    void runGameLoop();
-
-public:
-    GameManager(ServerManager &serverManager);
-
-    int lines2Points(int nLines);
-
-    // Starts the game loop in a separate thread
-    void startGameLoop();
-
-    // Stops the game loop and waits for the thread to finish
-    void stopGameLoop();
-
-    // Checks if the game is currently running
-    bool isGameRunning() const;
-
-    // Checks if the game thread is running
-    bool isThreadRunning() const;
-
-    void spawnTetromino();
-    void update();
-
-    void enqueueAction(TetrisAction action)
-    {
-        actionQueue.push(action);
-    }
-};
-
-
-
 // File: ./include/server/game/nonSymmetricTetromino.hpp
 #pragma once
 
@@ -590,7 +607,7 @@ public:
 // File: ./include/server/game/tetrominoFactory.hpp
 #pragma once
 
-#include "board.hpp"
+#include "TetrisBoard.hpp"
 #include "tetrominos.hpp"
 
 class TetrominoFactory
@@ -640,7 +657,7 @@ public:
 
 #include "CellColorType.hpp"
 
-enum CELL_STATES
+enum CELL_STATE
 {
     CELL_FALLED = -1,
     CELL_EMPTY = 0,
@@ -650,11 +667,11 @@ enum CELL_STATES
 class Cell
 {
 private:
-    int state; // 0 = vazio, -1 = fixado, 1 = em queda
+    CELL_STATE state; // 0 = vazio, -1 = fixado, 1 = em queda
     CellColorType color;
 
-    int x; // Linha (posição X)
-    int y; // Coluna (posição Y)
+    int x;
+    int y;
 public:
     Cell(int x, int y);
 
@@ -813,6 +830,11 @@ public:
         return data.isConnected;
     }
 
+    int getPlayerID()
+    {
+        return data.playerID;
+    }
+
 private:
     PlayerData data;
 };
@@ -827,7 +849,6 @@ private:
 #include <map>
 
 #include "NetworkManager.hpp"
-#include "game/gameManager.hpp"
 #include "Player.hpp"
 #include <json.hpp>
 #include <random>
@@ -847,7 +868,21 @@ public:
     ServerManager(uint16_t port = 12345);
     ~ServerManager() {};
 
-    void start_game();
+    void broadcast_starting_game();
+
+    static Player *extractPlayerFromPacket(const Packet &packet)
+    {
+        if (!packet.peer)
+        {
+            throw std::runtime_error("Error: Packet has no associated ENetPeer.");
+        }
+        if (!packet.peer->data)
+        {
+            throw std::runtime_error("Error: ENetPeer has no associated Player.");
+        }
+
+        return static_cast<Player *>(packet.peer->data);
+    }
 };
 
 
@@ -859,19 +894,18 @@ public:
 #include <functional>
 #include "CellColorType.hpp"
 
-class TetrisCell
+class TetrisCell : public sf::RectangleShape
 {
-    sf::RectangleShape cellShape;
     std::function<void()> onClickCallback;
 
 public:
     TetrisCell(sf::Vector2f size, sf::Vector2f position, sf::Color color)
     {
-        cellShape.setSize(size);
-        cellShape.setPosition(position);
-        cellShape.setFillColor(color);
-        cellShape.setOutlineThickness(1.0f);
-        cellShape.setOutlineColor(sf::Color::Black);
+        setSize(size);
+        setPosition(position);
+        setFillColor(color);
+        setOutlineThickness(1.0f);
+        setOutlineColor(sf::Color::Black);
     }
 
     void setOnClick(const std::function<void()> &callback) { onClickCallback = callback; }
@@ -879,16 +913,12 @@ public:
     void handleEvent(const sf::Event &event)
     {
         if (event.type == sf::Event::MouseButtonPressed)
-            if (cellShape.getGlobalBounds().contains(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y)))
+            if (getGlobalBounds().contains(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y)))
                 if (onClickCallback)
                     onClickCallback();
     }
 
-    void render(sf::RenderWindow &window) { window.draw(cellShape); }
-
-    void setColor(const sf::Color &color) { cellShape.setFillColor(color); }
-
-    sf::RectangleShape &getShape() { return cellShape; }
+    void setColor(const CellColorType tc) { setFillColor(getColorFromType(tc)); }
 
     static sf::Color getColorFromType(CellColorType type)
     {
@@ -912,6 +942,46 @@ public:
 
 
 
+// File: ./include/client/screens/ScreenManager.hpp
+#pragma once
+
+#include <SFML/Graphics.hpp>
+#include <map>
+#include <string>
+#include <memory>
+#include <atomic>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
+class Screen;
+
+class ScreenManager
+{
+    std::map<std::string, std::unique_ptr<Screen>> screens;
+    
+    Screen *activeScreen = nullptr;
+
+    std::thread screenThread;
+    std::mutex mtx;
+    std::condition_variable cv;
+
+    std::atomic<bool> threadRunning{false};
+
+public:
+    ScreenManager();
+    ~ScreenManager();
+    void quit();
+    void addScreen(const std::string &name, std::unique_ptr<Screen> screen);
+    void setActiveScreen(const std::string &name);
+    void handleEvent(sf::Event event);
+    void update(float deltaTime);
+    void render(sf::RenderWindow &window);
+    void startThread();
+    void stopThread();
+};
+
+
 // File: ./include/client/screens/GameScreen.hpp
 #pragma once
 
@@ -931,29 +1001,10 @@ class GameScreen : public Screen
     sf::Text gameText;
 
 public:
-    GameScreen()
-    {
-        gameText.setFont(defaultFont);
-        gameText.setString("Game Screen");
-        gameText.setCharacterSize(40);
-        gameText.setFillColor(sf::Color::Green);
-        gameText.setPosition(200, 200);
-    }
-
-    void handleEvent(sf::Event event, ScreenManager &manager) override
-    {
-        if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-            std::cout << "Game event: escape pressed" << std::endl;
-    }
-
-    void update(float deltaTime) override
-    {
-    }
-
-    void render(sf::RenderWindow &window) override
-    {
-        window.draw(gameText);
-    }
+    GameScreen();
+    void handleEvent(sf::Event event, ScreenManager &manager) override;
+    void update(float deltaTime) override;
+    void render(sf::RenderWindow &window) override;
 };
 
 
@@ -967,102 +1018,23 @@ public:
 #include <map>
 #include <memory>
 #include "Screen.hpp"
+#include "Button.hpp"
+#include "ClientManager.hpp"
 
 class LobbyScreen : public Screen
 {
     Button mainText;
-
     Button startGameText;
-
     ClientManager &clientMan;
-
     const float circleRadius = 30.0f;
     const float padding = 100.0f;
     std::vector<Button> clickableTexts;
 
 public:
-    LobbyScreen(ClientManager &clientManager)
-        : clientMan(clientManager),
-          mainText(defaultFont, "Tetris Lobby", sf::Color::Blue, {230, 20}, 50),
-          startGameText(defaultFont, "Start Game", sf::Color::Green, {230, 380}, 40)
-    {
-        startGameText.setOnClick([&clientManager]() {
-            clientManager.request_game_start();
-        });
-    }
-
-    void handleEvent(sf::Event event, ScreenManager &manager) override
-    {
-        startGameText.handleEvent(event);
-
-        for (Button ct : clickableTexts)
-            ct.handleEvent(event);
-            
-        if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-            std::cout << "Lobby event: escape pressed" << std::endl;
-    }
-
-    void update(float deltaTime) override
-    {
-        // Update logic for lobby screen (e.g., fetching player list from server)
-    }
-
-    void render(sf::RenderWindow &window) override
-    {
-        startGameText.render(window);
-        mainText.render(window);
-
-        int index = 0;
-        int maxColumns = 5; // Max number of circles per row
-        int numPlayers = clientMan.getDataPlayers().size();
-
-        // Calculate the number of rows needed
-        int rows = (numPlayers + maxColumns - 1) / maxColumns;
-
-        // Calculate the total width and height of the grid
-        float totalWidth = maxColumns * (2 * circleRadius + padding) - padding;
-        float totalHeight = rows * (2 * circleRadius + padding) - padding;
-
-        // Get window size
-        sf::Vector2u windowSize = window.getSize();
-
-        // Calculate starting position to center the grid
-        float startX = (windowSize.x - totalWidth) / 2;
-        float startY = (windowSize.y - totalHeight) / 2;
-
-        clickableTexts.clear();
-        for (auto &pd : clientMan.getDataPlayers())
-        {
-            sf::CircleShape circle(circleRadius);
-
-            circle.setFillColor(sf::Color::Cyan);
-            circle.setOutlineThickness(2.0f);
-            circle.setOutlineColor(sf::Color::Black);
-
-            // Calculate position for the circle
-            float x = startX + (index % maxColumns) * (2 * circleRadius + padding);
-            float y = startY + (index / maxColumns) * (2 * circleRadius + padding);
-
-            // Set circle position
-            circle.setPosition(x, y);
-            window.draw(circle);
-
-            // Create and position the text
-            Button itext(
-                defaultFont,
-                pd.playerName + " " + std::to_string(pd.playerID),
-                sf::Color::Red,
-                {x - circleRadius, y + 2 * circleRadius}, 20); // Centered text below circle
-
-            itext.render(window);
-            itext.setOnClick([&]()
-                             { std::cout << " clicked " << pd.playerID << std::endl; });
-
-            clickableTexts.emplace_back(itext);
-
-            index++;
-        }
-    }
+    LobbyScreen(ClientManager &clientManager);
+    void handleEvent(sf::Event event, ScreenManager &manager) override;
+    void update(float deltaTime) override;
+    void render(sf::RenderWindow &window) override;
 };
 
 
@@ -1091,42 +1063,13 @@ class MenuScreen : public Screen
     Button titleText;
     Button connectText;
     Button quitText;
-    ScreenManager &manager; // Reference to ScreenManager
+    ScreenManager &manager;
     ClientManager &clientMan;
-
 public:
-    MenuScreen(ScreenManager &screenManager, ClientManager &clientManager)
-        : titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}, 40),
-          connectText(defaultFont, "Connect", sf::Color::White, {x_offset_screen + 330, y_offset_screen + 200}, 25),
-          quitText(defaultFont, "Quit", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}, 25),
-          manager(screenManager), clientMan(clientManager)
-    {
-        connectText.setOnClick([this]()
-                               {
-                                manager.setActiveScreen("waiting-connection");
-                                clientMan.connect(); });
-
-        quitText.setOnClick([this]()
-                            { manager.quit(); });
-    }
-
-    void handleEvent(sf::Event event, ScreenManager &manager) override
-    {
-        connectText.handleEvent(event);
-        quitText.handleEvent(event);
-    }
-
-    void update(float deltaTime) override
-    {
-        // Menu update logic
-    }
-
-    void render(sf::RenderWindow &window) override
-    {
-        titleText.render(window);
-        connectText.render(window);
-        quitText.render(window);
-    }
+    MenuScreen(ScreenManager &screenManager, ClientManager &clientManager);
+    void handleEvent(sf::Event event, ScreenManager &manager) override;
+    void update(float deltaTime) override;
+    void render(sf::RenderWindow &window) override;
 };
 
 
@@ -1151,40 +1094,15 @@ class WaitingConnectionScreen : public Screen
 {
     Button titleText;
     Button backText;
-
     ScreenManager &screenMan;
     ClientManager &clientMan;
     static constexpr float x_offset_screen = 100.0f;
     static constexpr float y_offset_screen = 120.0f;
-
 public:
-    WaitingConnectionScreen(ScreenManager &screenManager, ClientManager &clientManager)
-        : titleText(defaultFont, "Waiting for server...", sf::Color::White, {(x_offset_screen + 100.0f), (y_offset_screen + 50.0f)}, 40),
-          backText(defaultFont, "Back", sf::Color::White, {(x_offset_screen + 300.0f), (y_offset_screen + 170.0f)}, 25),
-          screenMan(screenManager), clientMan(clientManager)
-    {
-        backText.setOnClick([this]()
-                            {   std::cout << "Getting back to main screen\n";
-                                screenMan.setActiveScreen("main-menu");
-                                clientMan.disconnect(); });
-    }
-
-    void handleEvent(sf::Event event, ScreenManager &manager) override
-    {
-        backText.handleEvent(event);
-    }
-
-    void update(float deltaTime) override
-    {
-        if (clientMan.IsConnected())
-            screenMan.setActiveScreen("lobby");
-    }
-
-    void render(sf::RenderWindow &window) override
-    {
-        titleText.render(window);
-        backText.render(window);
-    }
+    WaitingConnectionScreen(ScreenManager &screenManager, ClientManager &clientManager);
+    void handleEvent(sf::Event event, ScreenManager &manager) override;
+    void update(float deltaTime) override;
+    void render(sf::RenderWindow &window) override;
 };
 
 
@@ -1198,28 +1116,11 @@ public:
 class Button : public sf::Text
 {
     std::function<void()> onClickCallback;
-
 public:
-    Button(const sf::Font &font, const std::string &str, sf::Color color, sf::Vector2f position, int fontSize)
-    {
-        setFont(font);
-        setString(str);
-        setCharacterSize(fontSize);
-        setFillColor(color);
-        setPosition(position);
-    }
-
-    void setOnClick(const std::function<void()> &callback) { onClickCallback = callback; }
-
-    void handleEvent(const sf::Event &event)
-    {
-        if (event.type == sf::Event::MouseButtonPressed)
-            if (getGlobalBounds().contains(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y)))
-                if (onClickCallback)
-                    onClickCallback();
-    }
-
-    void render(sf::RenderWindow &window) { window.draw(*this); }
+    Button(const sf::Font &font, const std::string &str, sf::Color color, sf::Vector2f position, int fontSize);
+    void setOnClick(const std::function<void()> &callback);
+    void handleEvent(const sf::Event &event);
+    void render(sf::RenderWindow &window);
 };
 
 
@@ -1235,120 +1136,21 @@ public:
 #include <atomic>
 #include <memory>
 #include <map>
-
-// Base class for screens
+#include "ScreenManager.hpp"
 class Screen
 {
 public:
-    Screen()
-    {
-        // Load font
-        if (!defaultFont.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"))
-        {
-            std::cerr << "Error loading font!" << std::endl;
-        }
-    }
+    Screen();
+    void stop();
     virtual ~Screen() {}
+
     virtual void handleEvent(sf::Event event, class ScreenManager &manager) = 0;
     virtual void update(float deltaTime) = 0;
     virtual void render(sf::RenderWindow &window) = 0;
 
-    void stop()
-    {
-        running = false;
-    }
-
 protected:
     std::atomic<bool> running{true};
     sf::Font defaultFont;
-};
-
-// Screen Manager
-class ScreenManager
-{
-    std::map<std::string, std::unique_ptr<Screen>> screens;
-    Screen *activeScreen = nullptr;
-
-    std::thread screenThread;
-    std::mutex mtx;
-    std::condition_variable cv;
-
-    std::atomic<bool> threadRunning{false};
-
-public:
-    ~ScreenManager()
-    {
-        stopThread();
-    }
-
-    void quit()
-    {
-        exit(0);
-    }
-
-    void addScreen(const std::string &name, std::unique_ptr<Screen> screen)
-    {
-        screens[name] = std::move(screen);
-    }
-
-    void setActiveScreen(const std::string &name)
-    {
-        {
-            std::lock_guard<std::mutex> lock(mtx);
-            activeScreen = screens[name].get();
-        }
-        cv.notify_one();
-    }
-
-    void handleEvent(sf::Event event)
-    {
-        if (activeScreen)
-        {
-            activeScreen->handleEvent(event, *this);
-        }
-    }
-
-    void update(float deltaTime)
-    {
-        if (activeScreen)
-        {
-            activeScreen->update(deltaTime);
-        }
-    }
-
-    void render(sf::RenderWindow &window)
-    {
-        if (activeScreen)
-            activeScreen->render(window);
-    }
-
-    void startThread()
-    {
-        threadRunning = true;
-        screenThread = std::thread([this]()
-                                   {
-            while (threadRunning) {
-                std::unique_lock<std::mutex> lock(mtx);
-                cv.wait(lock, [this]() { return activeScreen != nullptr; });
-                lock.unlock();
-
-                while (threadRunning) {
-                    if (activeScreen) {
-                        activeScreen->update(0.016f); // Simulate ~60 FPS updates
-                    }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(16));
-                }
-            } });
-    }
-
-    void stopThread()
-    {
-        threadRunning = false;
-        if (screenThread.joinable())
-        {
-            screenThread.join();
-        }
-    }
 };
 
 
@@ -1361,6 +1163,7 @@ public:
 #include <string>
 #include "Screen.hpp"
 #include "TetrisCell.hpp"
+#include "ClientManager.hpp"
 
 class BoardScreen : public Screen
 {
@@ -1372,122 +1175,16 @@ private:
 
     std::vector<std::vector<std::shared_ptr<TetrisCell>>> grid;
 
-    void setupCells()
-    {
-        for (int y = 0; y < BOARD_HEIGHT; ++y)
-        {
-            std::vector<std::shared_ptr<TetrisCell>> row;
-            for (int x = 0; x < BOARD_WIDTH; ++x)
-            {
-                auto cell = std::make_shared<TetrisCell>(
-                    sf::Vector2f(CELL_SIZE, CELL_SIZE),
-                    sf::Vector2f(x * CELL_SIZE, y * CELL_SIZE),
-                    sf::Color::Red);
-
-                row.push_back(cell);
-            }
-            grid.push_back(row);
-        }
-    }
+    void setupCells();
 
 public:
-    BoardScreen(ClientManager &clientManager) : clientManager(clientManager)
-    {
-    }
+    BoardScreen(ClientManager &clientManager);
 
-    void handleEvent(sf::Event event, ScreenManager &manager) override
-    {
-        handleKeyPress(event);
-
-        for (auto &row : grid)
-            for (auto &cell : row)
-                cell->handleEvent(event);
-    }
-
-    void render(sf::RenderWindow &window) override
-    {
-        for (auto &row : grid)
-            for (auto &cell : row)
-                cell->render(window);
-    }
-
-    void updateBoardFromJson(const nlohmann::json &boardData)
-    {
-        // Check for required keys in the JSON
-        if (!boardData.contains("width") || !boardData.contains("height") || !boardData.contains("cells"))
-        {
-            std::cerr << "Error: JSON is missing required keys (width, height, or cells)" << std::endl;
-            return;
-        }
-
-        // Check that width and height are valid integers
-        if (!boardData.at("width").is_number_integer() || !boardData.at("height").is_number_integer())
-        {
-            std::cerr << "Error: JSON width or height is not an integer" << std::endl;
-            return;
-        }
-
-        // Extract width and height
-        int newWidth = boardData.at("width").get<int>();
-        int newHeight = boardData.at("height").get<int>();
-
-        // Check that cells is a valid 2D array
-        if (!boardData.at("cells").is_array() || boardData.at("cells").size() != newHeight)
-        {
-            std::cerr << "Error: JSON cells array does not match the specified height" << std::endl;
-            return;
-        }
-
-        for (const auto &row : boardData.at("cells"))
-        {
-            if (!row.is_array() || row.size() != newWidth)
-            {
-                std::cerr << "Error: JSON cells array does not match the specified width" << std::endl;
-                return;
-            }
-        }
-
-        // Proceed with processing the data
-        if ((int)grid.size() != newHeight || (int)grid.at(0).size() != newWidth)
-        {
-            BOARD_WIDTH = newWidth;
-            BOARD_HEIGHT = newHeight;
-            grid.clear();
-            setupCells();
-        }
-
-        // Update cell colors
-        auto cells = boardData.at("cells");
-        for (int y = 0; y < BOARD_HEIGHT; y++)
-        {
-            for (int x = 0; x < BOARD_WIDTH; x++)
-            {
-                sf::Color cellColor = sf::Color::White;
-
-                // Check if cell contains "c" and process color
-                if (cells[y][x].contains("c"))
-                {
-                    cellColor = TetrisCell::getColorFromType(cells[y][x]["c"]);
-                    grid.at(y).at(x)->setColor(cellColor);
-                }
-            }
-        }
-    }
-
-    void update(float deltaTime) override
-    {
-        if (clientManager.boardDataAvailable())
-        {
-            nlohmann::json newBoard = clientManager.getLastBoardState();
-            updateBoardFromJson(newBoard);
-        }
-    }
-
-    void handleKeyPress(sf::Event event)
-    {
-        if (event.type == sf::Event::KeyPressed)
-            clientManager.onPressKey(event.key);
-    }
+    void handleEvent(sf::Event event, ScreenManager &manager) override;
+    void render(sf::RenderWindow &window) override;
+    void updateBoardFromJson(const nlohmann::json &boardData);
+    void update(float deltaTime) override;
+    void handleKeyPress(sf::Event event);
 };
 
 
@@ -1552,6 +1249,32 @@ public:
 
     void onPressKey(sf::Event::KeyEvent e);
 };
+
+
+// File: ./src/common/Debuggable.cpp
+#include "Debuggable.hpp"
+
+void Debuggable::console_log(const std::string &msg) const
+{
+
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    auto tm = *std::localtime(&in_time_t);
+
+    std::cout
+        << std::put_time(&tm, "[%H:%M:%S]")
+        << " [" << className << "] "
+        << " " << msg << std::endl;
+}
+
+Debuggable::Debuggable(std::string name) : className(name)
+{
+}
+
+Debuggable::~Debuggable()
+{
+}
+
 
 
 // File: ./src/common/NetworkManager.cpp
@@ -1776,20 +1499,44 @@ std::vector<ENetPeer *> NetworkManager::getPeers()
 
 
 
+// File: ./src/common/PlayerData.cpp
+#include "PlayerData.hpp"
+
+nlohmann::json PlayerData::serialize() const
+{
+    return {
+        {"playerID", playerID},
+        {"playerName", playerName},
+        {"score", score},
+        {"isConnected", isConnected}};
+}
+
+void PlayerData::deserialize(const nlohmann::json &data)
+{
+    playerID = data.at("playerID").get<int>();
+    playerName = data.at("playerName").get<std::string>();
+    score = data.at("score").get<int>();
+    isConnected = data.at("isConnected").get<bool>();
+}
+
+
 // File: ./src/server/TetrisServer.cpp
 #include <enet/enet.h>
 #include <iostream>
-#include "ServerManager.hpp"
+
+#include "GameManager.hpp"
 #include "TetrisAction.hpp"
 
 ServerManager server(12345);
 GameManager gm(server);
 
-// Might get player from packt id
 void onReceiveArrow(const Packet &packet)
 {
     TetrisAction action = getActionFromPacketType(packet.type);
-    gm.enqueueAction(action);
+
+    Player *player = ServerManager::extractPlayerFromPacket(packet);
+
+    gm.enqueueAction(player, action);
 }
 
 void HeartbeatListener(const Packet &packet)
@@ -1799,8 +1546,7 @@ void HeartbeatListener(const Packet &packet)
 
 void StartGameListener(const Packet &packet)
 {
-    server.start_game();
-    gm.startGameLoop();
+    gm.StartGameListener(packet);
 }
 
 void JoinRequestListener(const Packet &packet)
@@ -1912,213 +1658,155 @@ void ServerManager::broadcastPlayerList()
     {
         if (!entry->data)
         {
-            // This peer doesn't have a Player associated yet, skip it
-            std::cout << "~No player~" << std::endl;
+            std::cout << "~ No player ~" << std::endl;
             continue;
         }
+
         Player *player = (Player *)entry->data;
 
         nlohmann::json playerJson = player->getData().serialize();
 
         message.push_back(nlohmann::json::array({playerJson}));
     }
+
     std::cout << message << std::endl;
     send_packet(Packet(PacketType::PLAYER_LIST, message, nullptr));
 }
 
-void ServerManager::start_game()
+void ServerManager::broadcast_starting_game()
 {
     send_packet(Packet(PacketType::STARTING_GAME, 0, nullptr));
 }
 
 
-// File: ./src/server/game/gameManager.cpp
-#include "game/gameManager.hpp"
-#include <cstdlib>
-#include <ctime>
-#include <algorithm> // for std::max, std::min
+// File: ./src/server/game/GameManager.cpp
+#include "GameManager.hpp"
 
-#define P(x) ((280 * (x * x * x) - 1470 * (x * x) + 2630 * (x) - 1320) / 3)
-#define LEVEL_UP 10
-#define DOWN_FASTER 2 // Define this appropriately if not defined elsewhere
-
-GameManager::GameManager(ServerManager &serverManager)
-    : board(serverManager),
-      isRunning(false),
-      score(0),
-      level(0),
-      nLinesClearedThisLevel(0),
-      levelUpGravityTimeMs(100),
-      threadActive(false)
+GameManager::GameManager(ServerManager &server) : Debuggable("GameManager"), server(server)
 {
-    // Initialize gravityTimeMs to a default, for example 800ms:
-    gravityTimeMs = 600;
+    console_log("GameManager()");
 }
 
-int GameManager::lines2Points(int nLines)
+void GameManager::enqueueAction(Player *player, TetrisAction action)
 {
-    return (nLines > 0) ? P(std::min(nLines, 4)) * (level + 1) : 0;
+    console_log(std::to_string(player->getPlayerID()) + TetrisActionToString(action));
 }
 
-void GameManager::startGameLoop()
+void GameManager::StartGameListener(const Packet &)
 {
-    if (isRunning.load())
+    server.broadcast_starting_game();
+    game = new Game();
+    game->startGameLoop();
+}
+
+GameManager::~GameManager()
+{
+}
+
+
+// File: ./src/server/game/Tetromino.cpp
+#include "game/Tetromino.hpp"
+
+const std::vector<CellColorType> Tetromino::tetromino_colors = {
+    CellColorType::Red,
+    CellColorType::Blue,
+    CellColorType::Yellow,
+    CellColorType::Green};
+
+const std::vector<char> Tetromino::types = {'I', 'O', 'T', 'L', 'J', 'S', 'Z'};
+
+int Tetromino::getX() const
+{
+    return x;
+}
+
+int Tetromino::getY() const
+{
+    return y;
+}
+
+CellColorType Tetromino::getColor() const
+{
+    return color;
+}
+
+bool Tetromino::getGravity() const
+{
+    return gravity;
+}
+
+const std::vector<std::vector<int>> &Tetromino::getShape() const
+{
+    return shape;
+}
+
+void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
+{
+    int sign = (forward) ? 1 : -1;
+
+    if (gravity)
     {
-        std::cerr << "Game is already running!" << std::endl;
-        return;
+        x += sign;
     }
 
-    isRunning.store(true);
-    threadActive.store(true);
-    // Spawn a new thread that runs runGameLoop()
-    gameThread = std::thread(&GameManager::runGameLoop, this);
-    std::cout << "Game Started!";
-}
-
-void GameManager::stopGameLoop()
-{
-    // Signal the loop to stop
-    isRunning.store(false);
-
-    // Wait for thread to finish if joinable
-    if (gameThread.joinable())
+    switch (lastMove)
     {
-        gameThread.join();
-    }
-}
 
-bool GameManager::isGameRunning() const
-{
-    return isRunning.load();
-}
+    case TetrisAction::LEFT:
+        y -= sign;
+        break;
+    case TetrisAction::RIGHT:
+        y += sign;
+        break;
+    case TetrisAction::DROP_FASTER:
+        x += sign;
+        break;
 
-bool GameManager::isThreadRunning() const
-{
-    return threadActive.load();
-}
-
-void GameManager::spawnTetromino()
-{
-    currentTetromino = TetrominoFactory::createTetromino();
-}
-
-void GameManager::runGameLoop()
-{
-    srand(time(NULL));
-    spawnTetromino();
-
-    // Initialize lastGravityTick
-    lastGravityTick = std::chrono::steady_clock::now();
-
-    while (isRunning)
-    {
-        TetrisAction action;
-        while (actionQueue.pop(action))
-            handleInput(action);
-    
-        update();
-        board.broadcastBoardState();
-        // board.printStatus();
-        //  Sleep a bit to avoid busy-waiting and allow input handling at ~60 FPS
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    default:
+        break;
     }
 
-    // Loop ended
-    threadActive.store(false);
-}
+    size_t rows = shape.size();
+    size_t cols = shape[0].size();
 
-void GameManager::update()
-{
-    std::lock_guard<std::mutex> lock(gameStateMutex);
+    // Cria a matriz rotacionada
+    std::vector<std::vector<int>> rotated(cols, std::vector<int>(rows));
 
-    if (board.reachedTop())
+    if ((lastMove == TetrisAction::ROTATE_LEFT && forward) || (lastMove == TetrisAction::ROTATE_RIGHT && !forward))
     {
-        std::cout << "(GAME OVER) !!!" << std::endl;
-        std::cout << "(Final score) : " << score << " !!!" << std::endl;
-        std::cout << "You played till level: " << level << std::endl;
 
-        board.clear();
-        // Exit game loop by setting isRunning to false
-        isRunning.store(false);
-        return; // Return here to stop processing
-    }
-
-    // Clear old tetrominos
-    board.clearFallingTetrominos();
-
-    TetrisAction lastMovereceived = this->lastM;
-
-    // Check if it's time to apply gravity
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastGravityTick).count() > gravityTimeMs)
-    {
-        currentTetromino->dropGravity();
-        lastGravityTick = now;
-        lastMovereceived = TetrisAction::EMPTY;
-    }
-    else
-    {
-        this->lastM = TetrisAction::EMPTY;
-    }
-
-    // Check collision after gravity or moves
-    if (board.checkCollision(*currentTetromino, lastMovereceived))
-    {
-        if (lastMovereceived == TetrisAction::DROP_FASTER || currentTetromino->getGravity())
+        for (size_t i = 0; i < rows; ++i)
         {
-            // Place and lock tetromino
-            std::cout << "Last move received = " << TetrisActionToString(lastMovereceived) << " e gravidade = " << currentTetromino->getGravity() << std::endl;
-            board.placeTetromino(*currentTetromino, true);
-
-            // GRAVIDADE TEM Q SAIR DO TETROMINO, é uyma propriedade GLOBAL agr
-            currentTetromino->gravity = false;
-
-            // std::cout << "Encaixei" << std::endl;
-            currentTetromino.reset();
-
-            nLinesClearedThisLevel += board.clearLines();
-            score += lines2Points(nLinesClearedThisLevel);
-
-            if (nLinesClearedThisLevel >= LEVEL_UP)
+            for (size_t j = 0; j < cols; ++j)
             {
-                level++;
-                // Clear all fixed blocks
-                board.clearFalledTetrominos();
-
-                gravityTimeMs = std::max(gravityTimeMs - levelUpGravityTimeMs, minTimeMs);
-                lastGravityTick = std::chrono::steady_clock::now();
-                nLinesClearedThisLevel = 0;
-                std::cout << "(Current score) : " << score << " !!!" << std::endl;
-                std::cout << "(LEVEL UP) !!!" << std::endl;
+                rotated[j][rows - i - 1] = shape[i][j];
             }
+        }
 
-            // Spawn a new tetromino
-            spawnTetromino();
-        }
-        else
-        {
-            // Invalid move, revert
-            board.placeTetromino(*currentTetromino, false);
-            currentTetromino->gravity = false;
-        }
+        shape = rotated;
     }
-    else
+
+    if ((lastMove == TetrisAction::ROTATE_RIGHT && forward) || (lastMove == TetrisAction::ROTATE_LEFT && !forward))
     {
-        // Valid move, place without locking
-        board.placeTetromino(*currentTetromino, false);
-        currentTetromino->gravity = false;
+        for (size_t i = 0; i < rows; ++i)
+        {
+            for (size_t j = 0; j < cols; ++j)
+            {
+                rotated[cols - j - 1][i] = shape[i][j];
+            }
+        }
+
+        shape = rotated;
     }
 }
 
-void GameManager::handleInput(TetrisAction action)
+void Tetromino::dropGravity()
 {
-    std::lock_guard<std::mutex> lock(gameStateMutex);
-    lastM = action;
+    gravity = true;
 }
 
 
-
-// File: ./src/server/game/cell.cpp
+// File: ./src/server/game/Cell.cpp
 #include "game/Cell.hpp"
 
 Cell::Cell(int x, int y) : x(x), y(y) { setEmpty(); }
@@ -2148,15 +1836,13 @@ void Cell::setFixed(const CellColorType &newColor)
 
 
 
-// File: ./src/server/game/board.cpp
-#include "game/board.hpp"
-#include <stdlib.h>
-#include "ServerManager.hpp"
+// File: ./src/server/game/TetrisBoard.cpp
+#include "game/TetrisBoard.hpp"
 
 const int TetrisBoard::WIDTH = 10;
 const int TetrisBoard::HEIGHT = 16;
 
-TetrisBoard::TetrisBoard(ServerManager &serverManager) : serverManager(serverManager)
+TetrisBoard::TetrisBoard()
 {
     for (int y = 0; y < HEIGHT; ++y)
     {
@@ -2370,16 +2056,6 @@ int TetrisBoard::clearLines()
     return numLinesCleared;
 }
 
-void TetrisBoard::broadcastBoardState()
-{
-    if (!gridsAreEqual(grid, lastBroadcastedGrid))
-    {
-        updateLastBroadcastedGrid();                     // Step 1: Update lastBroadcastedGrid to match the current grid
-        nlohmann::json boardJson = constructBoardJson(); // Step 2: Construct the JSON object
-        sendBoardState(boardJson);                       // Step 3: Broadcast the JSON object
-    }
-}
-
 // Updates lastBroadcastedGrid with a deep copy of the current grid
 void TetrisBoard::updateLastBroadcastedGrid()
 {
@@ -2434,12 +2110,6 @@ nlohmann::json TetrisBoard::constructBoardJson() const
     return boardJson;
 }
 
-// Sends the JSON board state using the server manager
-void TetrisBoard::sendBoardState(const nlohmann::json &boardJson) const
-{
-    serverManager.send_packet(Packet(PacketType::GAME_SCREEN, boardJson, nullptr));
-}
-
 // Implementation of gridsAreEqual
 bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
                                 const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const
@@ -2468,106 +2138,103 @@ bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Ce
 }
 
 
-// File: ./src/server/game/baseTetromino.cpp
-#include "game/baseTetromino.hpp"
+// File: ./src/server/game/Game.cpp
+#include "Game.hpp"
 
-const std::vector<CellColorType> Tetromino::tetromino_colors = {
-    CellColorType::Red,
-    CellColorType::Blue,
-    CellColorType::Yellow,
-    CellColorType::Green};
+int Game::instanceCount = 0;
 
-const std::vector<char> Tetromino::types = {'I', 'O', 'T', 'L', 'J', 'S', 'Z'};
-
-int Tetromino::getX() const
+void Game::enqueueAction(TetrisAction action)
 {
-    return x;
+    // actionQueue.push(action);
+    console_log("received action: " + TetrisActionToString(action));
 }
 
-int Tetromino::getY() const
+void Game::startGameLoop()
 {
-    return y;
-}
-
-CellColorType Tetromino::getColor() const
-{
-    return color;
-}
-
-bool Tetromino::getGravity() const
-{
-    return gravity;
-}
-
-const std::vector<std::vector<int>> &Tetromino::getShape() const
-{
-    return shape;
-}
-
-void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
-{
-    int sign = (forward) ? 1 : -1;
-
-    if (gravity)
+    static int instanceCount = 0;
+    if (gameState != GameState::WAITING_PLAYERS)
     {
-        x += sign;
+        std::cerr << "Cannot start a game that is not currently waiting for players" << std::endl;
+        return;
     }
 
-    switch (lastMove)
+    gameState = GameState::STARTING;
+    console_log("Starting Game (" + std::to_string(instanceCount++) + ")...");
+
+    gameThread = std::thread(&Game::loop, this);
+}
+
+void Game::endGameLoop()
+{
+    if (gameState != GameState::RUNNNING)
     {
-
-    case TetrisAction::LEFT:
-        y -= sign;
-        break;
-    case TetrisAction::RIGHT:
-        y += sign;
-        break;
-    case TetrisAction::DROP_FASTER:
-        x += sign;
-        break;
-
-    default:
-        break;
+        console_log("Cannot end a game that is not currently running");
+        return;
     }
 
-    size_t rows = shape.size();
-    size_t cols = shape[0].size();
+    gameState = GameState::ENDING;
 
-    // Cria a matriz rotacionada
-    std::vector<std::vector<int>> rotated(cols, std::vector<int>(rows));
+    if (gameThread.joinable())
+        gameThread.join();
 
-    if ((lastMove == TetrisAction::ROTATE_LEFT && forward) || (lastMove == TetrisAction::ROTATE_RIGHT && !forward))
+    if (gameState == GameState::ENDED)
     {
-
-        for (size_t i = 0; i < rows; ++i)
-        {
-            for (size_t j = 0; j < cols; ++j)
-            {
-                rotated[j][rows - i - 1] = shape[i][j];
-            }
-        }
-
-        shape = rotated;
+        console_log("Successfully ended gameLoop");
     }
-
-    if ((lastMove == TetrisAction::ROTATE_RIGHT && forward) || (lastMove == TetrisAction::ROTATE_LEFT && !forward))
+    else
     {
-        for (size_t i = 0; i < rows; ++i)
-        {
-            for (size_t j = 0; j < cols; ++j)
-            {
-                rotated[cols - j - 1][i] = shape[i][j];
-            }
-        }
-
-        shape = rotated;
+        throw std::runtime_error("Failed to end game Loop");
     }
 }
 
-void Tetromino::dropGravity()
+int Game::calculateLinesToPoints(int nLines, int level)
 {
-    gravity = true;
+    int x = std::min(nLines, 4);
+    int P_x = ((280 * (x * x * x) - 1470 * (x * x) + 2630 * (x)-1320) / 3);
+
+    return (nLines > 0) ? P_x * (level + 1) : 0;
 }
+
+void Game::handleInput(TetrisAction action)
+{
+}
+
+void Game::loop()
+{
+    gameState = GameState::RUNNNING;
+
+    game
+
+    while (gameState != GameState::ENDING)
+    {
+
+    }
+
+    gameState = GameState::ENDED;
+}
+
+Game::Game() : Debuggable("Game"), this_instance(instanceCount++)
+{
+    console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
+    gameState = GameState::WAITING_PLAYERS;
+}
+
+Game::~Game()
+{
+    console_log("Destroying Game (" + std::to_string(this_instance) + ")...");
+}
+
+void Game::addPlayer(Player *player)
+{
+    if (gameState != GameState::WAITING_PLAYERS)
+    {
+        console_log("Cannot add player (not waiting for players)");
+        return;
+    }
+
+    players.emplace_back(player);
+}
+
 
 
 // File: ./src/client/ClientManager.cpp
@@ -2875,6 +2542,430 @@ void ClientManager::onPressKey(sf::Event::KeyEvent e)
 }
 
 
+// File: ./src/client/screens/MenuScreen.cpp
+#include "MenuScreen.hpp"
+
+MenuScreen::MenuScreen(ScreenManager &screenManager, ClientManager &clientManager)
+    : titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}, 40),
+      connectText(defaultFont, "Connect", sf::Color::White, {x_offset_screen + 330, y_offset_screen + 200}, 25),
+      quitText(defaultFont, "Quit", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}, 25),
+      manager(screenManager), clientMan(clientManager)
+{
+    connectText.setOnClick([this]()
+                           {
+                                manager.setActiveScreen("waiting-connection");
+                                clientMan.connect(); });
+
+    quitText.setOnClick([this]()
+                        { manager.quit(); });
+}
+
+void MenuScreen::handleEvent(sf::Event event, ScreenManager &manager)
+{
+    connectText.handleEvent(event);
+    quitText.handleEvent(event);
+}
+
+void MenuScreen::update(float deltaTime)
+{
+    // Menu update logic
+}
+
+void MenuScreen::render(sf::RenderWindow &window)
+{
+    titleText.render(window);
+    connectText.render(window);
+    quitText.render(window);
+}
+
+
+// File: ./src/client/screens/Button.cpp
+#include "Button.hpp"
+
+Button::Button(const sf::Font &font, const std::string &str, sf::Color color, sf::Vector2f position, int fontSize)
+{
+    setFont(font);
+    setString(str);
+    setCharacterSize(fontSize);
+    setFillColor(color);
+    setPosition(position);
+}
+
+void Button::setOnClick(const std::function<void()> &callback) { onClickCallback = callback; }
+
+void Button::handleEvent(const sf::Event &event)
+{
+    if (event.type == sf::Event::MouseButtonPressed)
+        if (getGlobalBounds().contains(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y)))
+            if (onClickCallback)
+                onClickCallback();
+}
+
+void Button::render(sf::RenderWindow &window) { window.draw(*this); }
+
+
+// File: ./src/client/screens/WaitingConnectionScreen.cpp
+#include "WaitingConnectionScreen.hpp"
+
+WaitingConnectionScreen::WaitingConnectionScreen(ScreenManager &screenManager, ClientManager &clientManager)
+    : titleText(defaultFont, "Waiting for server...", sf::Color::White, {(x_offset_screen + 100.0f), (y_offset_screen + 50.0f)}, 40),
+      backText(defaultFont, "Back", sf::Color::White, {(x_offset_screen + 300.0f), (y_offset_screen + 170.0f)}, 25),
+      screenMan(screenManager), clientMan(clientManager)
+{
+    backText.setOnClick([this]()
+                        {   std::cout << "Getting back to main screen\n";
+                                screenMan.setActiveScreen("main-menu");
+                                clientMan.disconnect(); });
+}
+
+void WaitingConnectionScreen::handleEvent(sf::Event event, ScreenManager &manager)
+{
+    backText.handleEvent(event);
+}
+
+void WaitingConnectionScreen::update(float deltaTime)
+{
+    if (clientMan.IsConnected())
+        screenMan.setActiveScreen("lobby");
+}
+
+void WaitingConnectionScreen::render(sf::RenderWindow &window)
+{
+    titleText.render(window);
+    backText.render(window);
+}
+
+
+// File: ./src/client/screens/BoardScreen.cpp
+#include "BoardScreen.hpp"
+
+void BoardScreen::setupCells()
+{
+    for (int y = 0; y < BOARD_HEIGHT; ++y)
+    {
+        std::vector<std::shared_ptr<TetrisCell>> row;
+        for (int x = 0; x < BOARD_WIDTH; ++x)
+        {
+            auto cell = std::make_shared<TetrisCell>(
+                sf::Vector2f(CELL_SIZE, CELL_SIZE),
+                sf::Vector2f(x * CELL_SIZE, y * CELL_SIZE),
+                sf::Color::Red);
+
+            row.push_back(cell);
+        }
+        grid.push_back(row);
+    }
+}
+
+BoardScreen::BoardScreen(ClientManager &clientManager) : clientManager(clientManager)
+{
+}
+
+void BoardScreen::handleEvent(sf::Event event, ScreenManager &manager)
+{
+    handleKeyPress(event);
+
+    for (auto &row : grid)
+        for (auto &cell : row)
+            cell->handleEvent(event);
+}
+
+void BoardScreen::render(sf::RenderWindow &window)
+{
+    for (auto &row : grid)
+        for (auto &cell : row)
+            window.draw(*cell);
+}
+
+void BoardScreen::updateBoardFromJson(const nlohmann::json &boardData)
+{
+    // Check for required keys in the JSON
+    if (!boardData.contains("width") || !boardData.contains("height") || !boardData.contains("cells"))
+    {
+        std::cerr << "Error: JSON is missing required keys (width, height, or cells)" << std::endl;
+        return;
+    }
+
+    // Check that width and height are valid integers
+    if (!boardData.at("width").is_number_integer() || !boardData.at("height").is_number_integer())
+    {
+        std::cerr << "Error: JSON width or height is not an integer" << std::endl;
+        return;
+    }
+
+    // Extract width and height
+    int newWidth = boardData.at("width").get<int>();
+    int newHeight = boardData.at("height").get<int>();
+
+    // Check that cells is a valid 2D array
+    if (!boardData.at("cells").is_array() || boardData.at("cells").size() != newHeight)
+    {
+        std::cerr << "Error: JSON cells array does not match the specified height" << std::endl;
+        return;
+    }
+
+    for (const auto &row : boardData.at("cells"))
+    {
+        if (!row.is_array() || row.size() != newWidth)
+        {
+            std::cerr << "Error: JSON cells array does not match the specified width" << std::endl;
+            return;
+        }
+    }
+
+    // Proceed with processing the data
+    if ((int)grid.size() != newHeight || (int)grid.at(0).size() != newWidth)
+    {
+        BOARD_WIDTH = newWidth;
+        BOARD_HEIGHT = newHeight;
+        grid.clear();
+        setupCells();
+    }
+
+    // Update cell colors
+    auto cells = boardData.at("cells");
+    for (int y = 0; y < BOARD_HEIGHT; y++)
+    {
+        for (int x = 0; x < BOARD_WIDTH; x++)
+        {
+            sf::Color cellColor = sf::Color::White;
+
+            // Check if cell contains "c" and process color
+            if (cells[y][x].contains("c"))
+            {
+                cellColor = TetrisCell::getColorFromType(cells[y][x]["c"]);
+                grid.at(y).at(x)->setFillColor(cellColor);
+            }
+        }
+    }
+}
+
+void BoardScreen::update(float deltaTime)
+{
+    if (clientManager.boardDataAvailable())
+    {
+        nlohmann::json newBoard = clientManager.getLastBoardState();
+        updateBoardFromJson(newBoard);
+    }
+}
+
+void BoardScreen::handleKeyPress(sf::Event event)
+{
+    if (event.type == sf::Event::KeyPressed)
+        clientManager.onPressKey(event.key);
+}
+
+
+// File: ./src/client/screens/GameScreen.cpp
+#include "GameScreen.hpp"
+
+GameScreen::GameScreen()
+{
+    gameText.setFont(defaultFont);
+    gameText.setString("Game Screen");
+    gameText.setCharacterSize(40);
+    gameText.setFillColor(sf::Color::Green);
+    gameText.setPosition(200, 200);
+}
+
+void GameScreen::handleEvent(sf::Event event, ScreenManager &manager)
+{
+}
+
+void GameScreen::update(float deltaTime)
+{
+}
+
+void GameScreen::render(sf::RenderWindow &window)
+{
+    window.draw(gameText);
+}
+
+
+// File: ./src/client/screens/Screen.cpp
+#include "Screen.hpp"
+
+Screen::Screen()
+{
+    if (!defaultFont.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"))
+    {
+        std::cerr << "Error loading font!" << std::endl;
+    }
+}
+
+void Screen::stop()
+{
+    running = false;
+}
+
+
+// File: ./src/client/screens/ScreenManager.cpp
+#include "ScreenManager.hpp"
+#include "Screen.hpp"
+
+ScreenManager::ScreenManager() {}
+
+ScreenManager::~ScreenManager()
+{
+    stopThread();
+}
+
+void ScreenManager::quit()
+{
+    exit(0);
+}
+
+void ScreenManager::addScreen(const std::string &name, std::unique_ptr<Screen> screen)
+{
+    screens[name] = std::move(screen);
+}
+
+void ScreenManager::setActiveScreen(const std::string &name)
+{
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        activeScreen = screens[name].get();
+    }
+    cv.notify_one();
+}
+
+void ScreenManager::handleEvent(sf::Event event)
+{
+    if (activeScreen)
+    {
+        activeScreen->handleEvent(event, *this);
+    }
+}
+
+void ScreenManager::update(float deltaTime)
+{
+    if (activeScreen)
+    {
+        activeScreen->update(deltaTime);
+    }
+}
+
+void ScreenManager::render(sf::RenderWindow &window)
+{
+    if (activeScreen)
+        activeScreen->render(window);
+}
+
+void ScreenManager::startThread()
+{
+    threadRunning = true;
+    screenThread = std::thread([this]()
+                               {
+            while (threadRunning) {
+                std::unique_lock<std::mutex> lock(mtx);
+                cv.wait(lock, [this]() { return activeScreen != nullptr; });
+                lock.unlock();
+
+                while (threadRunning) {
+                    if (activeScreen) {
+                        activeScreen->update(0.016f); // Simulate ~60 FPS updates
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+                }
+            } });
+}
+
+void ScreenManager::stopThread()
+{
+    threadRunning = false;
+    if (screenThread.joinable())
+    {
+        screenThread.join();
+    }
+}
+
+
+// File: ./src/client/screens/LobbyScreen.cpp
+#include "LobbyScreen.hpp"
+
+LobbyScreen::LobbyScreen(ClientManager &clientManager)
+    : clientMan(clientManager),
+      mainText(defaultFont, "Tetris Lobby", sf::Color::Blue, {230, 20}, 50),
+      startGameText(defaultFont, "Start Game", sf::Color::Green, {230, 380}, 40)
+{
+    startGameText.setOnClick([&clientManager]()
+                             { clientManager.request_game_start(); });
+}
+
+void LobbyScreen::handleEvent(sf::Event event, ScreenManager &manager)
+{
+    startGameText.handleEvent(event);
+
+    for (Button ct : clickableTexts)
+        ct.handleEvent(event);
+
+    if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
+        std::cout << "Lobby event: escape pressed" << std::endl;
+}
+
+void LobbyScreen::update(float deltaTime)
+{
+    // Update logic for lobby screen (e.g., fetching player list from server)
+}
+
+void LobbyScreen::render(sf::RenderWindow &window)
+{
+    startGameText.render(window);
+    mainText.render(window);
+
+    int index = 0;
+    int maxColumns = 5; // Max number of circles per row
+    int numPlayers = clientMan.getDataPlayers().size();
+
+    // Calculate the number of rows needed
+    int rows = (numPlayers + maxColumns - 1) / maxColumns;
+
+    // Calculate the total width and height of the grid
+    float totalWidth = maxColumns * (2 * circleRadius + padding) - padding;
+    float totalHeight = rows * (2 * circleRadius + padding) - padding;
+
+    // Get window size
+    sf::Vector2u windowSize = window.getSize();
+
+    // Calculate starting position to center the grid
+    float startX = (windowSize.x - totalWidth) / 2;
+    float startY = (windowSize.y - totalHeight) / 2;
+
+    clickableTexts.clear();
+    for (auto &pd : clientMan.getDataPlayers())
+    {
+        sf::CircleShape circle(circleRadius);
+
+        circle.setFillColor(sf::Color::Cyan);
+        circle.setOutlineThickness(2.0f);
+        circle.setOutlineColor(sf::Color::Black);
+
+        // Calculate position for the circle
+        float x = startX + (index % maxColumns) * (2 * circleRadius + padding);
+        float y = startY + (index / maxColumns) * (2 * circleRadius + padding);
+
+        // Set circle position
+        circle.setPosition(x, y);
+        window.draw(circle);
+
+        // Create and position the text
+        Button itext(
+            defaultFont,
+            pd.playerName + " " + std::to_string(pd.playerID),
+            sf::Color::Red,
+            {x - circleRadius, y + 2 * circleRadius}, 20); // Centered text below circle
+
+        itext.render(window);
+        itext.setOnClick([&]()
+                         { std::cout << " clicked " << pd.playerID << std::endl; });
+
+        clickableTexts.emplace_back(itext);
+
+        index++;
+    }
+}
+
+
 // File: ./src/client/TetrisClient.cpp
 #include <iostream>
 #include <enet/enet.h>
@@ -2882,6 +2973,7 @@ void ClientManager::onPressKey(sf::Event::KeyEvent e)
 #include "TetrisCell.hpp"
 #include "ClientManager.hpp"
 
+#include "screens/ScreenManager.hpp"
 #include "screens/WaitingConnectionScreen.hpp"
 #include "screens/GameScreen.hpp"
 #include "screens/MenuScreen.hpp"

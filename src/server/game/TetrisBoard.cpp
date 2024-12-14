@@ -1,11 +1,9 @@
 #include "game/TetrisBoard.hpp"
-#include <stdlib.h>
-#include "ServerManager.hpp"
 
 const int TetrisBoard::WIDTH = 10;
 const int TetrisBoard::HEIGHT = 16;
 
-TetrisBoard::TetrisBoard(ServerManager &serverManager) : serverManager(serverManager)
+TetrisBoard::TetrisBoard()
 {
     for (int y = 0; y < HEIGHT; ++y)
     {
@@ -219,16 +217,6 @@ int TetrisBoard::clearLines()
     return numLinesCleared;
 }
 
-void TetrisBoard::broadcastBoardState()
-{
-    if (!gridsAreEqual(grid, lastBroadcastedGrid))
-    {
-        updateLastBroadcastedGrid();                     // Step 1: Update lastBroadcastedGrid to match the current grid
-        nlohmann::json boardJson = constructBoardJson(); // Step 2: Construct the JSON object
-        sendBoardState(boardJson);                       // Step 3: Broadcast the JSON object
-    }
-}
-
 // Updates lastBroadcastedGrid with a deep copy of the current grid
 void TetrisBoard::updateLastBroadcastedGrid()
 {
@@ -281,12 +269,6 @@ nlohmann::json TetrisBoard::constructBoardJson() const
 
     boardJson["cells"] = cells;
     return boardJson;
-}
-
-// Sends the JSON board state using the server manager
-void TetrisBoard::sendBoardState(const nlohmann::json &boardJson) const
-{
-    serverManager.send_packet(Packet(PacketType::GAME_SCREEN, boardJson, nullptr));
 }
 
 // Implementation of gridsAreEqual

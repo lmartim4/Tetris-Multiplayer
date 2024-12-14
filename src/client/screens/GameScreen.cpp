@@ -11,8 +11,6 @@ GameScreen::GameScreen()
 
 void GameScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
-    if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-        std::cout << "Game event: escape pressed" << std::endl;
 }
 
 void GameScreen::update(float deltaTime)

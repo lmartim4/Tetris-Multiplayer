@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Add include directories for each module
 set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/common)
-set(SERVER_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/server)
+set(SERVER_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/server ${CMAKE_SOURCE_DIR}/include/server/game)
 set(CLIENT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/client)
 set(CLIENT_INCLUDE_SCREENS_DIR ${CMAKE_SOURCE_DIR}/include/client/screens)
 
@@ -37,6 +37,7 @@ set(SERVER_SOURCES
     src/server/game/TetrisBoard.cpp
     src/server/game/Cell.cpp
     src/server/game/GameManager.cpp
+    src/server/game/Game.cpp
 )
 
 # Source files for the client
@@ -57,6 +58,7 @@ set(CLIENT_SOURCES
 set(COMMOM_SOURCES
     src/common/NetworkManager.cpp
     src/common/PlayerData.cpp
+    src/common/Debuggable.cpp
 )
 
 # Configure build types

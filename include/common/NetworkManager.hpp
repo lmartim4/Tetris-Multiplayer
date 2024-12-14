@@ -80,7 +80,7 @@ public:
 
     // Returns the ENetHost object, which represents either the client or server in ENet.
     ENetHost *getHost();
-    
+
     std::vector<ENetPeer *> getPeers();
 
 protected:

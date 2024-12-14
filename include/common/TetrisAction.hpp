@@ -1,4 +1,6 @@
 #pragma once
+
+#include <string>
 #include "PacketType.hpp"
 
 enum class TetrisAction
@@ -41,7 +43,8 @@ inline const TetrisAction getActionFromPacketType(PacketType type)
 
     return action;
 }
-inline const char *TetrisActionToString(TetrisAction action)
+
+inline std::string TetrisActionToString(TetrisAction action)
 {
     switch (action)
     {

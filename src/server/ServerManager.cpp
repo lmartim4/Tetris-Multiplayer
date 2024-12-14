@@ -72,21 +72,22 @@ void ServerManager::broadcastPlayerList()
     {
         if (!entry->data)
         {
-            // This peer doesn't have a Player associated yet, skip it
-            std::cout << "~No player~" << std::endl;
+            std::cout << "~ No player ~" << std::endl;
             continue;
         }
+
         Player *player = (Player *)entry->data;
 
         nlohmann::json playerJson = player->getData().serialize();
 
         message.push_back(nlohmann::json::array({playerJson}));
     }
+
     std::cout << message << std::endl;
     send_packet(Packet(PacketType::PLAYER_LIST, message, nullptr));
 }
 
-void ServerManager::start_game()
+void ServerManager::broadcast_starting_game()
 {
     send_packet(Packet(PacketType::STARTING_GAME, 0, nullptr));
 }

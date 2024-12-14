@@ -1,16 +1,19 @@
 #include <enet/enet.h>
 #include <iostream>
-#include "ServerManager.hpp"
+
+#include "GameManager.hpp"
 #include "TetrisAction.hpp"
 
 ServerManager server(12345);
 GameManager gm(server);
 
-// Might get player from packt id
 void onReceiveArrow(const Packet &packet)
 {
     TetrisAction action = getActionFromPacketType(packet.type);
-    gm.enqueueAction(action);
+
+    Player *player = ServerManager::extractPlayerFromPacket(packet);
+
+    gm.enqueueAction(player, action);
 }
 
 void HeartbeatListener(const Packet &packet)
@@ -20,8 +23,7 @@ void HeartbeatListener(const Packet &packet)
 
 void StartGameListener(const Packet &packet)
 {
-    server.start_game();
-    gm.startGameLoop();
+    gm.StartGameListener(packet);
 }
 
 void JoinRequestListener(const Packet &packet)

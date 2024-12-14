@@ -5,7 +5,6 @@
 #include <map>
 
 #include "NetworkManager.hpp"
-#include "game/GameManager.hpp"
 #include "Player.hpp"
 #include <json.hpp>
 #include <random>
@@ -25,5 +24,19 @@ public:
     ServerManager(uint16_t port = 12345);
     ~ServerManager() {};
 
-    void start_game();
+    void broadcast_starting_game();
+
+    static Player *extractPlayerFromPacket(const Packet &packet)
+    {
+        if (!packet.peer)
+        {
+            throw std::runtime_error("Error: Packet has no associated ENetPeer.");
+        }
+        if (!packet.peer->data)
+        {
+            throw std::runtime_error("Error: ENetPeer has no associated Player.");
+        }
+
+        return static_cast<Player *>(packet.peer->data);
+    }
 };

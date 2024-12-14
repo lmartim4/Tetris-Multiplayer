@@ -51,6 +51,11 @@ public:
         return data.isConnected;
     }
 
+    int getPlayerID()
+    {
+        return data.playerID;
+    }
+
 private:
     PlayerData data;
 };
