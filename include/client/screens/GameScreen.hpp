@@ -16,27 +16,8 @@ class GameScreen : public Screen
     sf::Text gameText;
 
 public:
-    GameScreen()
-    {
-        gameText.setFont(defaultFont);
-        gameText.setString("Game Screen");
-        gameText.setCharacterSize(40);
-        gameText.setFillColor(sf::Color::Green);
-        gameText.setPosition(200, 200);
-    }
-
-    void handleEvent(sf::Event event, ScreenManager &manager) override
-    {
-        if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-            std::cout << "Game event: escape pressed" << std::endl;
-    }
-
-    void update(float deltaTime) override
-    {
-    }
-
-    void render(sf::RenderWindow &window) override
-    {
-        window.draw(gameText);
-    }
+    GameScreen();
+    void handleEvent(sf::Event event, ScreenManager &manager) override;
+    void update(float deltaTime) override;
+    void render(sf::RenderWindow &window) override;
 };

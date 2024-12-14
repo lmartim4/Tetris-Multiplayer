@@ -4,6 +4,7 @@
 #include "TetrisCell.hpp"
 #include "ClientManager.hpp"
 
+#include "screens/ScreenManager.hpp"
 #include "screens/WaitingConnectionScreen.hpp"
 #include "screens/GameScreen.hpp"
 #include "screens/MenuScreen.hpp"

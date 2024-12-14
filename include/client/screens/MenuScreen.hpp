@@ -21,40 +21,11 @@ class MenuScreen : public Screen
     Button titleText;
     Button connectText;
     Button quitText;
-    ScreenManager &manager; // Reference to ScreenManager
+    ScreenManager &manager;
     ClientManager &clientMan;
-
 public:
-    MenuScreen(ScreenManager &screenManager, ClientManager &clientManager)
-        : titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}, 40),
-          connectText(defaultFont, "Connect", sf::Color::White, {x_offset_screen + 330, y_offset_screen + 200}, 25),
-          quitText(defaultFont, "Quit", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}, 25),
-          manager(screenManager), clientMan(clientManager)
-    {
-        connectText.setOnClick([this]()
-                               {
-                                manager.setActiveScreen("waiting-connection");
-                                clientMan.connect(); });
-
-        quitText.setOnClick([this]()
-                            { manager.quit(); });
-    }
-
-    void handleEvent(sf::Event event, ScreenManager &manager) override
-    {
-        connectText.handleEvent(event);
-        quitText.handleEvent(event);
-    }
-
-    void update(float deltaTime) override
-    {
-        // Menu update logic
-    }
-
-    void render(sf::RenderWindow &window) override
-    {
-        titleText.render(window);
-        connectText.render(window);
-        quitText.render(window);
-    }
+    MenuScreen(ScreenManager &screenManager, ClientManager &clientManager);
+    void handleEvent(sf::Event event, ScreenManager &manager) override;
+    void update(float deltaTime) override;
+    void render(sf::RenderWindow &window) override;
 };

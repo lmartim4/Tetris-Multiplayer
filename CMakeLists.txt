@@ -12,8 +12,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/common)
 set(SERVER_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/server)
 set(CLIENT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/client)
+set(CLIENT_INCLUDE_SCREENS_DIR ${CMAKE_SOURCE_DIR}/include/client/screens)
 
-include_directories(${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR})
+include_directories(${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR} ${CLIENT_INCLUDE_SCREENS_DIR} )
 
 # Find SFML package (required)
 find_package(SFML 2.5 COMPONENTS system window graphics network audio REQUIRED)
@@ -32,9 +33,6 @@ find_package(Threads REQUIRED)
 set(SERVER_SOURCES
     src/server/TetrisServer.cpp
     src/server/ServerManager.cpp
-    src/common/NetworkManager.cpp
-    
-    #Tetris Single Player
     src/server/game/Tetromino.cpp
     src/server/game/TetrisBoard.cpp
     src/server/game/Cell.cpp
@@ -45,7 +43,20 @@ set(SERVER_SOURCES
 set(CLIENT_SOURCES
     src/client/TetrisClient.cpp
     src/client/ClientManager.cpp
+    src/client/screens/Button.cpp
+    src/client/screens/BoardScreen.cpp
+    src/client/screens/MenuScreen.cpp
+    src/client/screens/GameScreen.cpp
+    src/client/screens/LobbyScreen.cpp
+    src/client/screens/ScreenManager.cpp
+    src/client/screens/WaitingConnectionScreen.cpp
+    src/client/screens/Screen.cpp
+)
+
+# Source files for both
+set(COMMOM_SOURCES
     src/common/NetworkManager.cpp
+    src/common/PlayerData.cpp
 )
 
 # Configure build types
@@ -53,12 +64,12 @@ set(CMAKE_BUILD_TYPE_INIT Release)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Select Debug or Release" FORCE)
 
 # Server executable
-add_executable(server ${SERVER_SOURCES})
+add_executable(server ${SERVER_SOURCES} ${COMMOM_SOURCES})
 target_include_directories(server PRIVATE ${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR})
 target_link_libraries(server sfml-system ${ENET_LIB} Threads::Threads)
 
 # Client executable
-add_executable(client ${CLIENT_SOURCES})
+add_executable(client ${CLIENT_SOURCES} ${COMMOM_SOURCES})
 target_include_directories(client PRIVATE ${COMMON_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR})
 target_link_libraries(client sfml-system sfml-window sfml-graphics ${ENET_LIB} Threads::Threads)
 
