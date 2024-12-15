@@ -271,6 +271,8 @@ inline std::string TetrisActionToString(TetrisAction action)
 #include <functional>
 #include <thread>
 #include <memory>
+#include <mutex>
+#include <condition_variable>
 
 // The NetworkManager class is responsible for managing all network communication.
 // It sets up the network host, handles incoming and outgoing packets, and provides
@@ -278,8 +280,9 @@ inline std::string TetrisActionToString(TetrisAction action)
 class NetworkManager : public PacketSender
 {
 public:
-    NetworkManager();          // Constructor: Initializes the ENet library and network manager.
-    virtual ~NetworkManager(); // Destructor: Cleans up network resources and stops the network loop.
+    const int network_frequency = 10; // Hertz
+    NetworkManager();                  // Constructor: Initializes the ENet library and network manager.
+    virtual ~NetworkManager();         // Destructor: Cleans up network resources and stops the network loop.
 
     static const int version = 1; // NetworkManager version for debugging purposes
 
@@ -329,8 +332,14 @@ protected:
     void TaskStopNetwork();
 
 private:
-    std::thread networkThread;         // Thread for running the network event loop.
-    std::atomic<bool> running = false; // Atomic flag to indicate whether the network loop is active.
+    std::thread networkThread; // Thread for running the network event loop.
+
+    std::thread sendThread;
+    std::thread receiveThread;
+
+    std::atomic<bool> mainTask = false; // Atomic flag to indicate whether the network loop is active.
+    std::atomic<bool> sending = false;
+    std::atomic<bool> receiving = false;
 
     // Queue for outgoing packets that need to be sent to peers.
     std::queue<Packet> outgoingPackets;
@@ -340,6 +349,11 @@ private:
 
     // A map that associates packet types (as uint8_t) with their corresponding listener functions.
     std::unordered_map<uint8_t, std::function<void(const Packet &)>> listeners;
+
+    std::mutex outgoingMutex;
+    std::mutex incomingMutex;
+    std::condition_variable outgoingCondition;
+    std::condition_variable incomingCondition;
 
     // Processes events received from ENet, such as peer connections, disconnections, and packet receptions.
     void processENetEvent(ENetEvent &event);
@@ -355,6 +369,8 @@ private:
 
     // The main network loop that continuously processes ENet events, sends outgoing packets, and handles incoming ones.
     void TaskNetwork();
+    void TaskSend();
+    void TaskReceive();
 };
 
 
@@ -469,7 +485,7 @@ private:
     int level;
     int nLinesClearedThisLevel;
 
-    const int minTimeMs = 15;
+    const int minTimeMs = 400;
     int gravityTimeMs;        // Current gravity time in ms
     int levelUpGravityTimeMs; // How much to reduce gravity time on level up
 
@@ -486,13 +502,13 @@ private:
 
     int calculateLinesToPoints(int nLines, int level);
 
-    void handleInput(Player *player, TetrisAction action);
+    
 
     std::thread gameThread; // The thread running the game loop
 
     void loop();
     void updateGame(TetrisAction action);
-    void broadcastBoardState();
+    void sendBoardUpdates();
 
     void sendBoardState(const nlohmann::json &boardJson) const;
     void spawnTetromino();
@@ -502,8 +518,7 @@ public:
     ~Game();
 
     void addPlayer(Player *player);
-
-    void enqueueAction(TetrisAction action);
+    void handleInput(Player *player, TetrisAction action);
 
     void startGameLoop();
     void endGameLoop();
@@ -549,12 +564,15 @@ class ServerManager;
 class TetrisBoard
 {
 private:
+    bool changed = false;
     std::vector<std::vector<std::shared_ptr<Cell>>> grid;
     std::vector<std::vector<std::shared_ptr<Cell>>> lastBroadcastedGrid;
 
 public:
     static const int WIDTH;
     static const int HEIGHT;
+
+    bool anyChanges() { return changed; }
 
     TetrisBoard();
 
@@ -566,18 +584,19 @@ public:
     // checar a colisao sem mudar o objeto e ver se dá merda, na prática faz-se a ação inversa depois, então safe
     bool checkCollision(Tetromino &currentTetromino, TetrisAction action);
     int clearLines();
+    
     bool placeTetromino(const Tetromino &currentTetromino, bool fallen);
+    
     static int normalizedY(int y);
 
     void clearFallingTetrominos();
     void clearFalledTetrominos();
 
     std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid();
-    
-    bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
-                       const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const;
 
-    nlohmann::json constructBoardJson() const;
+    // bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1, const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const;
+
+    nlohmann::json constructBoardJsonToBroadcast();
 };
 
 
@@ -1385,7 +1404,6 @@ NetworkManager::~NetworkManager()
 
 void NetworkManager::sendPacket(const Packet &packet)
 {
-
     outgoingPackets.push(packet);
 }
 void NetworkManager::broadcastPacket(const Packet &packet)
@@ -1407,15 +1425,21 @@ void NetworkManager::network_print(const char *array)
 
 void NetworkManager::TaskStartNetwork()
 {
-    if (running)
+    if (mainTask)
     {
         std::cout << "Error: Network Task already running! (Why would you start again?)" << std::endl;
         return;
     }
 
     network_print("Initializing Network Task...\n");
-    running = true;
+
+    mainTask = true;
+    sending = true;
+    receiving = true;
+
     networkThread = std::thread(&NetworkManager::TaskNetwork, this);
+    sendThread = std::thread(&NetworkManager::TaskSend, this);
+    receiveThread = std::thread(&NetworkManager::TaskReceive, this);
 }
 
 void NetworkManager::registerListener(PacketType packetType, std::function<void(const Packet &)> callback)
@@ -1450,15 +1474,25 @@ void NetworkManager::processIncomingPackets()
 
 void NetworkManager::TaskStopNetwork()
 {
-    running = false;
+    mainTask = false;
+    sending = false;
+    receiving = false;
+
+    outgoingCondition.notify_all();
+    incomingCondition.notify_all();
 
     if (networkThread.joinable())
         networkThread.join();
+
+    if (sendThread.joinable())
+        sendThread.join();
+    if (receiveThread.joinable())
+        receiveThread.join();
 }
 
 bool NetworkManager::isRunning() const
 {
-    return running;
+    return mainTask;
 }
 
 Packet NetworkManager::parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer)
@@ -1483,24 +1517,39 @@ ENetPacket *NetworkManager::createENetPacket(const Packet &packet)
 
 void NetworkManager::TaskNetwork()
 {
-    int network_frequencie = 10; // Hertz
-    while (running)
+    while (mainTask)
     {
         ENetEvent event;
 
-        while (enet_host_service(host, &event, (1000 / network_frequencie)) > 0)
+        while (enet_host_service(host, &event, (1000 / network_frequency)) > 0)
             processENetEvent(event);
-
-        sendOutgoingPackets();
-        processIncomingPackets();
     }
     enet_host_destroy(host);
+}
+
+void NetworkManager::TaskSend()
+{
+    while (sending)
+    {
+        sendOutgoingPackets();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / network_frequency));
+    }
+}
+
+void NetworkManager::TaskReceive()
+{
+    while (receiving)
+    {
+        processIncomingPackets();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / network_frequency));
+    }
 }
 
 void NetworkManager::sendOutgoingPackets()
 {
     while (!outgoingPackets.empty())
     {
+        // std::cout << "Sending Packet\n";
         Packet packet = outgoingPackets.front();
         outgoingPackets.pop();
 
@@ -1607,7 +1656,6 @@ GameManager gm(server);
 
 void onReceiveArrow(const Packet &packet)
 {
-    std::cout << "Received!" << std::endl;
     TetrisAction action = getActionFromPacketType(packet.type);
 
     Player *player = ServerManager::extractPlayerFromPacket(packet);
@@ -1652,7 +1700,7 @@ int main(int argc, const char *argv[])
     server.registerListener(PacketType::DROP_INSTANT, onReceiveArrow);
 
     while (server.isRunning())
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     return 0;
 }
@@ -1764,8 +1812,8 @@ GameManager::GameManager(ServerManager &server) : Debuggable("GameManager"), ser
 }
 
 void GameManager::enqueueAction(Player *player, TetrisAction action)
-{   
-    console_log(std::to_string(player->getPlayerID()) + TetrisActionToString(action));
+{
+    game->handleInput(player, action);
 }
 
 void GameManager::StartGameListener(const Packet &)
@@ -1921,6 +1969,7 @@ void Cell::setFixed(const CellColorType &newColor)
 
 // File: ./src/server/game/TetrisBoard.cpp
 #include "game/TetrisBoard.hpp"
+#include "TetrisBoard.hpp"
 
 const int TetrisBoard::WIDTH = 10;
 const int TetrisBoard::HEIGHT = 16;
@@ -1967,8 +2016,6 @@ void TetrisBoard::printStatus()
         }
         std::cout << std::endl;
     }
-
-    // Separador visual
     std::cout << std::string(40, '-') << std::endl;
 }
 
@@ -2020,7 +2067,7 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastM
             }
         }
     }
-
+    changed = true;
     return false;
 }
 
@@ -2057,7 +2104,7 @@ bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
             }
         }
     }
-
+    changed = true;
     return true;
 }
 
@@ -2136,12 +2183,15 @@ int TetrisBoard::clearLines()
         }
     }
 
+    changed = true;
     return numLinesCleared;
 }
 
 // Constructs a JSON representation of the board's current state
-nlohmann::json TetrisBoard::constructBoardJson() const
+nlohmann::json TetrisBoard::constructBoardJsonToBroadcast()
 {
+    changed = false;
+
     nlohmann::json boardJson;
     boardJson["width"] = WIDTH;
     boardJson["height"] = HEIGHT;
@@ -2167,6 +2217,7 @@ nlohmann::json TetrisBoard::constructBoardJson() const
 }
 
 // Implementation of gridsAreEqual
+/*
 bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
                                 const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const
 {
@@ -2191,7 +2242,7 @@ bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Ce
     }
 
     return true;
-}
+}*/
 
 
 // File: ./src/server/game/Game.cpp
@@ -2249,7 +2300,7 @@ int Game::calculateLinesToPoints(int nLines, int level)
 
 void Game::handleInput(Player *player, TetrisAction action)
 {
-    updateGame(action);
+    player->actions.push(action);
 }
 
 void Game::loop()
@@ -2265,13 +2316,13 @@ void Game::loop()
 
         for (Player *pl : players)
             while (pl->actions.pop(action))
-                handleInput(pl, action);
+                updateGame(action);
 
         updateGame(TetrisAction::EMPTY);
-        broadcastBoardState();
+        sendBoardUpdates();
         // board.printStatus();
 
-        //std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     gameState = GameState::ENDED;
@@ -2279,9 +2330,6 @@ void Game::loop()
 
 void Game::updateGame(TetrisAction lastAction)
 {
-    if (lastAction != TetrisAction::EMPTY)
-        console_log("Action >> " + TetrisActionToString(lastAction));
-
     if (board.reachedTop())
     {
         std::cout << "(GAME OVER) !!!" << std::endl;
@@ -2311,7 +2359,7 @@ void Game::updateGame(TetrisAction lastAction)
         if (lastAction == TetrisAction::DROP_FASTER || currentTetromino->getGravity())
         {
             // Place and lock tetromino
-            std::cout << "Last move received = " << TetrisActionToString(lastAction) << " e gravidade = " << currentTetromino->getGravity() << std::endl;
+            // std::cout << "Last move received = " << TetrisActionToString(lastAction) << " e gravidade = " << currentTetromino->getGravity() << std::endl;
             board.placeTetromino(*currentTetromino, true);
 
             // GRAVIDADE TEM Q SAIR DO TETROMINO, é uyma propriedade GLOBAL agr
@@ -2376,19 +2424,19 @@ void Game::addPlayer(Player *player)
     players.emplace_back(player);
 }
 
-void Game::enqueueAction(TetrisAction action)
-{
-}
-
 void Game::spawnTetromino()
 {
-    std::cout << "Spawning tetromino\n";
     currentTetromino = TetrominoFactory::createTetromino();
 }
 
-void Game::broadcastBoardState()
+void Game::sendBoardUpdates()
 {
-    nlohmann::json boardJson = board.constructBoardJson();
+    if (!board.anyChanges())
+        return;
+
+    console_log("Sending board!");
+
+    nlohmann::json boardJson = board.constructBoardJsonToBroadcast();
     sendBoardState(boardJson);
 }
 

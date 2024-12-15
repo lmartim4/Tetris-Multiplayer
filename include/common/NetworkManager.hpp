@@ -78,7 +78,7 @@ private:
     std::thread sendThread;
     std::thread receiveThread;
 
-    std::atomic<bool> running = false; // Atomic flag to indicate whether the network loop is active.
+    std::atomic<bool> mainTask = false; // Atomic flag to indicate whether the network loop is active.
     std::atomic<bool> sending = false;
     std::atomic<bool> receiving = false;
 
@@ -108,11 +108,8 @@ private:
     // Creates an ENet packet from a custom Packet structure, ready to be sent over the network.
     ENetPacket *createENetPacket(const Packet &packet);
 
-    void TaskNetwork();
-
     // The main network loop that continuously processes ENet events, sends outgoing packets, and handles incoming ones.
-    // void TaskNetwork();
-
+    void TaskNetwork();
     void TaskSend();
     void TaskReceive();
 };

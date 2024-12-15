@@ -9,7 +9,6 @@ GameManager gm(server);
 
 void onReceiveArrow(const Packet &packet)
 {
-    std::cout << "I got a packet!" << std::endl;
     TetrisAction action = getActionFromPacketType(packet.type);
 
     Player *player = ServerManager::extractPlayerFromPacket(packet);

@@ -57,7 +57,7 @@ void NetworkManager::network_print(const char *array)
 
 void NetworkManager::TaskStartNetwork()
 {
-    if (running)
+    if (mainTask)
     {
         std::cout << "Error: Network Task already running! (Why would you start again?)" << std::endl;
         return;
@@ -65,7 +65,7 @@ void NetworkManager::TaskStartNetwork()
 
     network_print("Initializing Network Task...\n");
 
-    running = true;
+    mainTask = true;
     sending = true;
     receiving = true;
 
@@ -106,7 +106,7 @@ void NetworkManager::processIncomingPackets()
 
 void NetworkManager::TaskStopNetwork()
 {
-    running = false;
+    mainTask = false;
     sending = false;
     receiving = false;
 
@@ -124,7 +124,7 @@ void NetworkManager::TaskStopNetwork()
 
 bool NetworkManager::isRunning() const
 {
-    return running;
+    return mainTask;
 }
 
 Packet NetworkManager::parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer)
@@ -149,7 +149,7 @@ ENetPacket *NetworkManager::createENetPacket(const Packet &packet)
 
 void NetworkManager::TaskNetwork()
 {
-    while (running)
+    while (mainTask)
     {
         ENetEvent event;
 
@@ -181,7 +181,7 @@ void NetworkManager::sendOutgoingPackets()
 {
     while (!outgoingPackets.empty())
     {
-        std::cout << "Sending Packet\n";
+        // std::cout << "Sending Packet\n";
         Packet packet = outgoingPackets.front();
         outgoingPackets.pop();
 

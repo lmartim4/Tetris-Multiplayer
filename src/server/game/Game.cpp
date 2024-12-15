@@ -74,7 +74,7 @@ void Game::loop()
         sendBoardUpdates();
         // board.printStatus();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     gameState = GameState::ENDED;
@@ -148,6 +148,7 @@ void Game::updateGame(TetrisAction lastAction)
     }
     else
     {
+        board.changed = true;
         // Valid move, place without locking
         board.placeTetromino(*currentTetromino, false);
         currentTetromino->gravity = false;
@@ -178,6 +179,7 @@ void Game::addPlayer(Player *player)
 
 void Game::spawnTetromino()
 {
+    board.changed = true;
     currentTetromino = TetrominoFactory::createTetromino();
 }
 
@@ -185,6 +187,8 @@ void Game::sendBoardUpdates()
 {
     if (!board.anyChanges())
         return;
+
+    console_log("Sending board!");
 
     nlohmann::json boardJson = board.constructBoardJsonToBroadcast();
     sendBoardState(boardJson);

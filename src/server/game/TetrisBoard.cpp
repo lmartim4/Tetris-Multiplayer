@@ -20,18 +20,11 @@ TetrisBoard::TetrisBoard()
     }
 }
 
-bool TetrisBoard::anyChanges()
-{
-    return !gridsAreEqual(grid, lastBroadcastedGrid);
-}
-
 bool TetrisBoard::reachedTop()
 {
-    for (int y = 0; y < WIDTH; ++y)
-    {
+    for (int y = 0; y < WIDTH; y++)
         if (grid.at(0).at(y)->isFixed())
             return true;
-    }
 
     return false;
 }
@@ -40,31 +33,23 @@ void TetrisBoard::printStatus()
 {
     system("clear");
 
-    // Imprimir status da board
     std::cout << "\nEstado da Board:" << std::endl;
     for (int x = 0; x < HEIGHT; x++)
     {
         for (int y = 0; y < WIDTH; y++)
-        {
             std::cout << (grid[x][y]->isFalling() ? " # " : (grid[x][y]->isEmpty()) ? " * "
                                                                                     : " $ ");
-        }
         std::cout << std::endl;
     }
 
-    // Separador visual
     std::cout << std::string(40, '-') << std::endl;
 }
 
 void TetrisBoard::clear()
 {
     for (int x = 0; x < HEIGHT; x++)
-    {
         for (int y = 0; y < WIDTH; y++)
-        {
             grid[x][y]->setEmpty();
-        }
-    }
 }
 
 std::vector<std::vector<std::shared_ptr<Cell>>> &TetrisBoard::getGrid()
@@ -82,9 +67,7 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastM
     int tetrominoY = currentTetromino.getY();
 
     for (size_t x = 0; x < shape.size(); ++x)
-    {
         for (size_t y = 0; y < shape[x].size(); ++y)
-        {
             if (shape[x][y] != 0)
             {
                 int gridX = tetrominoX + x;
@@ -93,17 +76,17 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastM
                 if (gridX >= HEIGHT || gridX < 0)
                 {
                     currentTetromino.evolveStates(false, lastMove);
+
                     return true;
                 }
 
                 if (grid[gridX][gridY]->isFixed())
                 {
                     currentTetromino.evolveStates(false, lastMove);
+
                     return true;
                 }
             }
-        }
-    }
 
     return false;
 }
@@ -121,13 +104,10 @@ int TetrisBoard::normalizedY(int y)
 // Integra o tetromino com o resto que já caiu
 bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
 {
-
     const auto &shape = currentTetromino.getShape();
 
-    for (size_t x = 0; x < shape.size(); ++x)
-    {
-        for (size_t y = 0; y < shape[x].size(); ++y)
-        {
+    for (size_t x = 0; x < shape.size(); x++)
+        for (size_t y = 0; y < shape[x].size(); y++)
             if (shape[x][y] != 0)
             {
                 int gridX = currentTetromino.getX() + x;
@@ -139,38 +119,24 @@ bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
                 else
                     grid[gridX][gridY]->setFalling(tetroColor);
             }
-        }
-    }
 
     return true;
 }
 
 void TetrisBoard::clearFallingTetrominos()
 {
-    for (int x = 0; x < HEIGHT; ++x)
-    {
-        for (int y = 0; y < WIDTH; ++y)
-        {
+    for (int x = 0; x < HEIGHT; x++)
+        for (int y = 0; y < WIDTH; y++)
             if (grid[x][y]->isFalling())
-            {
                 grid[x][y]->setEmpty();
-            }
-        }
-    }
 }
 
 void TetrisBoard::clearFalledTetrominos()
 {
-    for (int x = 0; x < HEIGHT; ++x)
-    {
-        for (int y = 0; y < WIDTH; ++y)
-        {
+    for (int x = 0; x < HEIGHT; x++)
+        for (int y = 0; y < WIDTH; y++)
             if (grid[x][y]->isFixed())
-            {
                 grid[x][y]->setEmpty();
-            }
-        }
-    }
 }
 
 int TetrisBoard::clearLines()
@@ -181,7 +147,7 @@ int TetrisBoard::clearLines()
     for (int x = HEIGHT - 1; x >= 0; --x)
     {
         int sumLine = 0;
-        for (int y = 0; y < WIDTH; ++y)
+        for (int y = 0; y < WIDTH; y++)
         {
             if (grid[x][y]->isFixed())
                 sumLine++;
@@ -219,15 +185,13 @@ int TetrisBoard::clearLines()
             numLinesCleared++;
         }
     }
-
     return numLinesCleared;
 }
 
 // Constructs a JSON representation of the board's current state
 nlohmann::json TetrisBoard::constructBoardJsonToBroadcast()
 {
-    updateLastBroadcastedGrid();
-
+    changed = false;
     nlohmann::json boardJson;
     boardJson["width"] = WIDTH;
     boardJson["height"] = HEIGHT;
@@ -253,6 +217,7 @@ nlohmann::json TetrisBoard::constructBoardJsonToBroadcast()
 }
 
 // Implementation of gridsAreEqual
+/*
 bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
                                 const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const
 {
@@ -277,4 +242,4 @@ bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Ce
     }
 
     return true;
-}
+}*/
