@@ -84,10 +84,10 @@ void ServerManager::broadcastPlayerList()
     }
 
     std::cout << message << std::endl;
-    send_packet(Packet(PacketType::PLAYER_LIST, message, nullptr));
+    sendPacket(Packet(PacketType::PLAYER_LIST, message, nullptr));
 }
 
 void ServerManager::broadcast_starting_game()
 {
-    send_packet(Packet(PacketType::STARTING_GAME, 0, nullptr));
+    sendPacket(Packet(PacketType::STARTING_GAME, 0, nullptr));
 }

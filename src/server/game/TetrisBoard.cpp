@@ -1,4 +1,5 @@
 #include "game/TetrisBoard.hpp"
+#include "TetrisBoard.hpp"
 
 const int TetrisBoard::WIDTH = 10;
 const int TetrisBoard::HEIGHT = 16;
@@ -17,6 +18,11 @@ TetrisBoard::TetrisBoard()
 
         grid.push_back(row);
     }
+}
+
+bool TetrisBoard::anyChanges()
+{
+    return !gridsAreEqual(grid, lastBroadcastedGrid);
 }
 
 bool TetrisBoard::reachedTop()
@@ -217,36 +223,11 @@ int TetrisBoard::clearLines()
     return numLinesCleared;
 }
 
-// Updates lastBroadcastedGrid with a deep copy of the current grid
-void TetrisBoard::updateLastBroadcastedGrid()
-{
-    lastBroadcastedGrid.clear();
-    lastBroadcastedGrid.reserve(grid.size());
-
-    for (const auto &row : grid)
-    {
-        std::vector<std::shared_ptr<Cell>> newRow;
-        newRow.reserve(row.size());
-
-        for (const auto &cellPtr : row)
-        {
-            if (cellPtr)
-            {
-                newRow.emplace_back(std::make_shared<Cell>(*cellPtr));
-            }
-            else
-            {
-                newRow.emplace_back(nullptr);
-            }
-        }
-
-        lastBroadcastedGrid.emplace_back(std::move(newRow));
-    }
-}
-
 // Constructs a JSON representation of the board's current state
-nlohmann::json TetrisBoard::constructBoardJson() const
+nlohmann::json TetrisBoard::constructBoardJsonToBroadcast()
 {
+    updateLastBroadcastedGrid();
+
     nlohmann::json boardJson;
     boardJson["width"] = WIDTH;
     boardJson["height"] = HEIGHT;

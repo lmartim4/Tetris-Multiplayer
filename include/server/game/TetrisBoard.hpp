@@ -18,6 +18,8 @@ public:
     static const int WIDTH;
     static const int HEIGHT;
 
+    bool anyChanges();
+
     TetrisBoard();
 
     bool reachedTop();
@@ -35,11 +37,35 @@ public:
     void clearFalledTetrominos();
 
     std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid();
-    
+
     bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
                        const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const;
 
-    void updateLastBroadcastedGrid();
+    nlohmann::json constructBoardJsonToBroadcast();
 
-    nlohmann::json constructBoardJson() const;
+    void updateLastBroadcastedGrid()
+    {
+        lastBroadcastedGrid.clear();
+        lastBroadcastedGrid.reserve(grid.size());
+
+        for (const auto &row : grid)
+        {
+            std::vector<std::shared_ptr<Cell>> newRow;
+            newRow.reserve(row.size());
+
+            for (const auto &cellPtr : row)
+            {
+                if (cellPtr)
+                {
+                    newRow.emplace_back(std::make_shared<Cell>(*cellPtr));
+                }
+                else
+                {
+                    newRow.emplace_back(nullptr);
+                }
+            }
+
+            lastBroadcastedGrid.emplace_back(std::move(newRow));
+        }
+    }
 };

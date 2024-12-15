@@ -51,6 +51,11 @@ struct PlayerData : public ISerializable
 // File: ./include/common/PacketType.hpp
 #pragma once
 
+#include <cstdint>
+#include <vector>
+#include "enet/enet.h"
+#include "json.hpp"
+
 enum class PacketType : char
 {
     // Game actions/commands Packets
@@ -124,6 +129,60 @@ inline const char *PacketTypeToString(PacketType type)
         return "UNKNOWN_PACKET_TYPE";
     }
 }
+
+struct Packet
+{
+    PacketType type;           // The type of the packet (ACTION, HEARTBEAT, etc.)
+    std::vector<uint8_t> data; // Data payload of the packet
+    ENetPeer *peer;            // The peer that the packet is being sent to or received from
+
+    // Constructor to initialize a packet with its type, data, and optional destination peer.
+    Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *dest = nullptr)
+        : type(t), data(d), peer(dest) {}
+
+    // New constructor that accepts a JSON object
+    Packet(PacketType t, const nlohmann::json &j, ENetPeer *dest = nullptr)
+        : type(t), peer(dest)
+    {
+        // Convert JSON to string
+        std::string jsonStr = j.dump();
+        // Store as bytes
+        data.assign(jsonStr.begin(), jsonStr.end());
+    }
+
+    // Serialize the packet to raw byte data so it can be sent over the network.
+    std::vector<uint8_t> toRawData() const
+    {
+        std::vector<uint8_t> rawData;
+        rawData.push_back(static_cast<uint8_t>(type));           // First byte stores the packet type
+        rawData.insert(rawData.end(), data.begin(), data.end()); // Append the rest of the data
+        return rawData;
+    }
+
+    // Helper method to parse the data vector into a JSON object
+    nlohmann::json toJson() const
+    {
+        std::string jsonStr(data.begin(), data.end());
+        return nlohmann::json::parse(jsonStr);
+    }
+};
+
+
+// File: ./include/common/PacketSender.hpp
+#pragma once
+#include "PacketType.hpp"
+
+struct PacketSender
+{
+    virtual ~PacketSender() = default;
+    
+    // Send a packet to a specific destination
+    virtual void sendPacket(const Packet &packet) = 0;
+
+    // Broadcast a packet to all connected peers
+    virtual void broadcastPacket(const Packet &packet) = 0;
+};
+
 
 
 // File: ./include/common/TetrisAction.hpp
@@ -200,6 +259,7 @@ inline std::string TetrisActionToString(TetrisAction action)
 // File: ./include/common/NetworkManager.hpp
 #pragma once
 
+#include "PacketSender.hpp"
 #include "PacketType.hpp"
 #include <json.hpp>
 
@@ -212,49 +272,10 @@ inline std::string TetrisActionToString(TetrisAction action)
 #include <thread>
 #include <memory>
 
-// This struct represents a network packet. It contains information such as the packet type,
-// data payload, and the peer to which the packet is being sent or received from.
-struct Packet
-{
-    PacketType type;           // The type of the packet (ACTION, HEARTBEAT, etc.)
-    std::vector<uint8_t> data; // Data payload of the packet
-    ENetPeer *peer;            // The peer that the packet is being sent to or received from
-
-    // Constructor to initialize a packet with its type, data, and optional destination peer.
-    Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *dest = nullptr)
-        : type(t), data(d), peer(dest) {}
-
-    // New constructor that accepts a JSON object
-    Packet(PacketType t, const nlohmann::json &j, ENetPeer *dest = nullptr)
-        : type(t), peer(dest)
-    {
-        // Convert JSON to string
-        std::string jsonStr = j.dump();
-        // Store as bytes
-        data.assign(jsonStr.begin(), jsonStr.end());
-    }
-
-    // Serialize the packet to raw byte data so it can be sent over the network.
-    std::vector<uint8_t> toRawData() const
-    {
-        std::vector<uint8_t> rawData;
-        rawData.push_back(static_cast<uint8_t>(type));           // First byte stores the packet type
-        rawData.insert(rawData.end(), data.begin(), data.end()); // Append the rest of the data
-        return rawData;
-    }
-
-    // Helper method to parse the data vector into a JSON object
-    nlohmann::json toJson() const
-    {
-        std::string jsonStr(data.begin(), data.end());
-        return nlohmann::json::parse(jsonStr);
-    }
-};
-
 // The NetworkManager class is responsible for managing all network communication.
 // It sets up the network host, handles incoming and outgoing packets, and provides
 // methods to register listeners for specific packet types.
-class NetworkManager
+class NetworkManager : public PacketSender
 {
 public:
     NetworkManager();          // Constructor: Initializes the ENet library and network manager.
@@ -265,9 +286,6 @@ public:
     // Registers a listener function for a specific packet type.
     // The listener will be called whenever a packet of the given type is received.
     void registerListener(PacketType packetType, std::function<void(const Packet &)> callback);
-
-    // Adds a packet to the outgoing packet queue to be sent to its destination peer.
-    void send_packet(const Packet &packet);
 
     // Checks whether the network task (event loop) is currently running.
     bool isRunning() const;
@@ -282,6 +300,12 @@ public:
     ENetHost *getHost();
 
     std::vector<ENetPeer *> getPeers();
+
+    // Send a packet to a specific destination
+    virtual void sendPacket(const Packet &packet);
+
+    // Broadcast a packet to all connected peers
+    virtual void broadcastPacket(const Packet &packet);
 
 protected:
     ENetHost *host = nullptr; // ENet host, which can either be a server or a client.
@@ -419,6 +443,8 @@ protected:
 #include <thread>
 #include <map>
 
+#include "PacketSender.hpp"
+
 enum GameState
 {
     INITIALIZING,    // WAITING CLASS CREATION
@@ -432,25 +458,47 @@ enum GameState
 class Game : public Debuggable
 {
 private:
+    /* General Game State*/
+
+    TetrisBoard board;
+    std::unique_ptr<Tetromino> currentTetromino;
+
+    /*-=-=-=-=-=-=-=-=-=-=-=*/
+    std::mutex gameStateMutex;
+    int score;
+    int level;
+    int nLinesClearedThisLevel;
+
+    const int minTimeMs = 15;
+    int gravityTimeMs;        // Current gravity time in ms
+    int levelUpGravityTimeMs; // How much to reduce gravity time on level up
+
+    std::chrono::steady_clock::time_point lastGravityTick; // To track gravity intervals
+    /*-------------------*/
+    
+    PacketSender *packetSender;
+
     static int instanceCount;
     const int this_instance;
 
     std::atomic<GameState> gameState = INITIALIZING;
     std::vector<Player *> players;
 
-    ThreadSafeQueue<TetrisAction> actionQueue;
-
-    TetrisBoard board;
-
     int calculateLinesToPoints(int nLines, int level);
 
-    void handleInput(TetrisAction action);
+    void handleInput(Player *player, TetrisAction action);
 
     std::thread gameThread; // The thread running the game loop
+
     void loop();
+    void updateGame(TetrisAction action);
+    void broadcastBoardState();
+
+    void sendBoardState(const nlohmann::json &boardJson) const;
+    void spawnTetromino();
 
 public:
-    Game();
+    Game(PacketSender *sender);
     ~Game();
 
     void addPlayer(Player *player);
@@ -529,8 +577,6 @@ public:
     bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
                        const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const;
 
-    void updateLastBroadcastedGrid();
-
     nlohmann::json constructBoardJson() const;
 };
 
@@ -549,13 +595,12 @@ protected:
     std::vector<std::vector<int>> shape;
     int x, y;
     CellColorType color;
-    
 
 public:
+    bool gravity = false;
     static const std::vector<CellColorType> tetromino_colors;
     static const std::vector<char> types;
-    bool gravity = false;
-    
+
     Tetromino(int x0, int y0, CellColorType color) : x(x0), y(y0), color(color) {}
     virtual ~Tetromino() = default;
 
@@ -612,7 +657,7 @@ public:
 
 class TetrominoFactory
 {
-public:                                                                            
+public:
     static std::unique_ptr<Tetromino> createTetromino()
     {
         char randomType = Tetromino::types.at(rand() % Tetromino::types.size()); // Randomly select one tetromino
@@ -624,26 +669,26 @@ public:
         {
         /* Symmetric tetros */
         case 'I':
-            return std::make_unique<TetrominoI>(0,y0, randomColor);
+            return std::make_unique<TetrominoI>(0, y0, randomColor);
         case 'O':
-            return std::make_unique<TetrominoO>(0,y0, randomColor);
+            return std::make_unique<TetrominoO>(0, y0, randomColor);
         case 'T':
-            return std::make_unique<TetrominoT>(0,y0, randomColor);
+            return std::make_unique<TetrominoT>(0, y0, randomColor);
 
         /* Asymmetric tetros */
         /* L - J */
         case 'L':
-            return std::make_unique<TetrominoL>(0,y0, randomColor);
+            return std::make_unique<TetrominoL>(0, y0, randomColor);
         case 'J':
             // Create J from L inverted
-            return std::make_unique<TetrominoL>(0,y0, randomColor, true);
+            return std::make_unique<TetrominoL>(0, y0, randomColor, true);
 
         /* S - Z */
         case 'S':
-            return std::make_unique<TetrominoS>(0,y0, randomColor);
+            return std::make_unique<TetrominoS>(0, y0, randomColor);
         case 'Z':
             // Create Z from S inverted
-            return std::make_unique<TetrominoS>(0,y0, randomColor, true);
+            return std::make_unique<TetrominoS>(0, y0, randomColor, true);
 
         default:
             throw std::invalid_argument("Invalid Tetromino type");
@@ -778,6 +823,9 @@ public:
 
 // File: ./include/server/Player.hpp
 #pragma once
+
+#include "TetrisAction.hpp"
+#include "ThreadSafeQueue.hpp"
 #include "PlayerData.hpp"
 #include <iostream>
 
@@ -835,6 +883,8 @@ public:
         return data.playerID;
     }
 
+    ThreadSafeQueue<TetrisAction> actions;
+
 private:
     PlayerData data;
 };
@@ -849,6 +899,7 @@ private:
 #include <map>
 
 #include "NetworkManager.hpp"
+
 #include "Player.hpp"
 #include <json.hpp>
 #include <random>
@@ -882,6 +933,24 @@ public:
         }
 
         return static_cast<Player *>(packet.peer->data);
+    }
+
+    std::vector<Player *> getPlayers()
+    {
+        std::vector<Player *> players;
+
+        for (ENetPeer *entry : getPeers())
+        {
+            if (!entry->data)
+            {
+                std::cout << "~No player~" << std::endl;
+                continue;
+            }
+            Player *player = (Player *)entry->data;
+
+            players.emplace_back(player);
+        }
+        return players;
     }
 };
 
@@ -1314,8 +1383,14 @@ NetworkManager::~NetworkManager()
     TaskStopNetwork();
 }
 
-void NetworkManager::send_packet(const Packet &packet)
+void NetworkManager::sendPacket(const Packet &packet)
 {
+
+    outgoingPackets.push(packet);
+}
+void NetworkManager::broadcastPacket(const Packet &packet)
+{
+
     outgoingPackets.push(packet);
 }
 
@@ -1408,7 +1483,7 @@ ENetPacket *NetworkManager::createENetPacket(const Packet &packet)
 
 void NetworkManager::TaskNetwork()
 {
-    int network_frequencie = 20; // Hertz
+    int network_frequencie = 10; // Hertz
     while (running)
     {
         ENetEvent event;
@@ -1532,6 +1607,7 @@ GameManager gm(server);
 
 void onReceiveArrow(const Packet &packet)
 {
+    std::cout << "Received!" << std::endl;
     TetrisAction action = getActionFromPacketType(packet.type);
 
     Player *player = ServerManager::extractPlayerFromPacket(packet);
@@ -1541,7 +1617,7 @@ void onReceiveArrow(const Packet &packet)
 
 void HeartbeatListener(const Packet &packet)
 {
-    server.send_packet(packet);
+    server.sendPacket(packet);
 }
 
 void StartGameListener(const Packet &packet)
@@ -1552,9 +1628,9 @@ void StartGameListener(const Packet &packet)
 void JoinRequestListener(const Packet &packet)
 {
     if (server.getHost()->connectedPeers < 4)
-        server.send_packet(Packet(PacketType::JOIN_ACCEPTED, 0, packet.peer));
+        server.sendPacket(Packet(PacketType::JOIN_ACCEPTED, 0, packet.peer));
     else
-        server.send_packet(Packet(PacketType::JOIN_DENIED, 0, packet.peer));
+        server.sendPacket(Packet(PacketType::JOIN_DENIED, 0, packet.peer));
 }
 
 int main(int argc, const char *argv[])
@@ -1670,12 +1746,12 @@ void ServerManager::broadcastPlayerList()
     }
 
     std::cout << message << std::endl;
-    send_packet(Packet(PacketType::PLAYER_LIST, message, nullptr));
+    sendPacket(Packet(PacketType::PLAYER_LIST, message, nullptr));
 }
 
 void ServerManager::broadcast_starting_game()
 {
-    send_packet(Packet(PacketType::STARTING_GAME, 0, nullptr));
+    sendPacket(Packet(PacketType::STARTING_GAME, 0, nullptr));
 }
 
 
@@ -1688,14 +1764,21 @@ GameManager::GameManager(ServerManager &server) : Debuggable("GameManager"), ser
 }
 
 void GameManager::enqueueAction(Player *player, TetrisAction action)
-{
+{   
     console_log(std::to_string(player->getPlayerID()) + TetrisActionToString(action));
 }
 
 void GameManager::StartGameListener(const Packet &)
 {
+    if (game != nullptr)
+        throw std::runtime_error("Game was already started!");
+
+    game = new Game(&server);
+
+    for (Player *p : server.getPlayers())
+        game->addPlayer(p);
+
     server.broadcast_starting_game();
-    game = new Game();
     game->startGameLoop();
 }
 
@@ -2056,33 +2139,6 @@ int TetrisBoard::clearLines()
     return numLinesCleared;
 }
 
-// Updates lastBroadcastedGrid with a deep copy of the current grid
-void TetrisBoard::updateLastBroadcastedGrid()
-{
-    lastBroadcastedGrid.clear();
-    lastBroadcastedGrid.reserve(grid.size());
-
-    for (const auto &row : grid)
-    {
-        std::vector<std::shared_ptr<Cell>> newRow;
-        newRow.reserve(row.size());
-
-        for (const auto &cellPtr : row)
-        {
-            if (cellPtr)
-            {
-                newRow.emplace_back(std::make_shared<Cell>(*cellPtr));
-            }
-            else
-            {
-                newRow.emplace_back(nullptr);
-            }
-        }
-
-        lastBroadcastedGrid.emplace_back(std::move(newRow));
-    }
-}
-
 // Constructs a JSON representation of the board's current state
 nlohmann::json TetrisBoard::constructBoardJson() const
 {
@@ -2140,14 +2196,10 @@ bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Ce
 
 // File: ./src/server/game/Game.cpp
 #include "Game.hpp"
+#include <tetrominoFactory.hpp>
+#define LEVEL_UP 10
 
 int Game::instanceCount = 0;
-
-void Game::enqueueAction(TetrisAction action)
-{
-    // actionQueue.push(action);
-    console_log("received action: " + TetrisActionToString(action));
-}
 
 void Game::startGameLoop()
 {
@@ -2195,25 +2247,114 @@ int Game::calculateLinesToPoints(int nLines, int level)
     return (nLines > 0) ? P_x * (level + 1) : 0;
 }
 
-void Game::handleInput(TetrisAction action)
+void Game::handleInput(Player *player, TetrisAction action)
 {
+    updateGame(action);
 }
 
 void Game::loop()
 {
     gameState = GameState::RUNNNING;
 
-    game
+    spawnTetromino();
+    lastGravityTick = std::chrono::steady_clock::now();
 
     while (gameState != GameState::ENDING)
     {
+        TetrisAction action;
 
+        for (Player *pl : players)
+            while (pl->actions.pop(action))
+                handleInput(pl, action);
+
+        updateGame(TetrisAction::EMPTY);
+        broadcastBoardState();
+        // board.printStatus();
+
+        //std::this_thread::sleep_for(std::chrono::milliseconds(25));
     }
 
     gameState = GameState::ENDED;
 }
 
-Game::Game() : Debuggable("Game"), this_instance(instanceCount++)
+void Game::updateGame(TetrisAction lastAction)
+{
+    if (lastAction != TetrisAction::EMPTY)
+        console_log("Action >> " + TetrisActionToString(lastAction));
+
+    if (board.reachedTop())
+    {
+        std::cout << "(GAME OVER) !!!" << std::endl;
+        std::cout << "(Final score) : " << score << " !!!" << std::endl;
+        std::cout << "You played till level: " << level << std::endl;
+
+        board.clear();
+
+        gameState = GameState::ENDING;
+        return;
+    }
+
+    // Clear old tetrominos
+    board.clearFallingTetrominos();
+
+    // Check if it's time to apply gravity
+    auto now = std::chrono::steady_clock::now();
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastGravityTick).count() > minTimeMs)
+    {
+        currentTetromino->dropGravity();
+        lastGravityTick = now;
+    }
+
+    // Check collision after gravity or moves
+    if (board.checkCollision(*currentTetromino, lastAction))
+    {
+        if (lastAction == TetrisAction::DROP_FASTER || currentTetromino->getGravity())
+        {
+            // Place and lock tetromino
+            std::cout << "Last move received = " << TetrisActionToString(lastAction) << " e gravidade = " << currentTetromino->getGravity() << std::endl;
+            board.placeTetromino(*currentTetromino, true);
+
+            // GRAVIDADE TEM Q SAIR DO TETROMINO, é uyma propriedade GLOBAL agr
+            currentTetromino->gravity = false;
+
+            // std::cout << "Encaixei" << std::endl;
+            currentTetromino.reset();
+
+            nLinesClearedThisLevel += board.clearLines();
+            score += calculateLinesToPoints(nLinesClearedThisLevel, level);
+
+            if (nLinesClearedThisLevel >= LEVEL_UP)
+            {
+                level++;
+                // Clear all fixed blocks
+                board.clearFalledTetrominos();
+
+                gravityTimeMs = std::max(gravityTimeMs - levelUpGravityTimeMs, minTimeMs);
+                lastGravityTick = std::chrono::steady_clock::now();
+                nLinesClearedThisLevel = 0;
+                std::cout << "(Current score) : " << score << " !!!" << std::endl;
+                std::cout << "(LEVEL UP) !!!" << std::endl;
+            }
+
+            // Spawn a new tetromino
+            spawnTetromino();
+        }
+        else
+        {
+            // Invalid move, revert
+            board.placeTetromino(*currentTetromino, false);
+            currentTetromino->gravity = false;
+        }
+    }
+    else
+    {
+        // Valid move, place without locking
+        board.placeTetromino(*currentTetromino, false);
+        currentTetromino->gravity = false;
+    }
+}
+
+Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++)
 {
     console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
     gameState = GameState::WAITING_PLAYERS;
@@ -2235,6 +2376,26 @@ void Game::addPlayer(Player *player)
     players.emplace_back(player);
 }
 
+void Game::enqueueAction(TetrisAction action)
+{
+}
+
+void Game::spawnTetromino()
+{
+    std::cout << "Spawning tetromino\n";
+    currentTetromino = TetrominoFactory::createTetromino();
+}
+
+void Game::broadcastBoardState()
+{
+    nlohmann::json boardJson = board.constructBoardJson();
+    sendBoardState(boardJson);
+}
+
+void Game::sendBoardState(const nlohmann::json &boardJson) const
+{
+    packetSender->sendPacket(Packet(PacketType::GAME_SCREEN, boardJson, nullptr));
+}
 
 
 // File: ./src/client/ClientManager.cpp
@@ -2337,7 +2498,7 @@ void ClientManager::TaskHeartbeat()
     while (HeartBeatRunningFlag)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / heartbeat_frequencie));
-        send_packet(Packet(PacketType::HEARTBEAT, 0, serverPeer)); // Set destination as the server serverPeer
+        sendPacket(Packet(PacketType::HEARTBEAT, 0, serverPeer)); // Set destination as the server serverPeer
     }
 }
 
@@ -2455,7 +2616,7 @@ bool ClientManager::boardDataAvailable()
 
 void ClientManager::request_game_start()
 {
-    send_packet(Packet(PacketType::REQUEST_START, 0, serverPeer));
+    sendPacket(Packet(PacketType::REQUEST_START, 0, serverPeer));
 }
 
 void ClientManager::onPressKey(sf::Event::KeyEvent e)
@@ -2464,72 +2625,72 @@ void ClientManager::onPressKey(sf::Event::KeyEvent e)
     {
     case sf::Keyboard::P:
         // if (debugEnabled) clientManager.network_print("Tecla P pressionada. Pausar o jogo.\n");
-        send_packet(Packet(PacketType::PAUSE, 0, serverPeer));
+        sendPacket(Packet(PacketType::PAUSE, 0, serverPeer));
         break;
 
     case sf::Keyboard::R:
         if (debugEnabled)
             network_print("Tecla R pressionada. Reiniciar o jogo.\n");
-        send_packet(Packet(PacketType::RESTART, 0, serverPeer));
+        sendPacket(Packet(PacketType::RESTART, 0, serverPeer));
         break;
     case sf::Keyboard::Up:
         if (debugEnabled)
             network_print("Tecla Cima (Up) pressionada.\n");
-        send_packet(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Down:
         if (debugEnabled)
             network_print("Tecla Baixo (Down) pressionada.\n");
-        send_packet(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Left:
         if (debugEnabled)
             network_print("Tecla Esquerda (Left) pressionada.\n");
-        send_packet(Packet(PacketType::LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::LEFT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Right:
         if (debugEnabled)
             network_print("Tecla Direita (Right) pressionada.\n");
-        send_packet(Packet(PacketType::RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::RIGHT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Space:
         if (debugEnabled)
             network_print("Tecla Espaco (Space) pressionada.\n");
-        send_packet(Packet(PacketType::DROP_FASTER, 0, serverPeer));
+        sendPacket(Packet(PacketType::DROP_FASTER, 0, serverPeer));
         break;
 
     case sf::Keyboard::W:
         if (debugEnabled)
             network_print("Tecla W pressionada.\n");
-        send_packet(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
         break;
 
     case sf::Keyboard::A:
         if (debugEnabled)
             network_print("Tecla A pressionada.\n");
-        send_packet(Packet(PacketType::LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::LEFT, 0, serverPeer));
         break;
 
     case sf::Keyboard::S:
         if (debugEnabled)
             network_print("Tecla S pressionada.\n");
-        send_packet(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
         break;
 
     case sf::Keyboard::D:
         if (debugEnabled)
             network_print("Tecla D pressionada.\n");
-        send_packet(Packet(PacketType::RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::RIGHT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Enter:
         if (debugEnabled)
             network_print("Tecla Espaco (Enter) pressionada.\n");
-        send_packet(Packet(PacketType::DROP_FASTER, 0, serverPeer));
+        sendPacket(Packet(PacketType::DROP_FASTER, 0, serverPeer));
         break;
 
     case sf::Keyboard::G:

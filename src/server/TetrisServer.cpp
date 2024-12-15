@@ -9,6 +9,7 @@ GameManager gm(server);
 
 void onReceiveArrow(const Packet &packet)
 {
+    std::cout << "I got a packet!" << std::endl;
     TetrisAction action = getActionFromPacketType(packet.type);
 
     Player *player = ServerManager::extractPlayerFromPacket(packet);
@@ -18,7 +19,7 @@ void onReceiveArrow(const Packet &packet)
 
 void HeartbeatListener(const Packet &packet)
 {
-    server.send_packet(packet);
+    server.sendPacket(packet);
 }
 
 void StartGameListener(const Packet &packet)
@@ -29,9 +30,9 @@ void StartGameListener(const Packet &packet)
 void JoinRequestListener(const Packet &packet)
 {
     if (server.getHost()->connectedPeers < 4)
-        server.send_packet(Packet(PacketType::JOIN_ACCEPTED, 0, packet.peer));
+        server.sendPacket(Packet(PacketType::JOIN_ACCEPTED, 0, packet.peer));
     else
-        server.send_packet(Packet(PacketType::JOIN_DENIED, 0, packet.peer));
+        server.sendPacket(Packet(PacketType::JOIN_DENIED, 0, packet.peer));
 }
 
 int main(int argc, const char *argv[])
@@ -53,7 +54,7 @@ int main(int argc, const char *argv[])
     server.registerListener(PacketType::DROP_INSTANT, onReceiveArrow);
 
     while (server.isRunning())
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     return 0;
 }

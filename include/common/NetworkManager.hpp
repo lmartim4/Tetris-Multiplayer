@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PacketSender.hpp"
 #include "PacketType.hpp"
 #include <json.hpp>
 
@@ -11,63 +12,24 @@
 #include <functional>
 #include <thread>
 #include <memory>
-
-// This struct represents a network packet. It contains information such as the packet type,
-// data payload, and the peer to which the packet is being sent or received from.
-struct Packet
-{
-    PacketType type;           // The type of the packet (ACTION, HEARTBEAT, etc.)
-    std::vector<uint8_t> data; // Data payload of the packet
-    ENetPeer *peer;            // The peer that the packet is being sent to or received from
-
-    // Constructor to initialize a packet with its type, data, and optional destination peer.
-    Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *dest = nullptr)
-        : type(t), data(d), peer(dest) {}
-
-    // New constructor that accepts a JSON object
-    Packet(PacketType t, const nlohmann::json &j, ENetPeer *dest = nullptr)
-        : type(t), peer(dest)
-    {
-        // Convert JSON to string
-        std::string jsonStr = j.dump();
-        // Store as bytes
-        data.assign(jsonStr.begin(), jsonStr.end());
-    }
-
-    // Serialize the packet to raw byte data so it can be sent over the network.
-    std::vector<uint8_t> toRawData() const
-    {
-        std::vector<uint8_t> rawData;
-        rawData.push_back(static_cast<uint8_t>(type));           // First byte stores the packet type
-        rawData.insert(rawData.end(), data.begin(), data.end()); // Append the rest of the data
-        return rawData;
-    }
-
-    // Helper method to parse the data vector into a JSON object
-    nlohmann::json toJson() const
-    {
-        std::string jsonStr(data.begin(), data.end());
-        return nlohmann::json::parse(jsonStr);
-    }
-};
+#include <mutex>
+#include <condition_variable>
 
 // The NetworkManager class is responsible for managing all network communication.
 // It sets up the network host, handles incoming and outgoing packets, and provides
 // methods to register listeners for specific packet types.
-class NetworkManager
+class NetworkManager : public PacketSender
 {
 public:
-    NetworkManager();          // Constructor: Initializes the ENet library and network manager.
-    virtual ~NetworkManager(); // Destructor: Cleans up network resources and stops the network loop.
+    const int network_frequency = 10; // Hertz
+    NetworkManager();                  // Constructor: Initializes the ENet library and network manager.
+    virtual ~NetworkManager();         // Destructor: Cleans up network resources and stops the network loop.
 
     static const int version = 1; // NetworkManager version for debugging purposes
 
     // Registers a listener function for a specific packet type.
     // The listener will be called whenever a packet of the given type is received.
     void registerListener(PacketType packetType, std::function<void(const Packet &)> callback);
-
-    // Adds a packet to the outgoing packet queue to be sent to its destination peer.
-    void send_packet(const Packet &packet);
 
     // Checks whether the network task (event loop) is currently running.
     bool isRunning() const;
@@ -82,6 +44,12 @@ public:
     ENetHost *getHost();
 
     std::vector<ENetPeer *> getPeers();
+
+    // Send a packet to a specific destination
+    virtual void sendPacket(const Packet &packet);
+
+    // Broadcast a packet to all connected peers
+    virtual void broadcastPacket(const Packet &packet);
 
 protected:
     ENetHost *host = nullptr; // ENet host, which can either be a server or a client.
@@ -105,8 +73,14 @@ protected:
     void TaskStopNetwork();
 
 private:
-    std::thread networkThread;         // Thread for running the network event loop.
+    std::thread networkThread; // Thread for running the network event loop.
+
+    std::thread sendThread;
+    std::thread receiveThread;
+
     std::atomic<bool> running = false; // Atomic flag to indicate whether the network loop is active.
+    std::atomic<bool> sending = false;
+    std::atomic<bool> receiving = false;
 
     // Queue for outgoing packets that need to be sent to peers.
     std::queue<Packet> outgoingPackets;
@@ -116,6 +90,11 @@ private:
 
     // A map that associates packet types (as uint8_t) with their corresponding listener functions.
     std::unordered_map<uint8_t, std::function<void(const Packet &)>> listeners;
+
+    std::mutex outgoingMutex;
+    std::mutex incomingMutex;
+    std::condition_variable outgoingCondition;
+    std::condition_variable incomingCondition;
 
     // Processes events received from ENet, such as peer connections, disconnections, and packet receptions.
     void processENetEvent(ENetEvent &event);
@@ -129,6 +108,11 @@ private:
     // Creates an ENet packet from a custom Packet structure, ready to be sent over the network.
     ENetPacket *createENetPacket(const Packet &packet);
 
-    // The main network loop that continuously processes ENet events, sends outgoing packets, and handles incoming ones.
     void TaskNetwork();
+
+    // The main network loop that continuously processes ENet events, sends outgoing packets, and handles incoming ones.
+    // void TaskNetwork();
+
+    void TaskSend();
+    void TaskReceive();
 };

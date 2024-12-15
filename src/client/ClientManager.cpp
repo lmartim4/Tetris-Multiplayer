@@ -97,7 +97,7 @@ void ClientManager::TaskHeartbeat()
     while (HeartBeatRunningFlag)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / heartbeat_frequencie));
-        send_packet(Packet(PacketType::HEARTBEAT, 0, serverPeer)); // Set destination as the server serverPeer
+        sendPacket(Packet(PacketType::HEARTBEAT, 0, serverPeer)); // Set destination as the server serverPeer
     }
 }
 
@@ -215,7 +215,7 @@ bool ClientManager::boardDataAvailable()
 
 void ClientManager::request_game_start()
 {
-    send_packet(Packet(PacketType::REQUEST_START, 0, serverPeer));
+    sendPacket(Packet(PacketType::REQUEST_START, 0, serverPeer));
 }
 
 void ClientManager::onPressKey(sf::Event::KeyEvent e)
@@ -224,72 +224,72 @@ void ClientManager::onPressKey(sf::Event::KeyEvent e)
     {
     case sf::Keyboard::P:
         // if (debugEnabled) clientManager.network_print("Tecla P pressionada. Pausar o jogo.\n");
-        send_packet(Packet(PacketType::PAUSE, 0, serverPeer));
+        sendPacket(Packet(PacketType::PAUSE, 0, serverPeer));
         break;
 
     case sf::Keyboard::R:
         if (debugEnabled)
             network_print("Tecla R pressionada. Reiniciar o jogo.\n");
-        send_packet(Packet(PacketType::RESTART, 0, serverPeer));
+        sendPacket(Packet(PacketType::RESTART, 0, serverPeer));
         break;
     case sf::Keyboard::Up:
         if (debugEnabled)
             network_print("Tecla Cima (Up) pressionada.\n");
-        send_packet(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Down:
         if (debugEnabled)
             network_print("Tecla Baixo (Down) pressionada.\n");
-        send_packet(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Left:
         if (debugEnabled)
             network_print("Tecla Esquerda (Left) pressionada.\n");
-        send_packet(Packet(PacketType::LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::LEFT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Right:
         if (debugEnabled)
             network_print("Tecla Direita (Right) pressionada.\n");
-        send_packet(Packet(PacketType::RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::RIGHT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Space:
         if (debugEnabled)
             network_print("Tecla Espaco (Space) pressionada.\n");
-        send_packet(Packet(PacketType::DROP_FASTER, 0, serverPeer));
+        sendPacket(Packet(PacketType::DROP_FASTER, 0, serverPeer));
         break;
 
     case sf::Keyboard::W:
         if (debugEnabled)
             network_print("Tecla W pressionada.\n");
-        send_packet(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
         break;
 
     case sf::Keyboard::A:
         if (debugEnabled)
             network_print("Tecla A pressionada.\n");
-        send_packet(Packet(PacketType::LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::LEFT, 0, serverPeer));
         break;
 
     case sf::Keyboard::S:
         if (debugEnabled)
             network_print("Tecla S pressionada.\n");
-        send_packet(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
         break;
 
     case sf::Keyboard::D:
         if (debugEnabled)
             network_print("Tecla D pressionada.\n");
-        send_packet(Packet(PacketType::RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::RIGHT, 0, serverPeer));
         break;
 
     case sf::Keyboard::Enter:
         if (debugEnabled)
             network_print("Tecla Espaco (Enter) pressionada.\n");
-        send_packet(Packet(PacketType::DROP_FASTER, 0, serverPeer));
+        sendPacket(Packet(PacketType::DROP_FASTER, 0, serverPeer));
         break;
 
     case sf::Keyboard::G:

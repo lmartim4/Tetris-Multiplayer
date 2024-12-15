@@ -5,6 +5,7 @@
 #include <map>
 
 #include "NetworkManager.hpp"
+
 #include "Player.hpp"
 #include <json.hpp>
 #include <random>
@@ -38,5 +39,23 @@ public:
         }
 
         return static_cast<Player *>(packet.peer->data);
+    }
+
+    std::vector<Player *> getPlayers()
+    {
+        std::vector<Player *> players;
+
+        for (ENetPeer *entry : getPeers())
+        {
+            if (!entry->data)
+            {
+                std::cout << "~No player~" << std::endl;
+                continue;
+            }
+            Player *player = (Player *)entry->data;
+
+            players.emplace_back(player);
+        }
+        return players;
     }
 };

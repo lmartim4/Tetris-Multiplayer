@@ -7,13 +7,20 @@ GameManager::GameManager(ServerManager &server) : Debuggable("GameManager"), ser
 
 void GameManager::enqueueAction(Player *player, TetrisAction action)
 {
-    console_log(std::to_string(player->getPlayerID()) + TetrisActionToString(action));
+    game->handleInput(player, action);
 }
 
 void GameManager::StartGameListener(const Packet &)
 {
+    if (game != nullptr)
+        throw std::runtime_error("Game was already started!");
+
+    game = new Game(&server);
+
+    for (Player *p : server.getPlayers())
+        game->addPlayer(p);
+
     server.broadcast_starting_game();
-    game = new Game();
     game->startGameLoop();
 }
 
