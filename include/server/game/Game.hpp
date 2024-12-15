@@ -60,12 +60,15 @@ private:
 
     void loop();
     void updateGame(TetrisAction action);
+    void lockTetromino();
     void sendBoardUpdates();
 
     void sendBoardState(const nlohmann::json &boardJson) const;
     void spawnTetromino();
 
 public:
+    void clearFullLines();
+    void levelUp();
     Game(PacketSender *sender);
     ~Game();
 

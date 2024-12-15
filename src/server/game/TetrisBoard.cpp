@@ -73,21 +73,15 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastM
                 int gridX = tetrominoX + x;
                 int gridY = normalizedY(tetrominoY + y);
 
-                if (gridX >= HEIGHT || gridX < 0)
+                if (gridX >= HEIGHT || gridX < 0 || grid[gridX][gridY]->isFixed())
                 {
                     currentTetromino.evolveStates(false, lastMove);
-
-                    return true;
-                }
-
-                if (grid[gridX][gridY]->isFixed())
-                {
-                    currentTetromino.evolveStates(false, lastMove);
-
+                    changed = false;
                     return true;
                 }
             }
 
+    changed = true;
     return false;
 }
 
@@ -101,10 +95,10 @@ int TetrisBoard::normalizedY(int y)
     return y;
 }
 
-// Integra o tetromino com o resto que já caiu
 bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
 {
     const auto &shape = currentTetromino.getShape();
+    bool anyChange = false; // Track if any cell changes
 
     for (size_t x = 0; x < shape.size(); x++)
         for (size_t y = 0; y < shape[x].size(); y++)
@@ -115,12 +109,24 @@ bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
                 CellColorType tetroColor = currentTetromino.getColor();
 
                 if (bottom)
-                    grid[gridX][gridY]->setFixed(tetroColor);
+                {
+                    if (!grid[gridX][gridY]->isFixed())
+                    {
+                        grid[gridX][gridY]->setFixed(tetroColor);
+                        anyChange = true;
+                    }
+                }
                 else
-                    grid[gridX][gridY]->setFalling(tetroColor);
+                {
+                    if (!grid[gridX][gridY]->isFalling())
+                    {
+                        grid[gridX][gridY]->setFalling(tetroColor);
+                        anyChange = true;
+                    }
+                }
             }
 
-    return true;
+    return anyChange;
 }
 
 void TetrisBoard::clearFallingTetrominos()

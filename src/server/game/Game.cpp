@@ -82,78 +82,88 @@ void Game::loop()
 
 void Game::updateGame(TetrisAction lastAction)
 {
+    // Check for game-over condition
     if (board.reachedTop())
     {
         std::cout << "(GAME OVER) !!!" << std::endl;
-        std::cout << "(Final score) : " << score << " !!!" << std::endl;
+        std::cout << "(Final score): " << score << std::endl;
         std::cout << "You played till level: " << level << std::endl;
 
         board.clear();
-
         gameState = GameState::ENDING;
         return;
     }
 
-    // Clear old tetrominos
+    // Clear old tetrominos before processing the new action
     board.clearFallingTetrominos();
 
-    // Check if it's time to apply gravity
+    // Apply gravity if the minimum time has passed
     auto now = std::chrono::steady_clock::now();
+    bool gravityApplied = false;
     if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastGravityTick).count() > minTimeMs)
     {
         currentTetromino->dropGravity();
         lastGravityTick = now;
+        gravityApplied = true;
     }
 
-    // Check collision after gravity or moves
+    // Handle tetromino collision
     if (board.checkCollision(*currentTetromino, lastAction))
     {
-        if (lastAction == TetrisAction::DROP_FASTER || currentTetromino->getGravity())
+        // Place the tetromino if it has fallen or the action was DROP_FASTER
+        if (lastAction == TetrisAction::DROP_FASTER || gravityApplied)
         {
-            // Place and lock tetromino
-            // std::cout << "Last move received = " << TetrisActionToString(lastAction) << " e gravidade = " << currentTetromino->getGravity() << std::endl;
-            board.placeTetromino(*currentTetromino, true);
-
-            // GRAVIDADE TEM Q SAIR DO TETROMINO, é uyma propriedade GLOBAL agr
-            currentTetromino->gravity = false;
-
-            // std::cout << "Encaixei" << std::endl;
-            currentTetromino.reset();
-
-            nLinesClearedThisLevel += board.clearLines();
-            score += calculateLinesToPoints(nLinesClearedThisLevel, level);
+            lockTetromino();
+            clearFullLines();
 
             if (nLinesClearedThisLevel >= LEVEL_UP)
-            {
-                level++;
-                // Clear all fixed blocks
-                board.clearFalledTetrominos();
+                levelUp();
 
-                gravityTimeMs = std::max(gravityTimeMs - levelUpGravityTimeMs, minTimeMs);
-                lastGravityTick = std::chrono::steady_clock::now();
-                nLinesClearedThisLevel = 0;
-                std::cout << "(Current score) : " << score << " !!!" << std::endl;
-                std::cout << "(LEVEL UP) !!!" << std::endl;
-            }
-
-            // Spawn a new tetromino
             spawnTetromino();
         }
         else
         {
-            // Invalid move, revert
+            // Invalid move, revert the tetromino state
             board.placeTetromino(*currentTetromino, false);
             currentTetromino->gravity = false;
         }
     }
     else
     {
-        board.changed = true;
-        // Valid move, place without locking
+        // Valid move, place tetromino without locking
         board.placeTetromino(*currentTetromino, false);
         currentTetromino->gravity = false;
     }
 }
+
+// Locks the current tetromino into place and prepares for new actions
+void Game::lockTetromino()
+{
+    board.placeTetromino(*currentTetromino, true);
+    currentTetromino->gravity = false;
+    currentTetromino.reset();
+}
+
+// Clears full lines, updates the score, and resets level progress if needed
+void Game::clearFullLines()
+{
+    nLinesClearedThisLevel += board.clearLines();
+    score += calculateLinesToPoints(nLinesClearedThisLevel, level);
+}
+
+// Handles level-up logic, including adjusting gravity and clearing the board
+void Game::levelUp()
+{
+    level++;
+    board.clearFalledTetrominos();
+    gravityTimeMs = std::max(gravityTimeMs - levelUpGravityTimeMs, minTimeMs);
+    lastGravityTick = std::chrono::steady_clock::now();
+    nLinesClearedThisLevel = 0;
+
+    std::cout << "(Current score): " << score << std::endl;
+    std::cout << "(LEVEL UP) !!!" << std::endl;
+}
+
 
 Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++)
 {
@@ -179,7 +189,6 @@ void Game::addPlayer(Player *player)
 
 void Game::spawnTetromino()
 {
-    board.changed = true;
     currentTetromino = TetrominoFactory::createTetromino();
 }
 
