@@ -1,4 +1,7 @@
 #pragma once
+
+#include "TetrisAction.hpp"
+#include "ThreadSafeQueue.hpp"
 #include "PlayerData.hpp"
 #include <iostream>
 
@@ -50,6 +53,13 @@ public:
     {
         return data.isConnected;
     }
+
+    int getPlayerID()
+    {
+        return data.playerID;
+    }
+
+    ThreadSafeQueue<TetrisAction> actions;
 
 private:
     PlayerData data;

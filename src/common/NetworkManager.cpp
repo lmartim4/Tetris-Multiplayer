@@ -34,8 +34,13 @@ NetworkManager::~NetworkManager()
     TaskStopNetwork();
 }
 
-void NetworkManager::send_packet(const Packet &packet)
+void NetworkManager::sendPacket(const Packet &packet)
 {
+    outgoingPackets.push(packet);
+}
+void NetworkManager::broadcastPacket(const Packet &packet)
+{
+
     outgoingPackets.push(packet);
 }
 
@@ -52,15 +57,21 @@ void NetworkManager::network_print(const char *array)
 
 void NetworkManager::TaskStartNetwork()
 {
-    if (running)
+    if (mainTask)
     {
         std::cout << "Error: Network Task already running! (Why would you start again?)" << std::endl;
         return;
     }
 
     network_print("Initializing Network Task...\n");
-    running = true;
+
+    mainTask = true;
+    sending = true;
+    receiving = true;
+
     networkThread = std::thread(&NetworkManager::TaskNetwork, this);
+    sendThread = std::thread(&NetworkManager::TaskSend, this);
+    receiveThread = std::thread(&NetworkManager::TaskReceive, this);
 }
 
 void NetworkManager::registerListener(PacketType packetType, std::function<void(const Packet &)> callback)
@@ -95,15 +106,25 @@ void NetworkManager::processIncomingPackets()
 
 void NetworkManager::TaskStopNetwork()
 {
-    running = false;
+    mainTask = false;
+    sending = false;
+    receiving = false;
+
+    outgoingCondition.notify_all();
+    incomingCondition.notify_all();
 
     if (networkThread.joinable())
         networkThread.join();
+
+    if (sendThread.joinable())
+        sendThread.join();
+    if (receiveThread.joinable())
+        receiveThread.join();
 }
 
 bool NetworkManager::isRunning() const
 {
-    return running;
+    return mainTask;
 }
 
 Packet NetworkManager::parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer)
@@ -128,24 +149,39 @@ ENetPacket *NetworkManager::createENetPacket(const Packet &packet)
 
 void NetworkManager::TaskNetwork()
 {
-    int network_frequencie = 20; // Hertz
-    while (running)
+    while (mainTask)
     {
         ENetEvent event;
 
-        while (enet_host_service(host, &event, (1000 / network_frequencie)) > 0)
+        while (enet_host_service(host, &event, (1000 / network_frequency)) > 0)
             processENetEvent(event);
-
-        sendOutgoingPackets();
-        processIncomingPackets();
     }
     enet_host_destroy(host);
+}
+
+void NetworkManager::TaskSend()
+{
+    while (sending)
+    {
+        sendOutgoingPackets();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / network_frequency));
+    }
+}
+
+void NetworkManager::TaskReceive()
+{
+    while (receiving)
+    {
+        processIncomingPackets();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / network_frequency));
+    }
 }
 
 void NetworkManager::sendOutgoingPackets()
 {
     while (!outgoingPackets.empty())
     {
+        // std::cout << "Sending Packet\n";
         Packet packet = outgoingPackets.front();
         outgoingPackets.pop();
 

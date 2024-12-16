@@ -11,13 +11,12 @@ protected:
     std::vector<std::vector<int>> shape;
     int x, y;
     CellColorType color;
-    
 
 public:
+    bool gravity = false;
     static const std::vector<CellColorType> tetromino_colors;
     static const std::vector<char> types;
-    bool gravity = false;
-    
+
     Tetromino(int x0, int y0, CellColorType color) : x(x0), y(y0), color(color) {}
     virtual ~Tetromino() = default;
 

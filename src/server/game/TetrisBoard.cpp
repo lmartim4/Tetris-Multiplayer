@@ -1,11 +1,10 @@
 #include "game/TetrisBoard.hpp"
-#include <stdlib.h>
-#include "ServerManager.hpp"
+#include "TetrisBoard.hpp"
 
 const int TetrisBoard::WIDTH = 10;
 const int TetrisBoard::HEIGHT = 16;
 
-TetrisBoard::TetrisBoard(ServerManager &serverManager) : serverManager(serverManager)
+TetrisBoard::TetrisBoard()
 {
     for (int y = 0; y < HEIGHT; ++y)
     {
@@ -23,11 +22,9 @@ TetrisBoard::TetrisBoard(ServerManager &serverManager) : serverManager(serverMan
 
 bool TetrisBoard::reachedTop()
 {
-    for (int y = 0; y < WIDTH; ++y)
-    {
+    for (int y = 0; y < WIDTH; y++)
         if (grid.at(0).at(y)->isFixed())
             return true;
-    }
 
     return false;
 }
@@ -36,31 +33,23 @@ void TetrisBoard::printStatus()
 {
     system("clear");
 
-    // Imprimir status da board
     std::cout << "\nEstado da Board:" << std::endl;
     for (int x = 0; x < HEIGHT; x++)
     {
         for (int y = 0; y < WIDTH; y++)
-        {
             std::cout << (grid[x][y]->isFalling() ? " # " : (grid[x][y]->isEmpty()) ? " * "
                                                                                     : " $ ");
-        }
         std::cout << std::endl;
     }
 
-    // Separador visual
     std::cout << std::string(40, '-') << std::endl;
 }
 
 void TetrisBoard::clear()
 {
     for (int x = 0; x < HEIGHT; x++)
-    {
         for (int y = 0; y < WIDTH; y++)
-        {
             grid[x][y]->setEmpty();
-        }
-    }
 }
 
 std::vector<std::vector<std::shared_ptr<Cell>>> &TetrisBoard::getGrid()
@@ -78,29 +67,21 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastM
     int tetrominoY = currentTetromino.getY();
 
     for (size_t x = 0; x < shape.size(); ++x)
-    {
         for (size_t y = 0; y < shape[x].size(); ++y)
-        {
             if (shape[x][y] != 0)
             {
                 int gridX = tetrominoX + x;
                 int gridY = normalizedY(tetrominoY + y);
 
-                if (gridX >= HEIGHT || gridX < 0)
+                if (gridX >= HEIGHT || gridX < 0 || grid[gridX][gridY]->isFixed())
                 {
                     currentTetromino.evolveStates(false, lastMove);
-                    return true;
-                }
-
-                if (grid[gridX][gridY]->isFixed())
-                {
-                    currentTetromino.evolveStates(false, lastMove);
+                    changed = false;
                     return true;
                 }
             }
-        }
-    }
 
+    changed = true;
     return false;
 }
 
@@ -114,16 +95,13 @@ int TetrisBoard::normalizedY(int y)
     return y;
 }
 
-// Integra o tetromino com o resto que já caiu
 bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
 {
-
     const auto &shape = currentTetromino.getShape();
+    bool anyChange = false; // Track if any cell changes
 
-    for (size_t x = 0; x < shape.size(); ++x)
-    {
-        for (size_t y = 0; y < shape[x].size(); ++y)
-        {
+    for (size_t x = 0; x < shape.size(); x++)
+        for (size_t y = 0; y < shape[x].size(); y++)
             if (shape[x][y] != 0)
             {
                 int gridX = currentTetromino.getX() + x;
@@ -131,42 +109,40 @@ bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
                 CellColorType tetroColor = currentTetromino.getColor();
 
                 if (bottom)
-                    grid[gridX][gridY]->setFixed(tetroColor);
+                {
+                    if (!grid[gridX][gridY]->isFixed())
+                    {
+                        grid[gridX][gridY]->setFixed(tetroColor);
+                        anyChange = true;
+                    }
+                }
                 else
-                    grid[gridX][gridY]->setFalling(tetroColor);
+                {
+                    if (!grid[gridX][gridY]->isFalling())
+                    {
+                        grid[gridX][gridY]->setFalling(tetroColor);
+                        anyChange = true;
+                    }
+                }
             }
-        }
-    }
 
-    return true;
+    return anyChange;
 }
 
 void TetrisBoard::clearFallingTetrominos()
 {
-    for (int x = 0; x < HEIGHT; ++x)
-    {
-        for (int y = 0; y < WIDTH; ++y)
-        {
+    for (int x = 0; x < HEIGHT; x++)
+        for (int y = 0; y < WIDTH; y++)
             if (grid[x][y]->isFalling())
-            {
                 grid[x][y]->setEmpty();
-            }
-        }
-    }
 }
 
 void TetrisBoard::clearFalledTetrominos()
 {
-    for (int x = 0; x < HEIGHT; ++x)
-    {
-        for (int y = 0; y < WIDTH; ++y)
-        {
+    for (int x = 0; x < HEIGHT; x++)
+        for (int y = 0; y < WIDTH; y++)
             if (grid[x][y]->isFixed())
-            {
                 grid[x][y]->setEmpty();
-            }
-        }
-    }
 }
 
 int TetrisBoard::clearLines()
@@ -177,7 +153,7 @@ int TetrisBoard::clearLines()
     for (int x = HEIGHT - 1; x >= 0; --x)
     {
         int sumLine = 0;
-        for (int y = 0; y < WIDTH; ++y)
+        for (int y = 0; y < WIDTH; y++)
         {
             if (grid[x][y]->isFixed())
                 sumLine++;
@@ -215,50 +191,13 @@ int TetrisBoard::clearLines()
             numLinesCleared++;
         }
     }
-
     return numLinesCleared;
 }
 
-void TetrisBoard::broadcastBoardState()
-{
-    if (!gridsAreEqual(grid, lastBroadcastedGrid))
-    {
-        updateLastBroadcastedGrid();                     // Step 1: Update lastBroadcastedGrid to match the current grid
-        nlohmann::json boardJson = constructBoardJson(); // Step 2: Construct the JSON object
-        sendBoardState(boardJson);                       // Step 3: Broadcast the JSON object
-    }
-}
-
-// Updates lastBroadcastedGrid with a deep copy of the current grid
-void TetrisBoard::updateLastBroadcastedGrid()
-{
-    lastBroadcastedGrid.clear();
-    lastBroadcastedGrid.reserve(grid.size());
-
-    for (const auto &row : grid)
-    {
-        std::vector<std::shared_ptr<Cell>> newRow;
-        newRow.reserve(row.size());
-
-        for (const auto &cellPtr : row)
-        {
-            if (cellPtr)
-            {
-                newRow.emplace_back(std::make_shared<Cell>(*cellPtr));
-            }
-            else
-            {
-                newRow.emplace_back(nullptr);
-            }
-        }
-
-        lastBroadcastedGrid.emplace_back(std::move(newRow));
-    }
-}
-
 // Constructs a JSON representation of the board's current state
-nlohmann::json TetrisBoard::constructBoardJson() const
+nlohmann::json TetrisBoard::constructBoardJsonToBroadcast()
 {
+    changed = false;
     nlohmann::json boardJson;
     boardJson["width"] = WIDTH;
     boardJson["height"] = HEIGHT;
@@ -283,13 +222,8 @@ nlohmann::json TetrisBoard::constructBoardJson() const
     return boardJson;
 }
 
-// Sends the JSON board state using the server manager
-void TetrisBoard::sendBoardState(const nlohmann::json &boardJson) const
-{
-    serverManager.send_packet(Packet(PacketType::GAME_SCREEN, boardJson, nullptr));
-}
-
 // Implementation of gridsAreEqual
+/*
 bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
                                 const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const
 {
@@ -314,4 +248,4 @@ bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Ce
     }
 
     return true;
-}
+}*/

@@ -1,35 +1,37 @@
 #include <enet/enet.h>
 #include <iostream>
-#include "ServerManager.hpp"
+
+#include "GameManager.hpp"
 #include "TetrisAction.hpp"
 
 ServerManager server(12345);
 GameManager gm(server);
 
-// Might get player from packt id
 void onReceiveArrow(const Packet &packet)
 {
     TetrisAction action = getActionFromPacketType(packet.type);
-    gm.enqueueAction(action);
+
+    Player *player = ServerManager::extractPlayerFromPacket(packet);
+
+    gm.enqueueAction(player, action);
 }
 
 void HeartbeatListener(const Packet &packet)
 {
-    server.send_packet(packet);
+    server.sendPacket(packet);
 }
 
 void StartGameListener(const Packet &packet)
 {
-    server.start_game();
-    gm.startGameLoop();
+    gm.StartGameListener(packet);
 }
 
 void JoinRequestListener(const Packet &packet)
 {
     if (server.getHost()->connectedPeers < 4)
-        server.send_packet(Packet(PacketType::JOIN_ACCEPTED, 0, packet.peer));
+        server.sendPacket(Packet(PacketType::JOIN_ACCEPTED, 0, packet.peer));
     else
-        server.send_packet(Packet(PacketType::JOIN_DENIED, 0, packet.peer));
+        server.sendPacket(Packet(PacketType::JOIN_DENIED, 0, packet.peer));
 }
 
 int main(int argc, const char *argv[])
@@ -51,7 +53,7 @@ int main(int argc, const char *argv[])
     server.registerListener(PacketType::DROP_INSTANT, onReceiveArrow);
 
     while (server.isRunning())
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     return 0;
 }

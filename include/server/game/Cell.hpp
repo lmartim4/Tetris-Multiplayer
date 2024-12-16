@@ -2,7 +2,7 @@
 
 #include "CellColorType.hpp"
 
-enum CELL_STATES
+enum CELL_STATE
 {
     CELL_FALLED = -1,
     CELL_EMPTY = 0,
@@ -12,11 +12,11 @@ enum CELL_STATES
 class Cell
 {
 private:
-    int state; // 0 = vazio, -1 = fixado, 1 = em queda
+    CELL_STATE state; // 0 = vazio, -1 = fixado, 1 = em queda
     CellColorType color;
 
-    int x; // Linha (posição X)
-    int y; // Coluna (posição Y)
+    int x;
+    int y;
 public:
     Cell(int x, int y);
 
