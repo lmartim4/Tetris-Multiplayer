@@ -10,7 +10,7 @@
 class TetrominoI : public Tetromino
 {
 public:
-    TetrominoI(int x0, int y0, CellColorType color) : Tetromino(x0, y0, color)
+    TetrominoI(Coordinate coord, CellColorType color) : Tetromino(coord, color)
     {
         shape = {{1, 1, 1, 1}}; // 4-block straight line
     }
@@ -22,7 +22,7 @@ public:
 class TetrominoO : public Tetromino
 {
 public:
-    TetrominoO(int x0, int y0, CellColorType color) : Tetromino(x0, y0, color)
+    TetrominoO(Coordinate coord, CellColorType color) : Tetromino(coord, color)
     {
         shape = {{1, 1},
                  {1, 1}}; // 2x2 square
@@ -35,9 +35,9 @@ public:
 class TetrominoT : public Tetromino
 {
 public:
-    TetrominoT(int x0, int y0, CellColorType color) : Tetromino(x0, y0, color)
+    TetrominoT(Coordinate coord, CellColorType color) : Tetromino(coord, color)
     {
-        shape = {{1, 1, 1}, 
+        shape = {{1, 1, 1},
                  {0, 1, 0}}; // T
     }
 };
@@ -48,7 +48,7 @@ public:
 class TetrominoL : public NonSymmetricTetromino
 {
 public:
-    TetrominoL(int x0, int y0, CellColorType color, bool inverted = false) : NonSymmetricTetromino(x0, y0, color, inverted)
+    TetrominoL(Coordinate coord, CellColorType color, bool inverted = false) : NonSymmetricTetromino(coord, color, inverted)
     {
         shape = {{1, 0},
                  {1, 0},
@@ -65,7 +65,7 @@ public:
 class TetrominoS : public NonSymmetricTetromino
 {
 public:
-    TetrominoS(int x0, int y0, CellColorType color, bool inverted = false) : NonSymmetricTetromino(x0, y0, color, inverted)
+    TetrominoS(Coordinate coord, CellColorType color, bool inverted = false) : NonSymmetricTetromino(coord, color, inverted)
     {
         shape = {{0, 1, 1},
                  {1, 1, 0}};

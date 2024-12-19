@@ -103,13 +103,12 @@ void Game::updateGame(TetrisAction lastAction)
     bool gravityApplied = false;
     if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastGravityTick).count() > minTimeMs)
     {
-        currentTetromino->dropGravity();
         lastGravityTick = now;
         gravityApplied = true;
     }
 
     // Handle tetromino collision
-    if (board.checkCollision(*currentTetromino, lastAction))
+    if (board.checkCollision(*currentTetromino, lastAction, gravityApplied))
     {
         // Place the tetromino if it has fallen or the action was DROP_FASTER
         if (lastAction == TetrisAction::DROP_FASTER || gravityApplied)
@@ -126,14 +125,12 @@ void Game::updateGame(TetrisAction lastAction)
         {
             // Invalid move, revert the tetromino state
             board.placeTetromino(*currentTetromino, false);
-            currentTetromino->gravity = false;
         }
     }
     else
     {
         // Valid move, place tetromino without locking
         board.placeTetromino(*currentTetromino, false);
-        currentTetromino->gravity = false;
     }
 }
 
@@ -141,7 +138,6 @@ void Game::updateGame(TetrisAction lastAction)
 void Game::lockTetromino()
 {
     board.placeTetromino(*currentTetromino, true);
-    currentTetromino->gravity = false;
     currentTetromino.reset();
 }
 
@@ -164,7 +160,6 @@ void Game::levelUp()
     std::cout << "(Current score): " << score << std::endl;
     std::cout << "(LEVEL UP) !!!" << std::endl;
 }
-
 
 Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++)
 {

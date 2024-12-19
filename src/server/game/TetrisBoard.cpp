@@ -57,25 +57,22 @@ std::vector<std::vector<std::shared_ptr<Cell>>> &TetrisBoard::getGrid()
     return grid;
 }
 
-bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastMove)
+bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastMove, bool gravity)
 {
-    currentTetromino.evolveStates(true, lastMove);
+    currentTetromino.evolveStates(true, lastMove, gravity);
 
     const auto &shape = currentTetromino.getShape();
-
-    int tetrominoX = currentTetromino.getX();
-    int tetrominoY = currentTetromino.getY();
 
     for (size_t x = 0; x < shape.size(); ++x)
         for (size_t y = 0; y < shape[x].size(); ++y)
             if (shape[x][y] != 0)
             {
-                int gridX = tetrominoX + x;
-                int gridY = normalizedY(tetrominoY + y);
+                int gridX = currentTetromino.getCoordinate().x + x;
+                int gridY = normalizedY(currentTetromino.getCoordinate().y + y);
 
                 if (gridX >= HEIGHT || gridX < 0 || grid[gridX][gridY]->isFixed())
                 {
-                    currentTetromino.evolveStates(false, lastMove);
+                    currentTetromino.evolveStates(false, lastMove, gravity);
                     changed = false;
                     return true;
                 }
@@ -104,8 +101,8 @@ bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
         for (size_t y = 0; y < shape[x].size(); y++)
             if (shape[x][y] != 0)
             {
-                int gridX = currentTetromino.getX() + x;
-                int gridY = normalizedY(currentTetromino.getY() + y);
+                int gridX = currentTetromino.getCoordinate().x + x;
+                int gridY = normalizedY(currentTetromino.getCoordinate().y + y);
                 CellColorType tetroColor = currentTetromino.getColor();
 
                 if (bottom)

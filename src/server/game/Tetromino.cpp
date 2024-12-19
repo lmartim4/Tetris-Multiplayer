@@ -8,51 +8,35 @@ const std::vector<CellColorType> Tetromino::tetromino_colors = {
 
 const std::vector<char> Tetromino::types = {'I', 'O', 'T', 'L', 'J', 'S', 'Z'};
 
-int Tetromino::getX() const
-{
-    return x;
-}
-
-int Tetromino::getY() const
-{
-    return y;
-}
-
 CellColorType Tetromino::getColor() const
 {
     return color;
-}
-
-bool Tetromino::getGravity() const
-{
-    return gravity;
 }
 
 const std::vector<std::vector<int>> &Tetromino::getShape() const
 {
     return shape;
 }
-
-void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
+void Tetromino::evolveStates(bool forward, TetrisAction lastMove, bool gravity)
 {
     int sign = (forward) ? 1 : -1;
 
     if (gravity)
     {
-        x += sign;
+        coordinate.x += sign;
     }
 
     switch (lastMove)
     {
 
     case TetrisAction::LEFT:
-        y -= sign;
+        coordinate.y -= sign;
         break;
     case TetrisAction::RIGHT:
-        y += sign;
+        coordinate.y += sign;
         break;
     case TetrisAction::DROP_FASTER:
-        x += sign;
+        coordinate.x += sign;
         break;
 
     default:
@@ -91,9 +75,4 @@ void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
 
         shape = rotated;
     }
-}
-
-void Tetromino::dropGravity()
-{
-    gravity = true;
 }
