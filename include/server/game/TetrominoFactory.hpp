@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TetrisBoard.hpp"
-#include "tetrominos.hpp"
+#include "Tetrominos.hpp"
 
 class TetrominoFactory
 {

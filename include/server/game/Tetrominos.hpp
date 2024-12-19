@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nonSymmetricTetromino.hpp"
+#include "Tetromino.hpp"
 #include <memory>    // for std::unique_ptr
 #include <stdexcept> // for std::invalid_argument
 
