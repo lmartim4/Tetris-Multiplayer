@@ -21,7 +21,7 @@
 class NetworkManager : public PacketSender
 {
 public:
-    const int network_frequency = 10; // Hertz
+    const int network_frequency = 128; // Hertz
     NetworkManager();                  // Constructor: Initializes the ENet library and network manager.
     virtual ~NetworkManager();         // Destructor: Cleans up network resources and stops the network loop.
 

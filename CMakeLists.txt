@@ -35,7 +35,7 @@ set(SERVER_SOURCES
     src/server/ServerManager.cpp
     src/server/game/Tetromino.cpp
     src/server/game/TetrisBoard.cpp
-    src/server/game/Cell.cpp
+    src/server/game/GameCell.cpp
     src/server/game/GameManager.cpp
     src/server/game/Game.cpp
 )

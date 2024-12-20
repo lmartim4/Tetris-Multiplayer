@@ -12,6 +12,7 @@
 #include <map>
 
 #include "PacketSender.hpp"
+#include "LevelData.hpp"
 
 enum GameState
 {
@@ -31,19 +32,8 @@ private:
     TetrisBoard board;
     std::unique_ptr<Tetromino> currentTetromino;
 
-    /*-=-=-=-=-=-=-=-=-=-=-=*/
-    std::mutex gameStateMutex;
-    int score;
-    int level;
-    int nLinesClearedThisLevel;
+    LevelData levelData;
 
-    const int minTimeMs = 400;
-    int gravityTimeMs;        // Current gravity time in ms
-    int levelUpGravityTimeMs; // How much to reduce gravity time on level up
-
-    std::chrono::steady_clock::time_point lastGravityTick; // To track gravity intervals
-    /*-------------------*/
-    
     PacketSender *packetSender;
 
     static int instanceCount;
@@ -53,8 +43,6 @@ private:
     std::vector<Player *> players;
 
     int calculateLinesToPoints(int nLines, int level);
-
-    
 
     std::thread gameThread; // The thread running the game loop
 
@@ -67,8 +55,6 @@ private:
     void spawnTetromino();
 
 public:
-    void clearFullLines();
-    void levelUp();
     Game(PacketSender *sender);
     ~Game();
 
@@ -77,4 +63,6 @@ public:
 
     void startGameLoop();
     void endGameLoop();
+
+    void clearFullLines();
 };

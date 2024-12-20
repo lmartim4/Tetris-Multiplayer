@@ -2,25 +2,26 @@
 
 #include <memory>
 #include <iostream>
+#include "Debuggable.hpp"
 #include "json.hpp"
 #include "Tetromino.hpp"
-#include "game/Cell.hpp"
+#include "GameCell.hpp"
 
 class ServerManager;
 
-class TetrisBoard
+class TetrisBoard : public Debuggable
 {
 private:
-    std::vector<std::vector<std::shared_ptr<Cell>>> grid;
-    std::vector<std::vector<std::shared_ptr<Cell>>> lastBroadcastedGrid;
+    int WIDTH;
+    int HEIGHT;
+
+    std::vector<std::vector<std::shared_ptr<GameCell>>> grid;
+    std::vector<std::vector<std::shared_ptr<GameCell>>> lastBroadcastedGrid;
+
+    int getNormalizedY(int y) const;
 
 public:
-    static const int WIDTH;
-    static const int HEIGHT;
-    bool changed = false;
-    bool anyChanges() { return changed; }
-
-    TetrisBoard();
+    TetrisBoard(int h, int w);
 
     bool reachedTop();
     void printStatus();
@@ -33,14 +34,11 @@ public:
 
     bool placeTetromino(const Tetromino &currentTetromino, bool fallen);
 
-    static int normalizedY(int y);
-
     void clearFallingTetrominos();
     void clearFalledTetrominos();
 
-    std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid();
-
-    // bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1, const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const;
+    std::vector<std::vector<std::shared_ptr<GameCell>>> &getGrid() { return grid; }
 
     nlohmann::json constructBoardJsonToBroadcast();
+    // bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<GameCell>>> &grid1, const std::vector<std::vector<std::shared_ptr<GameCell>>> &grid2) const;
 };

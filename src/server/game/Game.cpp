@@ -61,7 +61,7 @@ void Game::loop()
     gameState = GameState::RUNNNING;
 
     spawnTetromino();
-    lastGravityTick = std::chrono::steady_clock::now();
+    levelData.updateGravityTick();
 
     while (gameState != GameState::ENDING)
     {
@@ -70,12 +70,12 @@ void Game::loop()
         for (Player *pl : players)
             while (pl->actions.pop(action))
                 updateGame(action);
-
+        
         updateGame(TetrisAction::EMPTY);
         sendBoardUpdates();
         // board.printStatus();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     gameState = GameState::ENDED;
@@ -87,8 +87,8 @@ void Game::updateGame(TetrisAction lastAction)
     if (board.reachedTop())
     {
         std::cout << "(GAME OVER) !!!" << std::endl;
-        std::cout << "(Final score): " << score << std::endl;
-        std::cout << "You played till level: " << level << std::endl;
+        std::cout << "(Final score): " << levelData.getScore() << std::endl;
+        std::cout << "You played till level: " << levelData.getLevel() << std::endl;
 
         board.clear();
         gameState = GameState::ENDING;
@@ -98,14 +98,7 @@ void Game::updateGame(TetrisAction lastAction)
     // Clear old tetrominos before processing the new action
     board.clearFallingTetrominos();
 
-    // Apply gravity if the minimum time has passed
-    auto now = std::chrono::steady_clock::now();
-    bool gravityApplied = false;
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastGravityTick).count() > minTimeMs)
-    {
-        lastGravityTick = now;
-        gravityApplied = true;
-    }
+    bool gravityApplied = levelData.gravityIntervalPassed();
 
     // Handle tetromino collision
     if (board.checkCollision(*currentTetromino, lastAction, gravityApplied))
@@ -116,8 +109,12 @@ void Game::updateGame(TetrisAction lastAction)
             lockTetromino();
             clearFullLines();
 
-            if (nLinesClearedThisLevel >= LEVEL_UP)
-                levelUp();
+            if (levelData.attemptLevelUp(LEVEL_UP))
+            {
+                board.clearFalledTetrominos();
+                std::cout << "(Current score): " << levelData.getScore() << std::endl;
+                std::cout << "(LEVEL UP) !!!" << std::endl;
+            }
 
             spawnTetromino();
         }
@@ -141,27 +138,13 @@ void Game::lockTetromino()
     currentTetromino.reset();
 }
 
-// Clears full lines, updates the score, and resets level progress if needed
 void Game::clearFullLines()
 {
-    nLinesClearedThisLevel += board.clearLines();
-    score += calculateLinesToPoints(nLinesClearedThisLevel, level);
+    levelData.addClearedLines(board.clearLines());
+    levelData.addScore(calculateLinesToPoints(levelData.getClearedLinesThisLevel(), levelData.getLevel()));
 }
 
-// Handles level-up logic, including adjusting gravity and clearing the board
-void Game::levelUp()
-{
-    level++;
-    board.clearFalledTetrominos();
-    gravityTimeMs = std::max(gravityTimeMs - levelUpGravityTimeMs, minTimeMs);
-    lastGravityTick = std::chrono::steady_clock::now();
-    nLinesClearedThisLevel = 0;
-
-    std::cout << "(Current score): " << score << std::endl;
-    std::cout << "(LEVEL UP) !!!" << std::endl;
-}
-
-Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++)
+Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++), board(16, 10)
 {
     console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
     gameState = GameState::WAITING_PLAYERS;
@@ -190,13 +173,12 @@ void Game::spawnTetromino()
 
 void Game::sendBoardUpdates()
 {
-    if (!board.anyChanges())
-        return;
-
-    console_log("Sending board!");
-
-    nlohmann::json boardJson = board.constructBoardJsonToBroadcast();
-    sendBoardState(boardJson);
+    if (currentTetromino->shouldBroadcastState())
+    {
+        console_log("Sending board!");
+        nlohmann::json boardJson = board.constructBoardJsonToBroadcast();
+        sendBoardState(boardJson);
+    }
 }
 
 void Game::sendBoardState(const nlohmann::json &boardJson) const

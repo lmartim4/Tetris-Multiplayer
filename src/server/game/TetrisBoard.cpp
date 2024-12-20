@@ -1,18 +1,19 @@
 #include "game/TetrisBoard.hpp"
 #include "TetrisBoard.hpp"
 
-const int TetrisBoard::WIDTH = 10;
-const int TetrisBoard::HEIGHT = 16;
-
-TetrisBoard::TetrisBoard()
+TetrisBoard::TetrisBoard(int h, int w) : Debuggable("Tetris Board")
 {
+    HEIGHT = h;
+    WIDTH = w;
+
+    console_log("Initializing Tetris-Board");
     for (int y = 0; y < HEIGHT; ++y)
     {
-        std::vector<std::shared_ptr<Cell>> row;
+        std::vector<std::shared_ptr<GameCell>> row;
 
         for (int x = 0; x < WIDTH; ++x)
         {
-            auto cell = std::make_shared<Cell>(x, y);
+            auto cell = std::make_shared<GameCell>(x, y);
             row.push_back(cell);
         }
 
@@ -52,11 +53,6 @@ void TetrisBoard::clear()
             grid[x][y]->setEmpty();
 }
 
-std::vector<std::vector<std::shared_ptr<Cell>>> &TetrisBoard::getGrid()
-{
-    return grid;
-}
-
 bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastMove, bool gravity)
 {
     currentTetromino.evolveStates(true, lastMove, gravity);
@@ -68,21 +64,19 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastM
             if (shape[x][y] != 0)
             {
                 int gridX = currentTetromino.getCoordinate().x + x;
-                int gridY = normalizedY(currentTetromino.getCoordinate().y + y);
+                int gridY = getNormalizedY(currentTetromino.getCoordinate().y + y);
 
                 if (gridX >= HEIGHT || gridX < 0 || grid[gridX][gridY]->isFixed())
                 {
                     currentTetromino.evolveStates(false, lastMove, gravity);
-                    changed = false;
                     return true;
                 }
             }
 
-    changed = true;
     return false;
 }
 
-int TetrisBoard::normalizedY(int y)
+int TetrisBoard::getNormalizedY(int y) const
 {
     y %= WIDTH;
 
@@ -102,7 +96,7 @@ bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
             if (shape[x][y] != 0)
             {
                 int gridX = currentTetromino.getCoordinate().x + x;
-                int gridY = normalizedY(currentTetromino.getCoordinate().y + y);
+                int gridY = getNormalizedY(currentTetromino.getCoordinate().y + y);
                 CellColorType tetroColor = currentTetromino.getColor();
 
                 if (bottom)
@@ -194,7 +188,6 @@ int TetrisBoard::clearLines()
 // Constructs a JSON representation of the board's current state
 nlohmann::json TetrisBoard::constructBoardJsonToBroadcast()
 {
-    changed = false;
     nlohmann::json boardJson;
     boardJson["width"] = WIDTH;
     boardJson["height"] = HEIGHT;
