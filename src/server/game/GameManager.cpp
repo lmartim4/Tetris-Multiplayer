@@ -7,7 +7,7 @@ GameManager::GameManager(ServerManager &server) : Debuggable("GameManager"), ser
 
 void GameManager::enqueueAction(Player *player, TetrisAction action)
 {
-    game->handleInput(player, action);
+    game->enqueueInput(player, action);
 }
 
 void GameManager::StartGameListener(const Packet &)

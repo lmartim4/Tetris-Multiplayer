@@ -27,7 +27,7 @@ public:
     void printStatus() const;
     void clear() const;
 
-    bool checkCollision(Tetromino &currentTetromino, TetrisAction action) const;
+    bool tryMove(Tetromino &currentTetromino, TetrisAction action) const;
     int clearLines() const;
     void placeTetromino(const Tetromino &currentTetromino, bool fallen);
     void clearFallingTetrominos();

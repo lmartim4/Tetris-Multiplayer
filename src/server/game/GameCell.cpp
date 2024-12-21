@@ -16,6 +16,6 @@ void GameCell::setFalling(const CellColorType &newColor)
 
 void GameCell::setFixed(const CellColorType &newColor)
 {
-    state = CELL_FALLED;
+    state = CELL_FALLEN;
     color = newColor;
 }

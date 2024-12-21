@@ -1,13 +1,41 @@
 #include "Game.hpp"
 #include "TetrominoFactory.hpp"
 
-#define LEVEL_UP 10
+#define LEVEL_UP_LINES 10
 
 int Game::instanceCount = 0;
+
+Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++), board(16, 10)
+{
+    console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
+    gameState = WAITING_PLAYERS;
+}
+
+Game::~Game()
+{
+    console_log("Destroying Game (" + std::to_string(this_instance) + ")...");
+}
+
+void Game::addPlayer(Player *player)
+{
+    if (gameState != WAITING_PLAYERS)
+    {
+        console_log("Cannot add player (not waiting for players)");
+        return;
+    }
+
+    players.emplace_back(player);
+}
+
+void Game::spawnTetromino()
+{
+    currentTetromino = TetrominoFactory::createTetromino();
+}
 
 void Game::startGameLoop()
 {
     static int instanceCount = 0;
+
     if (gameState != WAITING_PLAYERS)
     {
         std::cerr << "Cannot start a game that is not currently waiting for players" << std::endl;
@@ -34,26 +62,9 @@ void Game::endGameLoop()
         gameThread.join();
 
     if (gameState == ENDED)
-    {
         console_log("Successfully ended gameLoop");
-    }
     else
-    {
         throw std::runtime_error("Failed to end game Loop");
-    }
-}
-
-int Game::calculateLinesToPoints(int nLines, int level)
-{
-    int x = std::min(nLines, 4);
-    int P_x = ((280 * (x * x * x) - 1470 * (x * x) + 2630 * (x)-1320) / 3);
-
-    return (nLines > 0) ? P_x * (level + 1) : 0;
-}
-
-void Game::handleInput(Player *player, TetrisAction action)
-{
-    player->actions.push(action);
 }
 
 void Game::loop()
@@ -61,21 +72,15 @@ void Game::loop()
     gameState = RUNNNING;
 
     spawnTetromino();
-    levelData.updateGravityTick();
 
     while (gameState != ENDING)
     {
-        TetrisAction action;
+        processIncommingInputs();
 
-        for (Player *pl : players)
-            while (pl->actions.pop(action))
-                updateGame(action);
-
-        if (levelData.gravityIntervalPassed())
+        if (levelData.hasGravityIntervalElapsed())
             updateGame(GRAVITY);
 
         broadcastBoardIfChanges();
-
         // board.printStatus();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -84,16 +89,34 @@ void Game::loop()
     gameState = ENDED;
 }
 
+int Game::calculatePoints(int nLines, int level)
+{
+    int x = std::min(nLines, 4);
+    int P_x = ((280 * (x * x * x) - 1470 * (x * x) + 2630 * (x)-1320) / 3);
+
+    return (nLines > 0) ? P_x * (level + 1) : 0;
+}
+
+void Game::enqueueInput(Player *player, TetrisAction action)
+{
+    player->actions.push(action);
+}
+
+void Game::processIncommingInputs()
+{
+    TetrisAction action;
+    for (Player *pl : players)
+        while (pl->actions.pop(action))
+            updateGame(action);
+}
+
 void Game::updateGame(TetrisAction lastAction)
 {
-    // Check for game-over condition
     if (board.reachedTop())
     {
         std::cout << "(GAME OVER) !!!" << std::endl;
         std::cout << "(Final score): " << levelData.getScore() << std::endl;
         std::cout << "You played till level: " << levelData.getLevel() << std::endl;
-
-        board.clear();
         gameState = ENDING;
         return;
     }
@@ -102,15 +125,15 @@ void Game::updateGame(TetrisAction lastAction)
     board.clearFallingTetrominos();
 
     // Handle tetromino collision
-    if (board.checkCollision(*currentTetromino, lastAction))
+    if (board.tryMove(*currentTetromino, lastAction))
     {
         // Place the tetromino if it has fallen or the action was DROP_FASTER
         if (lastAction == DROP_FASTER || lastAction == GRAVITY)
         {
             lockTetromino();
-            clearFullLines();
+            tryClearFullLines();
 
-            if (levelData.attemptLevelUp(LEVEL_UP))
+            if (levelData.tryLevelUp(LEVEL_UP_LINES))
             {
                 board.clearFalledTetrominos();
                 std::cout << "(Current score): " << levelData.getScore() << std::endl;
@@ -139,37 +162,10 @@ void Game::lockTetromino()
     currentTetromino.reset();
 }
 
-void Game::clearFullLines()
+void Game::tryClearFullLines()
 {
     levelData.addClearedLines(board.clearLines());
-    levelData.addScore(calculateLinesToPoints(levelData.getClearedLinesThisLevel(), levelData.getLevel()));
-}
-
-Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++), board(16, 10)
-{
-    console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
-    gameState = WAITING_PLAYERS;
-}
-
-Game::~Game()
-{
-    console_log("Destroying Game (" + std::to_string(this_instance) + ")...");
-}
-
-void Game::addPlayer(Player *player)
-{
-    if (gameState != WAITING_PLAYERS)
-    {
-        console_log("Cannot add player (not waiting for players)");
-        return;
-    }
-
-    players.emplace_back(player);
-}
-
-void Game::spawnTetromino()
-{
-    currentTetromino = TetrominoFactory::createTetromino();
+    levelData.addScore(calculatePoints(levelData.getLinesClearedThisLevel(), levelData.getLevel()));
 }
 
 void Game::broadcastBoardIfChanges() const

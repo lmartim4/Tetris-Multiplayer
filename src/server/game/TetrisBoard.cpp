@@ -53,7 +53,7 @@ void TetrisBoard::clear() const
             grid[x][y]->setEmpty();
 }
 
-bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastMove) const
+bool TetrisBoard::tryMove(Tetromino &currentTetromino, TetrisAction lastMove) const
 {
     currentTetromino.evolveStates(true, lastMove);
 
@@ -188,12 +188,13 @@ nlohmann::json TetrisBoard::constructBoardJsonToBroadcast() const
 
     nlohmann::json cells = nlohmann::json::array();
 
-    for (int y = 0; y < HEIGHT; ++y)
+    for (int x = 0; x < HEIGHT; ++x)
     {
         nlohmann::json row = nlohmann::json::array();
-        for (int x = 0; x < WIDTH; ++x)
+
+        for (int y = 0; y < WIDTH; ++y)
         {
-            CellColorType colorType = grid.at(y).at(x)->getColor();
+            CellColorType colorType = grid.at(x).at(y)->getColor();
 
             nlohmann::json cellObj;
             cellObj["c"] = colorType;

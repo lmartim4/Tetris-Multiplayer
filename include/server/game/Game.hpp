@@ -20,47 +20,40 @@ enum GameState
     WAITING_PLAYERS, // SETTING UP PLAYER LIST
     STARTING,        // STARTING THREADS (not running yet)
     RUNNNING,        // THREADS ARE RUNNING
-    ENDING,          // THREADS ARE STOPING
+    ENDING,          // TELL THREADS TO STOP
     ENDED            // EVERYTHING IS ENDED
 };
 
 class Game : public Debuggable
 {
 private:
-    /* General Game State*/
-
-    TetrisBoard board;
-    std::unique_ptr<Tetromino> currentTetromino;
-
-    LevelData levelData;
-
-    PacketSender *packetSender;
-
     static int instanceCount;
     const int this_instance;
 
+    PacketSender *packetSender;
     std::atomic<GameState> gameState = INITIALIZING;
+    LevelData levelData;
+
+    TetrisBoard board;
     std::vector<Player *> players;
-
-    int calculateLinesToPoints(int nLines, int level);
-
-    std::thread gameThread; // The thread running the game loop
+    std::unique_ptr<Tetromino> currentTetromino;
 
     void loop();
+    void processIncommingInputs();
     void updateGame(TetrisAction action);
     void lockTetromino();
-    void broadcastBoardIfChanges() const;
+    void tryClearFullLines();
+    int calculatePoints(int nLines, int level);
     void spawnTetromino();
+    void broadcastBoardIfChanges() const;
 
+    std::thread gameThread; // The thread running the game loop
 public:
     Game(PacketSender *sender);
     ~Game();
-
+    
     void addPlayer(Player *player);
-    void handleInput(Player *player, TetrisAction action);
-
+    void enqueueInput(Player *player, TetrisAction action);
     void startGameLoop();
     void endGameLoop();
-
-    void clearFullLines();
 };
