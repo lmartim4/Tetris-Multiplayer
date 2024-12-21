@@ -23,22 +23,16 @@ private:
 public:
     TetrisBoard(int h, int w);
 
-    bool reachedTop();
-    void printStatus();
-    void clear();
+    bool reachedTop() const;
+    void printStatus() const;
+    void clear() const;
 
-    // Melhor seria se fosse const, mas é a vida, não consigo pensar em outro jeito de
-    // checar a colisao sem mudar o objeto e ver se dá merda, na prática faz-se a ação inversa depois, então safe
-    bool checkCollision(Tetromino &currentTetromino, TetrisAction action, bool gravity);
-    int clearLines();
-
-    bool placeTetromino(const Tetromino &currentTetromino, bool fallen);
-
+    bool checkCollision(Tetromino &currentTetromino, TetrisAction action) const;
+    int clearLines() const;
+    void placeTetromino(const Tetromino &currentTetromino, bool fallen);
     void clearFallingTetrominos();
     void clearFalledTetrominos();
 
     std::vector<std::vector<std::shared_ptr<GameCell>>> &getGrid() { return grid; }
-
-    nlohmann::json constructBoardJsonToBroadcast();
-    // bool gridsAreEqual(const std::vector<std::vector<std::shared_ptr<GameCell>>> &grid1, const std::vector<std::vector<std::shared_ptr<GameCell>>> &grid2) const;
+    nlohmann::json constructBoardJsonToBroadcast() const;
 };

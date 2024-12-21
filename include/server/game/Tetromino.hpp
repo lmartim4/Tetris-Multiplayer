@@ -46,7 +46,7 @@ public:
         return false;
     }
 
-    void evolveStates(bool forward, TetrisAction lastMove, bool gravity);
+    void evolveStates(bool forward, TetrisAction lastMove);
 
     void rotate(bool clockwise)
     {

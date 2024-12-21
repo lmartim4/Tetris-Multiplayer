@@ -3,20 +3,20 @@
 #include <string>
 #include "PacketType.hpp"
 
-enum class TetrisAction
+enum TetrisAction
 {
-    EMPTY = 0,
     LEFT,
     RIGHT,
     ROTATE_LEFT,
     ROTATE_RIGHT,
     DROP_FASTER,
-    DROP_INSTANT
+    DROP_INSTANT,
+    GRAVITY,
 };
 
 inline const TetrisAction getActionFromPacketType(PacketType type)
 {
-    TetrisAction action = TetrisAction::EMPTY;
+    TetrisAction action = TetrisAction::GRAVITY;
     switch (type)
     {
     case PacketType::LEFT:
@@ -48,8 +48,6 @@ inline std::string TetrisActionToString(TetrisAction action)
 {
     switch (action)
     {
-    case TetrisAction::EMPTY:
-        return "EMPTY";
     case TetrisAction::LEFT:
         return "LEFT";
     case TetrisAction::RIGHT:

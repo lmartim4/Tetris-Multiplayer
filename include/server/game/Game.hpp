@@ -49,9 +49,7 @@ private:
     void loop();
     void updateGame(TetrisAction action);
     void lockTetromino();
-    void sendBoardUpdates();
-
-    void sendBoardState(const nlohmann::json &boardJson) const;
+    void broadcastBoardIfChanges() const;
     void spawnTetromino();
 
 public:

@@ -17,40 +17,35 @@ const std::vector<std::vector<int>> &Tetromino::getShape() const
 {
     return shape;
 }
-void Tetromino::evolveStates(bool forward, TetrisAction lastMove, bool gravity)
+void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
 {
     int sign = (forward) ? 1 : -1;
 
-    if (!forward)
+    if (forward == false)
         hasChanged = false;
-
-    if (gravity)
-    {
-        coordinate.x += sign;
+    else
         hasChanged = true;
-    }
 
     switch (lastMove)
     {
+    case TetrisAction::GRAVITY:
+        coordinate.x += sign;
+        break;
+
     case TetrisAction::LEFT:
         coordinate.y -= sign;
-        hasChanged = true;
         break;
     case TetrisAction::RIGHT:
         coordinate.y += sign;
-        hasChanged = true;
         break;
     case TetrisAction::DROP_FASTER:
         coordinate.x += sign;
-        hasChanged = true;
         break;
     case TetrisAction::ROTATE_LEFT:
         rotate(forward ? false : true);
-        hasChanged = true;
         break;
     case TetrisAction::ROTATE_RIGHT:
         rotate(forward ? true : false);
-        hasChanged = true;
         break;
     default:
         break;

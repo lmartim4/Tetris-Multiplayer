@@ -8,13 +8,13 @@ int Game::instanceCount = 0;
 void Game::startGameLoop()
 {
     static int instanceCount = 0;
-    if (gameState != GameState::WAITING_PLAYERS)
+    if (gameState != WAITING_PLAYERS)
     {
         std::cerr << "Cannot start a game that is not currently waiting for players" << std::endl;
         return;
     }
 
-    gameState = GameState::STARTING;
+    gameState = STARTING;
     console_log("Starting Game (" + std::to_string(instanceCount++) + ")...");
 
     gameThread = std::thread(&Game::loop, this);
@@ -22,18 +22,18 @@ void Game::startGameLoop()
 
 void Game::endGameLoop()
 {
-    if (gameState != GameState::RUNNNING)
+    if (gameState != RUNNNING)
     {
         console_log("Cannot end a game that is not currently running");
         return;
     }
 
-    gameState = GameState::ENDING;
+    gameState = ENDING;
 
     if (gameThread.joinable())
         gameThread.join();
 
-    if (gameState == GameState::ENDED)
+    if (gameState == ENDED)
     {
         console_log("Successfully ended gameLoop");
     }
@@ -58,27 +58,30 @@ void Game::handleInput(Player *player, TetrisAction action)
 
 void Game::loop()
 {
-    gameState = GameState::RUNNNING;
+    gameState = RUNNNING;
 
     spawnTetromino();
     levelData.updateGravityTick();
 
-    while (gameState != GameState::ENDING)
+    while (gameState != ENDING)
     {
         TetrisAction action;
 
         for (Player *pl : players)
             while (pl->actions.pop(action))
                 updateGame(action);
-        
-        updateGame(TetrisAction::EMPTY);
-        sendBoardUpdates();
+
+        if (levelData.gravityIntervalPassed())
+            updateGame(GRAVITY);
+
+        broadcastBoardIfChanges();
+
         // board.printStatus();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    gameState = GameState::ENDED;
+    gameState = ENDED;
 }
 
 void Game::updateGame(TetrisAction lastAction)
@@ -91,20 +94,18 @@ void Game::updateGame(TetrisAction lastAction)
         std::cout << "You played till level: " << levelData.getLevel() << std::endl;
 
         board.clear();
-        gameState = GameState::ENDING;
+        gameState = ENDING;
         return;
     }
 
     // Clear old tetrominos before processing the new action
     board.clearFallingTetrominos();
 
-    bool gravityApplied = levelData.gravityIntervalPassed();
-
     // Handle tetromino collision
-    if (board.checkCollision(*currentTetromino, lastAction, gravityApplied))
+    if (board.checkCollision(*currentTetromino, lastAction))
     {
         // Place the tetromino if it has fallen or the action was DROP_FASTER
-        if (lastAction == TetrisAction::DROP_FASTER || gravityApplied)
+        if (lastAction == DROP_FASTER || lastAction == GRAVITY)
         {
             lockTetromino();
             clearFullLines();
@@ -147,7 +148,7 @@ void Game::clearFullLines()
 Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++), board(16, 10)
 {
     console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
-    gameState = GameState::WAITING_PLAYERS;
+    gameState = WAITING_PLAYERS;
 }
 
 Game::~Game()
@@ -157,7 +158,7 @@ Game::~Game()
 
 void Game::addPlayer(Player *player)
 {
-    if (gameState != GameState::WAITING_PLAYERS)
+    if (gameState != WAITING_PLAYERS)
     {
         console_log("Cannot add player (not waiting for players)");
         return;
@@ -171,17 +172,11 @@ void Game::spawnTetromino()
     currentTetromino = TetrominoFactory::createTetromino();
 }
 
-void Game::sendBoardUpdates()
+void Game::broadcastBoardIfChanges() const
 {
-    if (currentTetromino->shouldBroadcastState())
-    {
-        console_log("Sending board!");
-        nlohmann::json boardJson = board.constructBoardJsonToBroadcast();
-        sendBoardState(boardJson);
-    }
-}
+    if (!currentTetromino->shouldBroadcastState())
+        return;
 
-void Game::sendBoardState(const nlohmann::json &boardJson) const
-{
-    packetSender->sendPacket(Packet(PacketType::GAME_SCREEN, boardJson, nullptr));
+    // console_log("Sending board!");
+    packetSender->sendPacket(Packet(PacketType::GAME_SCREEN, board.constructBoardJsonToBroadcast(), nullptr));
 }

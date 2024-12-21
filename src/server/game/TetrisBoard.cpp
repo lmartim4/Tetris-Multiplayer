@@ -21,16 +21,16 @@ TetrisBoard::TetrisBoard(int h, int w) : Debuggable("Tetris Board")
     }
 }
 
-bool TetrisBoard::reachedTop()
+bool TetrisBoard::reachedTop() const
 {
     for (int y = 0; y < WIDTH; y++)
-        if (grid.at(0).at(y)->isFixed())
+        if (grid.at(0).at(y)->getState() == CELL_FALLEN)
             return true;
 
     return false;
 }
 
-void TetrisBoard::printStatus()
+void TetrisBoard::printStatus() const
 {
     system("clear");
 
@@ -38,24 +38,24 @@ void TetrisBoard::printStatus()
     for (int x = 0; x < HEIGHT; x++)
     {
         for (int y = 0; y < WIDTH; y++)
-            std::cout << (grid[x][y]->isFalling() ? " # " : (grid[x][y]->isEmpty()) ? " * "
-                                                                                    : " $ ");
+            std::cout << (grid[x][y]->getState() == CELL_FALLING ? " # " : (grid[x][y]->getState() == CELL_EMPTY) ? " * "
+                                                                                                                  : " $ ");
         std::cout << std::endl;
     }
 
     std::cout << std::string(40, '-') << std::endl;
 }
 
-void TetrisBoard::clear()
+void TetrisBoard::clear() const
 {
     for (int x = 0; x < HEIGHT; x++)
         for (int y = 0; y < WIDTH; y++)
             grid[x][y]->setEmpty();
 }
 
-bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastMove, bool gravity)
+bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastMove) const
 {
-    currentTetromino.evolveStates(true, lastMove, gravity);
+    currentTetromino.evolveStates(true, lastMove);
 
     const auto &shape = currentTetromino.getShape();
 
@@ -66,9 +66,9 @@ bool TetrisBoard::checkCollision(Tetromino &currentTetromino, TetrisAction lastM
                 int gridX = currentTetromino.getCoordinate().x + x;
                 int gridY = getNormalizedY(currentTetromino.getCoordinate().y + y);
 
-                if (gridX >= HEIGHT || gridX < 0 || grid[gridX][gridY]->isFixed())
+                if (gridX >= HEIGHT || gridX < 0 || grid[gridX][gridY]->getState() == CELL_FALLEN)
                 {
-                    currentTetromino.evolveStates(false, lastMove, gravity);
+                    currentTetromino.evolveStates(false, lastMove);
                     return true;
                 }
             }
@@ -86,10 +86,9 @@ int TetrisBoard::getNormalizedY(int y) const
     return y;
 }
 
-bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
+void TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
 {
     const auto &shape = currentTetromino.getShape();
-    bool anyChange = false; // Track if any cell changes
 
     for (size_t x = 0; x < shape.size(); x++)
         for (size_t y = 0; y < shape[x].size(); y++)
@@ -101,30 +100,26 @@ bool TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
 
                 if (bottom)
                 {
-                    if (!grid[gridX][gridY]->isFixed())
+                    if (grid[gridX][gridY]->getState() != CELL_FALLEN)
                     {
                         grid[gridX][gridY]->setFixed(tetroColor);
-                        anyChange = true;
                     }
                 }
                 else
                 {
-                    if (!grid[gridX][gridY]->isFalling())
+                    if (grid[gridX][gridY]->getState() != CELL_FALLING)
                     {
                         grid[gridX][gridY]->setFalling(tetroColor);
-                        anyChange = true;
                     }
                 }
             }
-
-    return anyChange;
 }
 
 void TetrisBoard::clearFallingTetrominos()
 {
     for (int x = 0; x < HEIGHT; x++)
         for (int y = 0; y < WIDTH; y++)
-            if (grid[x][y]->isFalling())
+            if (grid[x][y]->getState() == CELL_FALLING)
                 grid[x][y]->setEmpty();
 }
 
@@ -132,11 +127,11 @@ void TetrisBoard::clearFalledTetrominos()
 {
     for (int x = 0; x < HEIGHT; x++)
         for (int y = 0; y < WIDTH; y++)
-            if (grid[x][y]->isFixed())
+            if (grid[x][y]->getState() == CELL_FALLEN)
                 grid[x][y]->setEmpty();
 }
 
-int TetrisBoard::clearLines()
+int TetrisBoard::clearLines() const
 {
     int numLinesCleared = 0;
 
@@ -146,7 +141,7 @@ int TetrisBoard::clearLines()
         int sumLine = 0;
         for (int y = 0; y < WIDTH; y++)
         {
-            if (grid[x][y]->isFixed())
+            if (grid[x][y]->getState() == CELL_FALLEN)
                 sumLine++;
         }
 
@@ -166,7 +161,7 @@ int TetrisBoard::clearLines()
                 {
 
                     // Se o de cima for algum bloco fixo
-                    if (grid[x_clear - 1][y]->isFixed())
+                    if (grid[x_clear - 1][y]->getState() == CELL_FALLEN)
                     {
 
                         // Setar o de baixo como fixo, com a cor do de cima
@@ -185,8 +180,7 @@ int TetrisBoard::clearLines()
     return numLinesCleared;
 }
 
-// Constructs a JSON representation of the board's current state
-nlohmann::json TetrisBoard::constructBoardJsonToBroadcast()
+nlohmann::json TetrisBoard::constructBoardJsonToBroadcast() const
 {
     nlohmann::json boardJson;
     boardJson["width"] = WIDTH;
@@ -211,31 +205,3 @@ nlohmann::json TetrisBoard::constructBoardJsonToBroadcast()
     boardJson["cells"] = cells;
     return boardJson;
 }
-
-// Implementation of gridsAreEqual
-/*
-bool TetrisBoard::gridsAreEqual(const std::vector<std::vector<std::shared_ptr<Cell>>> &grid1,
-                                const std::vector<std::vector<std::shared_ptr<Cell>>> &grid2) const
-{
-    if (grid1.size() != grid2.size())
-        return false;
-
-    for (size_t i = 0; i < grid1.size(); ++i)
-    {
-        if (grid1[i].size() != grid2[i].size())
-            return false;
-
-        for (size_t j = 0; j < grid1[i].size(); ++j)
-        {
-            // Handle nullptrs if cells can be null
-            if (grid1[i][j] == nullptr && grid2[i][j] == nullptr)
-                continue;
-            if ((grid1[i][j] == nullptr) != (grid2[i][j] == nullptr))
-                return false;
-            if (*grid1[i][j] != *grid2[i][j])
-                return false;
-        }
-    }
-
-    return true;
-}*/

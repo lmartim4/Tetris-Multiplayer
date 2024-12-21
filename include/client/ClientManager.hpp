@@ -44,7 +44,7 @@ public:
     void TaskHeartbeat();
     void TaskStopHeartbeat();
 
-    void connect(const std::string &serverAddress = "localhost", uint16_t port = 12345);
+    void connect(const std::string &serverAddress = "127.0.0.1", uint16_t port = 12345);
     void disconnect();
 
     bool IsConnected() const { return isConnected; };
