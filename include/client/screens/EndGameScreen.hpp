@@ -28,6 +28,8 @@ private:
     Button quitButton;
     Button playAgainButton;
 
+    bool hasFetchedData = false;
+
 public:
     EndGameScreen(ClientManager &manager);
     ~EndGameScreen();

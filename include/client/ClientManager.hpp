@@ -19,7 +19,8 @@ private:
 
     std::vector<PlayerData> players; // Players in the match
 
-    ThreadSafeQueue<nlohmann::json> boardBuffer; // Buffer for received boards (always just the last one)
+    ThreadSafeQueue<nlohmann::json> boardBuffer;       // Buffer for received boards (always just the last one)
+    ThreadSafeQueue<nlohmann::json> endGameDataBuffer; // Buffer for received end game information (always just the last one)
 
     std::thread ThreadHeartbeat;
     std::atomic<bool> HeartBeatRunningFlag = false;
@@ -51,9 +52,8 @@ public:
     std::vector<PlayerData> &getDataPlayers() { return players; }
 
     bool hasBoard(nlohmann::json &board);
+    bool hasEndGameData(nlohmann::json &board);
     void request_game_start();
 
     void onPressKey(sf::Event::KeyEvent e);
-
-    EndGameData endGameData;
 };

@@ -197,13 +197,17 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
 
 void ClientManager::on_receive_end_screen(const Packet &packet)
 {
-    endGameData.deserialize(packet.toJson());
-    
+    endGameDataBuffer.push(packet.toJson());
 }
 
 bool ClientManager::hasBoard(nlohmann::json &board)
 {
     return boardBuffer.pop(board);
+}
+
+bool ClientManager::hasEndGameData(nlohmann::json &endGame)
+{
+    return endGameDataBuffer.pop(endGame);
 }
 
 void ClientManager::request_game_start()

@@ -2,16 +2,26 @@
 #include <string>
 #include <iostream>
 
+// Just for clarity here, assume you have some struct to hold the end-game data
+// struct EndGameData {
+//     int totalPoints;
+//     float gameTime;
+//     int linesRemoved;
+//     int finalLevel;
+//     std::vector<PlayerData> players;
+// };
+
 float base_x = 250;
 float base_y = 380;
 float gap = 180;
-EndGameScreen::EndGameScreen(ClientManager &manager) : clientManager(manager),
-                                                       quitButton(defaultFont, "Quit", sf::Color::White, {base_x, base_y}, 24),
-                                                       playAgainButton(defaultFont, "Play Again", sf::Color::White, {base_x + gap, base_y}, 24)
-{
 
+EndGameScreen::EndGameScreen(ClientManager &manager)
+    : clientManager(manager),
+      quitButton(defaultFont, "Quit", sf::Color::White, {base_x, base_y}, 24),
+      playAgainButton(defaultFont, "Play Again", sf::Color::White, {base_x + gap, base_y}, 24)
+{
     // ----------------------------------------------------------------------
-    // 2) Title
+    // Title (static)
     // ----------------------------------------------------------------------
     title.setFont(defaultFont);
     title.setString("Game End");
@@ -20,87 +30,49 @@ EndGameScreen::EndGameScreen(ClientManager &manager) : clientManager(manager),
     title.setPosition(270.f, 10.f);
 
     // ----------------------------------------------------------------------
-    // Layout offsets for the left column of stats
+    // Pre-set some default positions for labels. We'll fill their text later
+    // once data is retrieved from the clientManager
     // ----------------------------------------------------------------------
     float baseX = 100.f;  // Left margin
     float baseY = 140.f;  // Starting y position for first stat
     float spacing = 45.f; // Vertical gap between lines
 
-    // ----------------------------------------------------------------------
-    // 3) Total points label
-    // ----------------------------------------------------------------------
     totalPoints.setFont(defaultFont);
-    totalPoints.setString("Total Points: " + std::to_string(data.totalPoints));
     totalPoints.setCharacterSize(24);
     totalPoints.setFillColor(sf::Color::White);
     totalPoints.setPosition(baseX, baseY);
 
-    // ----------------------------------------------------------------------
-    // 4) Game time label
-    // ----------------------------------------------------------------------
     gameTime.setFont(defaultFont);
-    gameTime.setString("Game Time: " + std::to_string(data.gameTime) + " min");
     gameTime.setCharacterSize(24);
     gameTime.setFillColor(sf::Color::White);
     gameTime.setPosition(baseX, baseY + spacing);
 
-    // ----------------------------------------------------------------------
-    // 5) Lines removed label
-    // ----------------------------------------------------------------------
     linesRemoved.setFont(defaultFont);
-    linesRemoved.setString("Lines removed: " + std::to_string(data.linesRemoved));
     linesRemoved.setCharacterSize(24);
     linesRemoved.setFillColor(sf::Color::White);
     linesRemoved.setPosition(baseX, baseY + spacing * 2);
 
-    // ----------------------------------------------------------------------
-    // 6) Final level label
-    // ----------------------------------------------------------------------
     finalLevel.setFont(defaultFont);
-    finalLevel.setString("Final Level: " + std::to_string(data.finalLevel));
     finalLevel.setCharacterSize(24);
     finalLevel.setFillColor(sf::Color::White);
     finalLevel.setPosition(baseX, baseY + spacing * 3);
 
-    // ----------------------------------------------------------------------
-    // 7) Multiple player scores column
-    // ----------------------------------------------------------------------
-    float scoreboardX = 400.f;    // Right column X
-    float scoreboardBaseY = 80.f; // Starting y for the scoreboard
-    float scoreboardGap = 40.f;   // Vertical gap for each player line
-
-    for (std::size_t i = 0; i < data.players.size(); ++i)
-    {
-        sf::Text scoreText;
-        scoreText.setFont(defaultFont);
-        scoreText.setCharacterSize(24);
-        scoreText.setFillColor(sf::Color::Green);
-
-        // Example: "j1 - PlayerName pts" (or adapt your string as needed)
-        scoreText.setString("j" + std::to_string(i + 1) +
-                            " - " + data.players[i].playerName + " pts");
-
-        // Each row is offset by i * scoreboardGap
-        float currentY = scoreboardBaseY + i * scoreboardGap;
-        scoreText.setPosition(scoreboardX, currentY);
-
-        playerScores.push_back(scoreText);
-    }
+    // We do NOT fill them here with real data from `data`,
+    // because we want to fetch it once in update().
 
     // ----------------------------------------------------------------------
-    // 8) Configure button callbacks
+    // Configure button callbacks
     // ----------------------------------------------------------------------
     quitButton.setOnClick([&]()
                           {
                               std::cout << "[Quit button clicked]\n";
-                              // You can signal handleEvent to pop the screen, for instance
-                              // or call manager.popScreen() if manager is accessible here.
+                              // manager.popScreen(), etc.
                           });
 
     playAgainButton.setOnClick([&]()
                                {
                                    std::cout << "[Play Again button clicked]\n";
-                                   // Start a new game or replace the current screen, etc.
+                                   // Start a new game, manager.replaceScreen(...), etc.
                                });
 }
 
@@ -114,13 +86,54 @@ void EndGameScreen::handleEvent(sf::Event event, ScreenManager &manager)
     quitButton.handleEvent(event);
     playAgainButton.handleEvent(event);
 
-    // You could also check here if the user actually clicked and then do
-    // manager.popScreen(); or manager.pushScreen( ... );
+    // Possibly do something like manager.popScreen();
 }
 
-void EndGameScreen::update(float /*deltaTime*/)
-{
-    // Anything you need updated continuously, e.g. animations
+void EndGameScreen::update(float deltaTime)
+{        
+    if (!hasFetchedData)
+    {
+
+        nlohmann::json endGameData;
+
+        bool success = clientManager.hasEndGameData(endGameData);
+        if (success)
+        {
+            data.deserialize(endGameData);
+            
+            // We got the data, now update our text fields:
+            totalPoints.setString("Total Points: " + std::to_string(data.totalPoints));
+            gameTime.setString("Game Time: " + std::to_string(data.gameTime) + " min");
+            linesRemoved.setString("Lines removed: " + std::to_string(data.linesRemoved));
+            finalLevel.setString("Final Level: " + std::to_string(data.finalLevel));
+
+            // Also populate the "multiple player scores" column
+            float scoreboardX = 400.f;    // Right column X
+            float scoreboardBaseY = 80.f; // Starting y for the scoreboard
+            float scoreboardGap = 40.f;   // Vertical gap for each player line
+
+            playerScores.clear();
+            for (std::size_t i = 0; i < data.players.size(); ++i)
+            {
+                sf::Text scoreText;
+                scoreText.setFont(defaultFont);
+                scoreText.setCharacterSize(24);
+                scoreText.setFillColor(sf::Color::Green);
+
+                // Example: "j1 - PlayerName pts"
+                scoreText.setString("j" + std::to_string(i + 1) +
+                                    " - " + data.players[i].playerName + " pts");
+
+                float currentY = scoreboardBaseY + i * scoreboardGap;
+                scoreText.setPosition(scoreboardX, currentY);
+
+                playerScores.push_back(scoreText);
+            }
+
+            // Set the flag so we never do this again
+            hasFetchedData = true;
+        }
+    }
 }
 
 void EndGameScreen::render(sf::RenderWindow &window)
