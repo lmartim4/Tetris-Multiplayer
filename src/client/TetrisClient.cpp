@@ -10,6 +10,7 @@
 #include "screens/MenuScreen.hpp"
 #include "screens/LobbyScreen.hpp"
 #include "screens/BoardScreen.hpp"
+#include "screens/EndGameScreen.hpp"
 
 ScreenManager screenManager;
 ClientManager client;
@@ -29,6 +30,12 @@ void onGameScreenPacket(const Packet &packet)
     client.on_receive_game_screen(packet);
 }
 
+void onGameEndPacket(const Packet &packet)
+{
+    screenManager.setActiveScreen("end-game");
+    client.on_receive_end_screen(packet);
+}
+
 void onGameStartPacket(const Packet &packet)
 {
     screenManager.setActiveScreen("game");
@@ -40,6 +47,7 @@ int main()
     client.registerListener(PacketType::PLAYER_LIST, onPlayerListPacket);
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);
     client.registerListener(PacketType::STARTING_GAME, onGameStartPacket);
+    client.registerListener(PacketType::ENG_GAME_SCREEN, onGameEndPacket);
 
     sf::RenderWindow window(sf::VideoMode(800, 480), "Multi-Threaded Screens");
 
@@ -47,8 +55,10 @@ int main()
     screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(client));
     screenManager.addScreen("waiting-connection", std::make_unique<WaitingConnectionScreen>(screenManager, client));
     screenManager.addScreen("game", std::make_unique<BoardScreen>(client));
+    screenManager.addScreen("end-game", std::make_unique<EndGameScreen>(client));
 
     screenManager.setActiveScreen("main-menu");
+
     screenManager.startThread();
 
     sf::Clock clock;
@@ -67,6 +77,7 @@ int main()
         {
             if (event.type == sf::Event::Closed)
                 window.close();
+                
             screenManager.handleEvent(event);
         }
     }

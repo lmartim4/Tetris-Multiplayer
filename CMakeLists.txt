@@ -46,6 +46,7 @@ set(CLIENT_SOURCES
     src/client/ClientManager.cpp
     src/client/screens/Button.cpp
     src/client/screens/BoardScreen.cpp
+    src/client/screens/EndGameScreen.cpp
     src/client/screens/MenuScreen.cpp
     src/client/screens/GameScreen.cpp
     src/client/screens/LobbyScreen.cpp
@@ -57,6 +58,7 @@ set(CLIENT_SOURCES
 # Source files for both
 set(COMMOM_SOURCES
     src/common/NetworkManager.cpp
+    src/common/EndGameData.cpp
     src/common/PlayerData.cpp
     src/common/Debuggable.cpp
 )

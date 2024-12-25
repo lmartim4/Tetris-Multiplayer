@@ -1,6 +1,5 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
 #include <string>
@@ -15,7 +14,8 @@ private:
     int BOARD_HEIGHT = 10;
     int CELL_SIZE = 30;
     ClientManager &clientManager;
-
+    
+    nlohmann::json lastBoard;
     std::vector<std::vector<std::shared_ptr<TetrisCell>>> grid;
 
     void setupCells();

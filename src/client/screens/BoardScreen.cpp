@@ -35,7 +35,7 @@ void BoardScreen::render(sf::RenderWindow &window)
 {
     for (auto &row : grid)
         for (auto &cell : row)
-                window.draw(*cell);
+            window.draw(*cell);
 }
 
 void BoardScreen::updateBoardFromJson(const nlohmann::json &boardData)
@@ -90,8 +90,6 @@ void BoardScreen::updateBoardFromJson(const nlohmann::json &boardData)
         for (int y = 0; y < BOARD_WIDTH; y++)
         {
             sf::Color cellColor = sf::Color::White;
-
-            // Check if cell contains "c" and process color
             if (cells[x][y].contains("c"))
             {
                 cellColor = TetrisCell::getColorFromType(cells[x][y]["c"]);
@@ -103,11 +101,8 @@ void BoardScreen::updateBoardFromJson(const nlohmann::json &boardData)
 
 void BoardScreen::update(float deltaTime)
 {
-    if (clientManager.boardDataAvailable())
-    {
-        nlohmann::json newBoard = clientManager.getLastBoardState();
-        updateBoardFromJson(newBoard);
-    }
+    if (clientManager.hasBoard(lastBoard))
+        updateBoardFromJson(lastBoard);
 }
 
 void BoardScreen::handleKeyPress(sf::Event event)

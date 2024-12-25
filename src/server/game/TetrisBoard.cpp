@@ -96,7 +96,7 @@ void TetrisBoard::placeTetromino(const Tetromino &currentTetromino, bool bottom)
             {
                 int gridX = currentTetromino.getCoordinate().x + x;
                 int gridY = getNormalizedY(currentTetromino.getCoordinate().y + y);
-                CellColorType tetroColor = currentTetromino.getColor();
+                CellColor tetroColor = currentTetromino.getColor();
 
                 if (bottom)
                 {
@@ -194,7 +194,7 @@ nlohmann::json TetrisBoard::constructBoardJsonToBroadcast() const
 
         for (int y = 0; y < WIDTH; ++y)
         {
-            CellColorType colorType = grid.at(x).at(y)->getColor();
+            CellColor colorType = grid.at(x).at(y)->getColor();
 
             nlohmann::json cellObj;
             cellObj["c"] = colorType;

@@ -8,6 +8,8 @@ private:
     // Basic level/score data
     int score_ = 0;
     int level_ = 1;
+    int totalLinesCleared = 0;
+
     int linesClearedThisLevel_ = 0;
 
     // Gravity-related data
@@ -73,6 +75,7 @@ public:
     // Getters
     int getScore() const { return score_; }
     int getLevel() const { return level_; }
+    int getTotalLinesCleared() const { return totalLinesCleared; }
     int getLinesClearedThisLevel() const { return linesClearedThisLevel_; }
     int getGravityTimeMs() const { return gravityTimeMs_; }
 };

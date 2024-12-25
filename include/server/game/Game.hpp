@@ -5,6 +5,8 @@
 #include "ThreadSafeQueue.hpp"
 #include "Player.hpp"
 #include "TetrisBoard.hpp"
+#include "EndGameData.hpp"
+
 #include <vector>
 #include <memory>
 #include <atomic>
@@ -46,6 +48,7 @@ private:
     int calculatePoints(int nLines, int level);
     void spawnTetromino();
     void broadcastBoardIfChanges() const;
+    void broadcastEndGameStatus() const;
 
     std::thread gameThread; // The thread running the game loop
 public:

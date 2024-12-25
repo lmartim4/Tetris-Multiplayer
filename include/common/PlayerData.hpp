@@ -12,6 +12,5 @@ struct PlayerData : public ISerializable
     bool isConnected = false;
 
     nlohmann::json serialize() const override;
-
     void deserialize(const nlohmann::json &data) override;
 };

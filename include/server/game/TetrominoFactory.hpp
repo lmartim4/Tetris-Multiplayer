@@ -9,7 +9,7 @@ public:
     static std::unique_ptr<Tetromino> createTetromino()
     {
         char randomType = Tetromino::types.at(rand() % Tetromino::types.size()); // Randomly select one tetromino
-        CellColorType randomColor = Tetromino::tetromino_colors.at(rand() % Tetromino::tetromino_colors.size());
+        CellColor randomColor = Tetromino::tetromino_colors.at(rand() % Tetromino::tetromino_colors.size());
 
         int y0 = rand();
     

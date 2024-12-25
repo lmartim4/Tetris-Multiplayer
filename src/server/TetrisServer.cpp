@@ -5,6 +5,7 @@
 #include "TetrisAction.hpp"
 
 ServerManager server(12345);
+
 GameManager gm(server);
 
 void onReceiveArrow(const Packet &packet)

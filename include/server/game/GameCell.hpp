@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CellColorType.hpp"
+#include "CellColor.hpp"
 
 enum CELL_STATE
 {
@@ -13,7 +13,7 @@ class GameCell
 {
 private:
     CELL_STATE state;
-    CellColorType color;
+    CellColor color;
     
     int x;
     int y;
@@ -21,10 +21,10 @@ private:
 public:
     GameCell(int x, int y);
 
-    CellColorType getColor() const { return color; };
+    CellColor getColor() const { return color; };
     CELL_STATE getState() const { return state; }
 
     void setEmpty();
-    void setFalling(const CellColorType &newColor);
-    void setFixed(const CellColorType &newColor);
+    void setFalling(const CellColor &newColor);
+    void setFixed(const CellColor &newColor);
 };

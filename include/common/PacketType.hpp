@@ -5,7 +5,7 @@
 #include "enet/enet.h"
 #include "json.hpp"
 
-enum class PacketType : char
+enum class PacketType
 {
     // Game actions/commands Packets
     JOIN_REQUEST,
@@ -30,6 +30,7 @@ enum class PacketType : char
 
     GAME_SCREEN,
     PLAYER_LIST,
+    ENG_GAME_SCREEN,
 
     // Error packet threating
     PARSING_ERROR // Reserved for any custom packet types

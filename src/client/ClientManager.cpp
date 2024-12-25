@@ -11,6 +11,7 @@ void ClientManager::onPeerConnect(ENetPeer *peer)
     network_print("");
     std::cout << "Connection successful to " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
 }
+
 void ClientManager::onPeerDisconnect(ENetPeer *peer)
 {
     isConnected = false;
@@ -185,9 +186,8 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
     try
     {
         nlohmann::json boardData = packet.toJson();
-        std::lock_guard<std::mutex> lock(boardMutex);
-        lastReceivedBoard = boardData;
-        hasBoardData = true;
+        boardBuffer.clear();
+        boardBuffer.push(boardData);
     }
     catch (const std::exception &e)
     {
@@ -195,22 +195,15 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
     }
 }
 
-nlohmann::json ClientManager::getLastBoardState()
+void ClientManager::on_receive_end_screen(const Packet &packet)
 {
-    std::lock_guard<std::mutex> lock(boardMutex);
-    return lastReceivedBoard;
+    endGameData.deserialize(packet.toJson());
+    
 }
 
-// SE os quadros desincronizarem pode estar aqui o problema
-bool ClientManager::boardDataAvailable()
+bool ClientManager::hasBoard(nlohmann::json &board)
 {
-    std::lock_guard<std::mutex> lock(boardMutex);
-    if (hasBoardData)
-    {
-        hasBoardData = false;
-        return true;
-    }
-    return false;
+    return boardBuffer.pop(board);
 }
 
 void ClientManager::request_game_start()

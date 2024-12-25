@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include "CellColorType.hpp"
+#include "CellColor.hpp"
 #include "TetrisAction.hpp"
 
 struct Coordinate
@@ -20,18 +20,18 @@ private:
 
 protected:
     std::vector<std::vector<int>> shape;
-    CellColorType color;
+    CellColor color;
 
 public:
-    static const std::vector<CellColorType> tetromino_colors;
+    static const std::vector<CellColor> tetromino_colors;
     static const std::vector<char> types;
 
     Coordinate getCoordinate() const { return coordinate; }
 
-    Tetromino(Coordinate coord, CellColorType color) : coordinate(coord), color(color) {}
+    Tetromino(Coordinate coord, CellColor color) : coordinate(coord), color(color) {}
     virtual ~Tetromino() = default;
 
-    CellColorType getColor() const;
+    CellColor getColor() const;
 
     const std::vector<std::vector<int>> &getShape() const;
 
@@ -92,5 +92,5 @@ protected:
     }
 
 public:
-    NonSymmetricTetromino(Coordinate coord, CellColorType color, bool invert = false) : Tetromino(coord, color) {}
+    NonSymmetricTetromino(Coordinate coord, CellColor color, bool invert = false) : Tetromino(coord, color) {}
 };

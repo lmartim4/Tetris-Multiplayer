@@ -3,7 +3,7 @@
 #include <string>
 #include "PacketType.hpp"
 
-enum TetrisAction
+enum class TetrisAction
 {
     LEFT,
     RIGHT,
