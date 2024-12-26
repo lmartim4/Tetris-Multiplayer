@@ -98,11 +98,6 @@ int Game::calculatePoints(int nLines, int level)
     return (nLines > 0) ? P_x * (level + 1) : 0;
 }
 
-void Game::enqueueInput(Player *player, TetrisAction action)
-{
-    player->enqueueAction(action);
-}
-
 void Game::processIncommingInputs()
 {
     TetrisAction action;

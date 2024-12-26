@@ -14,7 +14,7 @@ public:
         data.playerName = name;
         data.score = 0;
     }
-
+    
     ~Player()
     {
         std::cout << "Player " << data.playerID << " was deleted " << std::endl;

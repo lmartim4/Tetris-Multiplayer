@@ -3,6 +3,7 @@
 #include <chrono>
 #include <SFML/Graphics.hpp>
 #include "PlayerData.hpp"
+#include "SoundType.hpp"
 
 void ClientManager::onPeerConnect(ENetPeer *peer)
 {
@@ -48,7 +49,6 @@ void ClientManager::on_receive_player_list(const Packet &packet)
         return;
     }
 
-    // Iterate over each inner array
     for (const auto &innerArray : received)
     {
         if (!innerArray.is_array())
@@ -57,7 +57,6 @@ void ClientManager::on_receive_player_list(const Packet &packet)
             continue;
         }
 
-        // Iterate over each player object in the inner arrays
         for (const auto &playerObject : innerArray)
         {
             if (!playerObject.is_object())
@@ -198,6 +197,12 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
 void ClientManager::on_receive_end_screen(const Packet &packet)
 {
     endGameDataBuffer.push(packet.toJson());
+}
+
+void ClientManager::on_receive_play_sound(const Packet &packet)
+{
+    SoundType c = (SoundType)packet.data.at(0);
+    audio.playSound(c);
 }
 
 bool ClientManager::hasBoard(nlohmann::json &board)

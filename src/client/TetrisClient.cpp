@@ -3,6 +3,9 @@
 
 #include "TetrisCell.hpp"
 #include "ClientManager.hpp"
+#include "AudioManager.hpp"
+
+#include "SoundType.hpp"
 
 #include "screens/ScreenManager.hpp"
 #include "screens/WaitingConnectionScreen.hpp"
@@ -13,11 +16,18 @@
 #include "screens/EndGameScreen.hpp"
 
 ScreenManager screenManager;
-ClientManager client;
+AudioManager audioManager;
+
+ClientManager client(audioManager);
 
 void heartbeat_listener(const Packet &packet)
 {
     client.on_receive_heartbeat();
+}
+
+void onPlaySoundPacket(const Packet &packet)
+{
+    client.on_receive_play_sound(packet);
 }
 
 void onPlayerListPacket(const Packet &packet)
@@ -45,9 +55,12 @@ int main()
 {
     client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
     client.registerListener(PacketType::PLAYER_LIST, onPlayerListPacket);
+    client.registerListener(PacketType::PLAY_SOUND, onPlaySoundPacket);
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);
     client.registerListener(PacketType::STARTING_GAME, onGameStartPacket);
     client.registerListener(PacketType::ENG_GAME_SCREEN, onGameEndPacket);
+
+    audioManager.loadAllSounds();
 
     sf::RenderWindow window(sf::VideoMode(800, 480), "Multi-Threaded Screens");
 
@@ -77,7 +90,7 @@ int main()
         {
             if (event.type == sf::Event::Closed)
                 window.close();
-                
+
             screenManager.handleEvent(event);
         }
     }

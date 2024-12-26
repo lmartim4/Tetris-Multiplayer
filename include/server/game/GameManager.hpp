@@ -14,7 +14,6 @@ private:
 
 public:
     void StartGameListener(const Packet &);
-    void enqueueAction(Player *player, TetrisAction action);
 
     GameManager(ServerManager &server);
     ~GameManager();

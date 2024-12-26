@@ -3,6 +3,7 @@
 #include <iostream>
 #include "NetworkManager.hpp"
 #include <SFML/Graphics.hpp>
+#include "AudioManager.hpp"
 #include "PlayerData.hpp"
 #include "EndGameData.hpp"
 #include <ThreadSafeQueue.hpp>
@@ -26,12 +27,14 @@ private:
     std::atomic<bool> HeartBeatRunningFlag = false;
     unsigned long last_heartbeat;
 
+    AudioManager audio;
+
 protected:
     void onPeerConnect(ENetPeer *peer) override;
     void onPeerDisconnect(ENetPeer *peer) override;
 
 public:
-    ClientManager() {};
+    ClientManager(AudioManager audioManager) : audio(audioManager) {};
     ~ClientManager() {};
 
     void toggleDebug();
@@ -40,6 +43,7 @@ public:
     void on_receive_player_list(const Packet &packet);
     void on_receive_game_screen(const Packet &packet);
     void on_receive_end_screen(const Packet &packet);
+    void on_receive_play_sound(const Packet &packet);
 
     void TaskStartHeartbeat();
     void TaskHeartbeat();

@@ -12,7 +12,10 @@ void ServerManager::onPeerConnect(ENetPeer *peer)
 
     createPlayerAndLink(peer);
     broadcastPlayerList();
+    
+    broadcastSound(SoundType::WinSound);
 }
+
 void ServerManager::onPeerDisconnect(ENetPeer *peer)
 {
     network_print("");
@@ -59,7 +62,7 @@ int ServerManager::getNextAvailablePlayerID()
 
 void ServerManager::createPlayerAndLink(ENetPeer *peer)
 {
-    Player *newPlayer = new Player(getNextAvailablePlayerID(), "Unnamed");
+    Player *newPlayer = new Player(getNextAvailablePlayerID(), "Player_");
     peer->data = (void *)newPlayer;
     std::cout << "New client connected. Assigned PlayerID: " << newPlayer->getData().playerID << "\n";
 }
@@ -85,6 +88,11 @@ void ServerManager::broadcastPlayerList()
 
     std::cout << message << std::endl;
     sendPacket(Packet(PacketType::PLAYER_LIST, message, nullptr));
+}
+
+void ServerManager::broadcastSound(SoundType soundType)
+{
+    sendPacket(Packet(PacketType::PLAY_SOUND, {soundType}, nullptr));
 }
 
 void ServerManager::broadcast_starting_game()

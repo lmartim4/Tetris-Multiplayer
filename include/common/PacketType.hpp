@@ -7,7 +7,7 @@
 
 enum class PacketType
 {
-    // Game actions/commands Packets
+    // FROM CLIENT TO SERVER
     JOIN_REQUEST,
     JOIN_ACCEPTED,
     JOIN_DENIED,
@@ -23,14 +23,17 @@ enum class PacketType
     DROP_FASTER,
     DROP_INSTANT,
 
+    // FROM SERVER TO CLIENT
+    GAME_SCREEN,
+    PLAYER_LIST,
+    ENG_GAME_SCREEN,
+    PLAY_SOUND,
+    
+    
     // Network/connection-related
     HEARTBEAT,  // A heartbeat packet to keep the connection alive
     CONNECT,    // A packet sent upon connecting
     DISCONNECT, // A packet sent upon disconnection
-
-    GAME_SCREEN,
-    PLAYER_LIST,
-    ENG_GAME_SCREEN,
 
     // Error packet threating
     PARSING_ERROR // Reserved for any custom packet types

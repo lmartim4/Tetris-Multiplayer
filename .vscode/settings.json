@@ -66,6 +66,7 @@
         "forward_list": "cpp",
         "ranges": "cpp",
         "valarray": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "set": "cpp"
     }
 }

@@ -10,11 +10,10 @@ GameManager gm(server);
 
 void onReceiveArrow(const Packet &packet)
 {
+    Player *player = ServerManager::getPlayerFromPacket(packet);
     TetrisAction action = getActionFromPacketType(packet.type);
-
-    Player *player = ServerManager::extractPlayerFromPacket(packet);
-
-    gm.enqueueAction(player, action);
+    
+    player->enqueueAction(action);
 }
 
 void HeartbeatListener(const Packet &packet)

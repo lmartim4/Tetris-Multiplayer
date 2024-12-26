@@ -5,11 +5,6 @@ GameManager::GameManager(ServerManager &server) : Debuggable("GameManager"), ser
     console_log("GameManager()");
 }
 
-void GameManager::enqueueAction(Player *player, TetrisAction action)
-{
-    game->enqueueInput(player, action);
-}
-
 void GameManager::StartGameListener(const Packet &)
 {
     if (game != nullptr)

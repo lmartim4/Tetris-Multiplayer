@@ -7,6 +7,8 @@
 #include "NetworkManager.hpp"
 
 #include "Player.hpp"
+#include "SoundType.hpp"
+
 #include <json.hpp>
 #include <random>
 
@@ -25,9 +27,11 @@ public:
     ServerManager(uint16_t port = 12345);
     ~ServerManager() {};
 
+    void broadcastSound(SoundType soundType);
+
     void broadcast_starting_game();
 
-    static Player *extractPlayerFromPacket(const Packet &packet)
+    static Player *getPlayerFromPacket(const Packet &packet)
     {
         if (!packet.peer)
         {

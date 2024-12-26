@@ -44,6 +44,7 @@ set(SERVER_SOURCES
 set(CLIENT_SOURCES
     src/client/TetrisClient.cpp
     src/client/ClientManager.cpp
+    src/client/AudioManager.cpp
     src/client/screens/Button.cpp
     src/client/screens/BoardScreen.cpp
     src/client/screens/EndGameScreen.cpp
@@ -75,7 +76,7 @@ target_link_libraries(server sfml-system ${ENET_LIB} Threads::Threads)
 # Client executable
 add_executable(client ${CLIENT_SOURCES} ${COMMOM_SOURCES})
 target_include_directories(client PRIVATE ${COMMON_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR})
-target_link_libraries(client sfml-system sfml-window sfml-graphics ${ENET_LIB} Threads::Threads)
+target_link_libraries(client sfml-system sfml-window sfml-graphics sfml-audio ${ENET_LIB} Threads::Threads)
 
 # Custom commands to run in debug or release mode
 add_custom_target(run-server

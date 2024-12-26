@@ -56,7 +56,7 @@ public:
     ~Game();
     
     void addPlayer(Player *player);
-    void enqueueInput(Player *player, TetrisAction action);
+    
     void startGameLoop();
     void endGameLoop();
 };
