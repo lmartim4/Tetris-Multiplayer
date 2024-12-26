@@ -13,7 +13,6 @@
 #include <thread>
 #include <map>
 
-#include "PacketSender.hpp"
 #include "LevelData.hpp"
 
 enum GameState
@@ -32,7 +31,7 @@ private:
     static int instanceCount;
     const int this_instance;
 
-    PacketSender *packetSender;
+    ServerManager &server;
     std::atomic<GameState> gameState = INITIALIZING;
     LevelData levelData;
 
@@ -52,7 +51,7 @@ private:
 
     std::thread gameThread; // The thread running the game loop
 public:
-    Game(PacketSender *sender);
+    Game(ServerManager &sender);
     ~Game();
     
     void addPlayer(Player *player);

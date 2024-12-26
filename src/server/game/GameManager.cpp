@@ -10,7 +10,7 @@ void GameManager::StartGameListener(const Packet &)
     if (game != nullptr)
         throw std::runtime_error("Game was already started!");
 
-    game = new Game(&server);
+    game = new Game(server);
 
     for (Player *p : server.getPlayers())
         game->addPlayer(p);

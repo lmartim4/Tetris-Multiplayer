@@ -11,11 +11,10 @@ GameManager gm(server);
 
 void onReceiveArrow(const Packet &packet)
 {
+    Player *player = ServerManager::getPlayerFromPacket(packet);
     TetrisAction action = getActionFromPacketType(packet.type);
-
-    Player *player = ServerManager::extractPlayerFromPacket(packet);
-
-    gm.enqueueAction(player, action);
+    
+    player->enqueueAction(action);
 }
 
 void HeartbeatListener(const Packet &packet)
@@ -77,7 +76,10 @@ void ServerManager::onPeerConnect(ENetPeer *peer)
 
     createPlayerAndLink(peer);
     broadcastPlayerList();
+
+    broadcastSound(SoundType::DeathSound);
 }
+
 void ServerManager::onPeerDisconnect(ENetPeer *peer)
 {
     network_print("");
@@ -124,7 +126,7 @@ int ServerManager::getNextAvailablePlayerID()
 
 void ServerManager::createPlayerAndLink(ENetPeer *peer)
 {
-    Player *newPlayer = new Player(getNextAvailablePlayerID(), "Unnamed");
+    Player *newPlayer = new Player(getNextAvailablePlayerID(), "Player_");
     peer->data = (void *)newPlayer;
     std::cout << "New client connected. Assigned PlayerID: " << newPlayer->getData().playerID << "\n";
 }
@@ -150,6 +152,17 @@ void ServerManager::broadcastPlayerList()
 
     std::cout << message << std::endl;
     sendPacket(Packet(PacketType::PLAYER_LIST, message, nullptr));
+}
+
+void ServerManager::broadcastSound(SoundType soundType)
+{
+    std::vector<uint8_t> payload(1);
+    payload[0] = (uint8_t)soundType;
+
+    Packet playSoundPacket(PacketType::PLAY_SOUND, payload, nullptr);
+
+    sendPacket(playSoundPacket);
+    std::cout << "sending sound: " << payload[0] << "\n";
 }
 
 void ServerManager::broadcast_starting_game()
@@ -191,17 +204,12 @@ GameManager::GameManager(ServerManager &server) : Debuggable("GameManager"), ser
     console_log("GameManager()");
 }
 
-void GameManager::enqueueAction(Player *player, TetrisAction action)
-{
-    game->enqueueInput(player, action);
-}
-
 void GameManager::StartGameListener(const Packet &)
 {
     if (game != nullptr)
         throw std::runtime_error("Game was already started!");
 
-    game = new Game(&server);
+    game = new Game(server);
 
     for (Player *p : server.getPlayers())
         game->addPlayer(p);
@@ -279,7 +287,7 @@ void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
 
 int Game::instanceCount = 0;
 
-Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++), board(16, 10)
+Game::Game(PacketSender &sender) : Debuggable("Game"), server(sender), this_instance(instanceCount++), board(16, 10)
 {
     console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
     gameState = WAITING_PLAYERS;
@@ -372,11 +380,6 @@ int Game::calculatePoints(int nLines, int level)
     return (nLines > 0) ? P_x * (level + 1) : 0;
 }
 
-void Game::enqueueInput(Player *player, TetrisAction action)
-{
-    player->enqueueAction(action);
-}
-
 void Game::processIncommingInputs()
 {
     TetrisAction action;
@@ -390,9 +393,7 @@ void Game::updateGame(TetrisAction lastAction)
     if (board.reachedTop())
     {
         gameState = ENDING;
-        std::cout << "(GAME OVER) !!!" << std::endl;
-        std::cout << "(Final score): " << levelData.getScore() << std::endl;
-        std::cout << "You played till level: " << levelData.getLevel() << std::endl;
+        console_log("Ending Game");
         return;
     }
 
@@ -411,10 +412,12 @@ void Game::updateGame(TetrisAction lastAction)
             if (levelData.tryLevelUp(LEVEL_UP_LINES))
             {
                 board.clearFalledTetrominos();
-                std::cout << "(Current score): " << levelData.getScore() << std::endl;
-                std::cout << "(LEVEL UP) !!!" << std::endl;
-            }
+                levelData.addScore(calculatePoints(levelData.getLinesClearedThisLevel(), levelData.getLevel()));
 
+                console_log("Level Up: (" + std::to_string(levelData.getLevel()) + ")");
+
+                server.broadcastSound(SoundType::LevelUp);
+            }
             spawnTetromino();
         }
         else
@@ -433,21 +436,27 @@ void Game::updateGame(TetrisAction lastAction)
 // Locks the current tetromino into place and prepares for new actions
 void Game::lockTetromino()
 {
+    server.broadcastSound(SoundType::DjembeSlap);
     board.placeTetromino(*currentTetromino, true);
     currentTetromino.reset();
 }
 
 void Game::tryClearFullLines()
 {
-    levelData.addClearedLines(board.clearLines());
-    levelData.addScore(calculatePoints(levelData.getLinesClearedThisLevel(), levelData.getLevel()));
+    int clearedLines = board.clearLines();
+    
+    if (clearedLines > 0)
+    {
+        levelData.addClearedLines(clearedLines);
+        server.broadcastSound(SoundType::BreakLine);
+    }
 }
 
 void Game::broadcastBoardIfChanges() const
 {
     if (!currentTetromino->shouldBroadcastState())
         return;
-    packetSender->sendPacket(Packet(PacketType::GAME_SCREEN, board.constructBoardJsonToBroadcast(), nullptr));
+    server.sendPacket(Packet(PacketType::GAME_SCREEN, board.constructBoardJsonToBroadcast(), nullptr));
 }
 
 void Game::broadcastEndGameStatus() const
@@ -464,7 +473,7 @@ void Game::broadcastEndGameStatus() const
     for (Player *pl : players)
         endGame.players.emplace_back(pl->getData());
 
-    packetSender->sendPacket((Packet(PacketType::ENG_GAME_SCREEN, endGame.serialize(), nullptr)));
+    server.sendPacket((Packet(PacketType::ENG_GAME_SCREEN, endGame.serialize(), nullptr)));
 }
 
 
@@ -1267,19 +1276,17 @@ void LobbyScreen::render(sf::RenderWindow &window)
 
 bool AudioManager::loadSound(SoundType type, const std::string &filepath)
 {
-    console_log("Loading sound: " + filepath);
-
     sf::SoundBuffer buffer;
 
     if (!buffer.loadFromFile(filepath))
     {
-        console_log("Failed to load file: " + filepath);
+        console_log("(-) Failed to load file: " + filepath);
         return false;
     }
 
     m_soundBuffers[type] = buffer;
     m_sounds[type].setBuffer(m_soundBuffers[type]);
-
+    console_log("(+) Loaded file: " + filepath);
     return true;
 }
 
@@ -1288,9 +1295,10 @@ void AudioManager::playSound(SoundType type)
     auto it = m_sounds.find(type);
     if (it == m_sounds.end())
     {
-        console_log("SoundType not loaded: " + static_cast<int>(type));
+        console_log("SoundType not loaded: " + std::to_string(static_cast<int>(type)));
         return;
     }
+
     it->second.play();
 }
 
@@ -1331,14 +1339,14 @@ AudioManager audioManager;
 
 ClientManager client(audioManager);
 
-void playsound_listener(const Packet &packet)
-{
-    client.on_receive_play_sound(packet);
-}
-
 void heartbeat_listener(const Packet &packet)
 {
     client.on_receive_heartbeat();
+}
+
+void onPlaySoundPacket(const Packet &packet)
+{
+    client.on_receive_play_sound(packet);
 }
 
 void onPlayerListPacket(const Packet &packet)
@@ -1362,16 +1370,15 @@ void onGameStartPacket(const Packet &packet)
     screenManager.setActiveScreen("game");
 }
 
-
 int main()
 {
+    audioManager.loadAllSounds();
     client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
     client.registerListener(PacketType::PLAYER_LIST, onPlayerListPacket);
+    client.registerListener(PacketType::PLAY_SOUND, onPlaySoundPacket);
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);
     client.registerListener(PacketType::STARTING_GAME, onGameStartPacket);
     client.registerListener(PacketType::ENG_GAME_SCREEN, onGameEndPacket);
-
-    audioManager.loadAllSounds();
 
     sf::RenderWindow window(sf::VideoMode(800, 480), "Multi-Threaded Screens");
 
@@ -1382,7 +1389,6 @@ int main()
     screenManager.addScreen("end-game", std::make_unique<EndGameScreen>(client));
 
     screenManager.setActiveScreen("main-menu");
-
     screenManager.startThread();
 
     sf::Clock clock;
@@ -1615,8 +1621,7 @@ void ClientManager::on_receive_end_screen(const Packet &packet)
 
 void ClientManager::on_receive_play_sound(const Packet &packet)
 {
-    SoundType c = (SoundType)packet.data.at(0);
-    audio.playSound(c);
+    audio.playSound((SoundType)packet.data[0]);
 }
 
 bool ClientManager::hasBoard(nlohmann::json &board)
@@ -2084,6 +2089,8 @@ void PlayerData::deserialize(const nlohmann::json &data)
 #include "NetworkManager.hpp"
 
 #include "Player.hpp"
+#include "SoundType.hpp"
+
 #include <json.hpp>
 #include <random>
 
@@ -2102,9 +2109,11 @@ public:
     ServerManager(uint16_t port = 12345);
     ~ServerManager() {};
 
+    void broadcastSound(SoundType soundType);
+
     void broadcast_starting_game();
 
-    static Player *extractPlayerFromPacket(const Packet &packet)
+    static Player *getPlayerFromPacket(const Packet &packet)
     {
         if (!packet.peer)
         {
@@ -2244,7 +2253,7 @@ private:
     static int instanceCount;
     const int this_instance;
 
-    PacketSender *packetSender;
+    PacketSender &server;
     std::atomic<GameState> gameState = INITIALIZING;
     LevelData levelData;
 
@@ -2264,11 +2273,11 @@ private:
 
     std::thread gameThread; // The thread running the game loop
 public:
-    Game(PacketSender *sender);
+    Game(PacketSender &sender);
     ~Game();
     
     void addPlayer(Player *player);
-    void enqueueInput(Player *player, TetrisAction action);
+    
     void startGameLoop();
     void endGameLoop();
 };
@@ -2455,7 +2464,6 @@ private:
 
 public:
     void StartGameListener(const Packet &);
-    void enqueueAction(Player *player, TetrisAction action);
 
     GameManager(ServerManager &server);
     ~GameManager();
@@ -2697,7 +2705,7 @@ public:
 class AudioManager : public Debuggable
 {
 public:
-    AudioManager() : Debuggable("AudioManager") {}
+    AudioManager() : Debuggable("Audio Manager") {}
     ~AudioManager() = default;
 
     void playSound(SoundType type);
@@ -3083,14 +3091,14 @@ private:
     std::atomic<bool> HeartBeatRunningFlag = false;
     unsigned long last_heartbeat;
 
-    AudioManager audio;
+    AudioManager &audio;
 
 protected:
     void onPeerConnect(ENetPeer *peer) override;
     void onPeerDisconnect(ENetPeer *peer) override;
 
 public:
-    ClientManager(AudioManager audioManager) : audio(audioManager) {};
+    ClientManager(AudioManager &audioManager) : audio(audioManager) {};
     ~ClientManager() {};
 
     void toggleDebug();
@@ -3238,7 +3246,7 @@ public:
 
 enum class PacketType
 {
-    // Game actions/commands Packets
+    // FROM CLIENT TO SERVER
     JOIN_REQUEST,
     JOIN_ACCEPTED,
     JOIN_DENIED,
@@ -3254,14 +3262,17 @@ enum class PacketType
     DROP_FASTER,
     DROP_INSTANT,
 
+    // FROM SERVER TO CLIENT
+    GAME_SCREEN,
+    PLAYER_LIST,
+    ENG_GAME_SCREEN,
+    PLAY_SOUND,
+    
+    
     // Network/connection-related
     HEARTBEAT,  // A heartbeat packet to keep the connection alive
     CONNECT,    // A packet sent upon connecting
     DISCONNECT, // A packet sent upon disconnection
-
-    GAME_SCREEN,
-    PLAYER_LIST,
-    ENG_GAME_SCREEN,
 
     // Error packet threating
     PARSING_ERROR // Reserved for any custom packet types
@@ -3352,15 +3363,15 @@ struct Packet
 // File: ./include/common/PacketSender.hpp
 #pragma once
 #include "PacketType.hpp"
+#include "SoundType.hpp"
 
+/*Functions from server maanger that a Game Might use*/
 struct PacketSender
 {
     virtual ~PacketSender() = default;
-    
-    // Send a packet to a specific destination
     virtual void sendPacket(const Packet &packet) = 0;
+    virtual void broadcastSound(SoundType sound) = 0;
 };
-
 
 
 // File: ./include/common/PlayerData.hpp
@@ -3390,6 +3401,8 @@ struct PlayerData : public ISerializable
 
 enum class SoundType : int
 {
+    LevelUp,
+    BreakLine,
     Seeds,
     DjembeSlap,
     DjembeBass,
@@ -3400,6 +3413,8 @@ enum class SoundType : int
     Lv1,
     DeathSound,
     WinSound,
+
+    /*Always Leave it as the last one*/
     Count
 };
 
@@ -3407,6 +3422,12 @@ inline std::string toFilePath(SoundType type)
 {
     switch (type)
     {
+
+    case SoundType::LevelUp:
+        return "assets/sounds/433701__dersuperanton__level-up-voice.wav.wav";
+    
+    case SoundType::BreakLine:
+        return "41348__datasoundsample__glass-shatter.wav";
     case SoundType::Seeds:
         return "assets/sounds/542752__panpiper5__seeds.wav";
 

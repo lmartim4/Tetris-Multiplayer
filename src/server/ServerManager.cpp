@@ -13,7 +13,7 @@ void ServerManager::onPeerConnect(ENetPeer *peer)
     createPlayerAndLink(peer);
     broadcastPlayerList();
     
-    broadcastSound(SoundType::WinSound);
+    broadcastSound(SoundType::OnJoinLobby);
 }
 
 void ServerManager::onPeerDisconnect(ENetPeer *peer)
@@ -92,7 +92,11 @@ void ServerManager::broadcastPlayerList()
 
 void ServerManager::broadcastSound(SoundType soundType)
 {
-    sendPacket(Packet(PacketType::PLAY_SOUND, {soundType}, nullptr));
+    std::vector<uint8_t> payload(1);
+    payload[0] = (uint8_t)soundType;
+
+    Packet playSoundPacket(PacketType::PLAY_SOUND, payload, nullptr);
+    sendPacket(playSoundPacket);
 }
 
 void ServerManager::broadcast_starting_game()

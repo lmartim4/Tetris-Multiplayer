@@ -201,8 +201,7 @@ void ClientManager::on_receive_end_screen(const Packet &packet)
 
 void ClientManager::on_receive_play_sound(const Packet &packet)
 {
-    SoundType c = (SoundType)packet.data.at(0);
-    audio.playSound(c);
+    audio.playSound((SoundType)packet.data[0]);
 }
 
 bool ClientManager::hasBoard(nlohmann::json &board)

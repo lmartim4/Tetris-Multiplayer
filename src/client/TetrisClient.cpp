@@ -53,14 +53,13 @@ void onGameStartPacket(const Packet &packet)
 
 int main()
 {
+    audioManager.loadAllSounds();
     client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
     client.registerListener(PacketType::PLAYER_LIST, onPlayerListPacket);
     client.registerListener(PacketType::PLAY_SOUND, onPlaySoundPacket);
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);
     client.registerListener(PacketType::STARTING_GAME, onGameStartPacket);
     client.registerListener(PacketType::ENG_GAME_SCREEN, onGameEndPacket);
-
-    audioManager.loadAllSounds();
 
     sf::RenderWindow window(sf::VideoMode(800, 480), "Multi-Threaded Screens");
 
@@ -71,7 +70,6 @@ int main()
     screenManager.addScreen("end-game", std::make_unique<EndGameScreen>(client));
 
     screenManager.setActiveScreen("main-menu");
-
     screenManager.startThread();
 
     sf::Clock clock;

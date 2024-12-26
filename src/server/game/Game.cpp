@@ -1,11 +1,12 @@
 #include "Game.hpp"
 #include "TetrominoFactory.hpp"
+#include "ServerManager.hpp"
 
 #define LEVEL_UP_LINES 10
 
 int Game::instanceCount = 0;
 
-Game::Game(PacketSender *sender) : Debuggable("Game"), packetSender(sender), this_instance(instanceCount++), board(16, 10)
+Game::Game(ServerManager &server) : Debuggable("Game"), server(server), this_instance(instanceCount++), board(16, 10)
 {
     console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
     gameState = WAITING_PLAYERS;
@@ -111,9 +112,7 @@ void Game::updateGame(TetrisAction lastAction)
     if (board.reachedTop())
     {
         gameState = ENDING;
-        std::cout << "(GAME OVER) !!!" << std::endl;
-        std::cout << "(Final score): " << levelData.getScore() << std::endl;
-        std::cout << "You played till level: " << levelData.getLevel() << std::endl;
+        console_log("Ending Game");
         return;
     }
 
@@ -132,10 +131,12 @@ void Game::updateGame(TetrisAction lastAction)
             if (levelData.tryLevelUp(LEVEL_UP_LINES))
             {
                 board.clearFalledTetrominos();
-                std::cout << "(Current score): " << levelData.getScore() << std::endl;
-                std::cout << "(LEVEL UP) !!!" << std::endl;
-            }
+                levelData.addScore(calculatePoints(levelData.getLinesClearedThisLevel(), levelData.getLevel()));
 
+                console_log("Level Up: (" + std::to_string(levelData.getLevel()) + ")");
+
+                server.broadcastSound(SoundType::LevelUp);
+            }
             spawnTetromino();
         }
         else
@@ -154,21 +155,27 @@ void Game::updateGame(TetrisAction lastAction)
 // Locks the current tetromino into place and prepares for new actions
 void Game::lockTetromino()
 {
+    server.broadcastSound(SoundType::DjembeSlap);
     board.placeTetromino(*currentTetromino, true);
     currentTetromino.reset();
 }
 
 void Game::tryClearFullLines()
 {
-    levelData.addClearedLines(board.clearLines());
-    levelData.addScore(calculatePoints(levelData.getLinesClearedThisLevel(), levelData.getLevel()));
+    int clearedLines = board.clearLines();
+
+    if (clearedLines > 0)
+    {
+        levelData.addClearedLines(clearedLines);
+        server.broadcastSound(SoundType::BreakLine);
+    }
 }
 
 void Game::broadcastBoardIfChanges() const
 {
     if (!currentTetromino->shouldBroadcastState())
         return;
-    packetSender->sendPacket(Packet(PacketType::GAME_SCREEN, board.constructBoardJsonToBroadcast(), nullptr));
+    server.sendPacket(Packet(PacketType::GAME_SCREEN, board.constructBoardJsonToBroadcast(), nullptr));
 }
 
 void Game::broadcastEndGameStatus() const
@@ -185,5 +192,5 @@ void Game::broadcastEndGameStatus() const
     for (Player *pl : players)
         endGame.players.emplace_back(pl->getData());
 
-    packetSender->sendPacket((Packet(PacketType::ENG_GAME_SCREEN, endGame.serialize(), nullptr)));
+    server.sendPacket((Packet(PacketType::ENG_GAME_SCREEN, endGame.serialize(), nullptr)));
 }

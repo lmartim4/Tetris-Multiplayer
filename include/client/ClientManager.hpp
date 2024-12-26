@@ -27,14 +27,14 @@ private:
     std::atomic<bool> HeartBeatRunningFlag = false;
     unsigned long last_heartbeat;
 
-    AudioManager audio;
+    AudioManager &audio;
 
 protected:
     void onPeerConnect(ENetPeer *peer) override;
     void onPeerDisconnect(ENetPeer *peer) override;
 
 public:
-    ClientManager(AudioManager audioManager) : audio(audioManager) {};
+    ClientManager(AudioManager &audioManager) : audio(audioManager) {};
     ~ClientManager() {};
 
     void toggleDebug();

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "PacketSender.hpp"
 #include "PacketType.hpp"
 #include <json.hpp>
 
@@ -18,7 +17,7 @@
 // The NetworkManager class is responsible for managing all network communication.
 // It sets up the network host, handles incoming and outgoing packets, and provides
 // methods to register listeners for specific packet types.
-class NetworkManager : public PacketSender
+class NetworkManager
 {
 public:
     const int network_frequency = 128; // Hertz
