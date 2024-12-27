@@ -9,9 +9,9 @@ class Debuggable
 {
 private:
     std::string className;
-
-protected:
-    void console_log(const std::string &msg) const;
+public:
     Debuggable(std::string name);
     ~Debuggable();
+
+    void console_log(const std::string &msg) const;
 };

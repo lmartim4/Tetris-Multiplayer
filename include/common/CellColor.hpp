@@ -1,5 +1,12 @@
 #pragma once
 
+enum CellState
+{
+    FALLEN,
+    EMPTY,
+    FALLING
+};
+
 enum CellColor
 {
     Empty,

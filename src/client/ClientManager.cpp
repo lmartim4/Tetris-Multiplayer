@@ -29,59 +29,7 @@ void ClientManager::on_receive_heartbeat()
 
 void ClientManager::on_receive_player_list(const Packet &packet)
 {
-    players.clear();
-
-    nlohmann::json received;
-
-    try
-    {
-        received = packet.toJson();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Failed to parse packet as JSON: " << e.what() << std::endl;
-        return;
-    }
-
-    if (!received.is_array())
-    {
-        std::cerr << "Invalid JSON: top-level element is not an array." << std::endl;
-        return;
-    }
-
-    for (const auto &innerArray : received)
-    {
-        if (!innerArray.is_array())
-        {
-            std::cerr << "Inner element is not an array. Skipping." << std::endl;
-            continue;
-        }
-
-        for (const auto &playerObject : innerArray)
-        {
-            if (!playerObject.is_object())
-            {
-                std::cerr << "Player entry is not a valid JSON object. Skipping." << std::endl;
-                continue;
-            }
-
-            PlayerData playerData;
-
-            if (playerObject.contains("isConnected") && playerObject["isConnected"].is_boolean())
-                playerData.isConnected = playerObject["isConnected"].get<bool>();
-
-            if (playerObject.contains("playerID") && playerObject["playerID"].is_number_integer())
-                playerData.playerID = playerObject["playerID"].get<int>();
-
-            if (playerObject.contains("playerName") && playerObject["playerName"].is_string())
-                playerData.playerName = playerObject["playerName"].get<std::string>();
-
-            if (playerObject.contains("score") && playerObject["score"].is_number_integer())
-                playerData.score = playerObject["score"].get<int>();
-
-            players.emplace_back(playerData);
-        }
-    }
+    players.deserialize(packet.getPayloadAsJson());
 }
 
 void ClientManager::TaskStartHeartbeat()
@@ -97,7 +45,7 @@ void ClientManager::TaskHeartbeat()
     while (HeartBeatRunningFlag)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / heartbeat_frequencie));
-        sendPacket(Packet(PacketType::HEARTBEAT, 0, serverPeer)); // Set destination as the server serverPeer
+        sendPacket(Packet(PacketType::HEARTBEAT, serverPeer)); // Set destination as the server serverPeer
     }
 }
 
@@ -184,7 +132,7 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
 {
     try
     {
-        nlohmann::json boardData = packet.toJson();
+        nlohmann::json boardData = packet.getPayloadAsJson();
         boardBuffer.clear();
         boardBuffer.push(boardData);
     }
@@ -196,12 +144,13 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
 
 void ClientManager::on_receive_end_screen(const Packet &packet)
 {
-    endGameDataBuffer.push(packet.toJson());
+    endGameDataBuffer.push(packet.getPayloadAsJson());
 }
 
 void ClientManager::on_receive_play_sound(const Packet &packet)
 {
-    audio.playSound((SoundType)packet.data[0]);
+    
+    audio.playSound((SoundType)packet.getData()[0]);
 }
 
 bool ClientManager::hasBoard(nlohmann::json &board)
@@ -216,7 +165,7 @@ bool ClientManager::hasEndGameData(nlohmann::json &endGame)
 
 void ClientManager::request_game_start()
 {
-    sendPacket(Packet(PacketType::REQUEST_START, 0, serverPeer));
+    sendPacket(Packet(PacketType::REQUEST_START, serverPeer));
 }
 
 void ClientManager::onPressKey(sf::Event::KeyEvent e)
@@ -224,73 +173,74 @@ void ClientManager::onPressKey(sf::Event::KeyEvent e)
     switch (e.code)
     {
     case sf::Keyboard::P:
-        // if (debugEnabled) clientManager.network_print("Tecla P pressionada. Pausar o jogo.\n");
-        sendPacket(Packet(PacketType::PAUSE, 0, serverPeer));
+        if (debugEnabled)
+            network_print("Tecla P pressionada. Pausar o jogo.\n");
+        sendPacket(Packet(PacketType::PAUSE, serverPeer));
         break;
 
     case sf::Keyboard::R:
         if (debugEnabled)
             network_print("Tecla R pressionada. Reiniciar o jogo.\n");
-        sendPacket(Packet(PacketType::RESTART, 0, serverPeer));
+        sendPacket(Packet(PacketType::RESTART, serverPeer));
         break;
     case sf::Keyboard::Up:
         if (debugEnabled)
             network_print("Tecla Cima (Up) pressionada.\n");
-        sendPacket(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_CW, serverPeer));
         break;
 
     case sf::Keyboard::Down:
         if (debugEnabled)
             network_print("Tecla Baixo (Down) pressionada.\n");
-        sendPacket(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_CCW, serverPeer));
         break;
 
     case sf::Keyboard::Left:
         if (debugEnabled)
             network_print("Tecla Esquerda (Left) pressionada.\n");
-        sendPacket(Packet(PacketType::LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::LEFT, serverPeer));
         break;
 
     case sf::Keyboard::Right:
         if (debugEnabled)
             network_print("Tecla Direita (Right) pressionada.\n");
-        sendPacket(Packet(PacketType::RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::RIGHT, serverPeer));
         break;
 
     case sf::Keyboard::Space:
         if (debugEnabled)
             network_print("Tecla Espaco (Space) pressionada.\n");
-        sendPacket(Packet(PacketType::DROP_FASTER, 0, serverPeer));
+        sendPacket(Packet(PacketType::HARD_DROP, serverPeer));
         break;
 
     case sf::Keyboard::W:
         if (debugEnabled)
             network_print("Tecla W pressionada.\n");
-        sendPacket(Packet(PacketType::ROTATE_LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_CCW, serverPeer));
         break;
 
     case sf::Keyboard::A:
         if (debugEnabled)
             network_print("Tecla A pressionada.\n");
-        sendPacket(Packet(PacketType::LEFT, 0, serverPeer));
+        sendPacket(Packet(PacketType::LEFT, serverPeer));
         break;
 
     case sf::Keyboard::S:
         if (debugEnabled)
             network_print("Tecla S pressionada.\n");
-        sendPacket(Packet(PacketType::ROTATE_RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::ROTATE_CW, serverPeer));
         break;
 
     case sf::Keyboard::D:
         if (debugEnabled)
             network_print("Tecla D pressionada.\n");
-        sendPacket(Packet(PacketType::RIGHT, 0, serverPeer));
+        sendPacket(Packet(PacketType::RIGHT, serverPeer));
         break;
 
     case sf::Keyboard::Enter:
         if (debugEnabled)
             network_print("Tecla Espaco (Enter) pressionada.\n");
-        sendPacket(Packet(PacketType::DROP_FASTER, 0, serverPeer));
+        sendPacket(Packet(PacketType::DROP_FASTER, serverPeer));
         break;
 
     case sf::Keyboard::G:

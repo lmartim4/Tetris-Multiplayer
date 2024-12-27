@@ -7,10 +7,10 @@ enum class TetrisAction
 {
     LEFT,
     RIGHT,
-    ROTATE_LEFT,
-    ROTATE_RIGHT,
+    ROTATE_CCW,
+    ROTATE_CW,
     DROP_FASTER,
-    DROP_INSTANT,
+    HARD_DROP,
     GRAVITY,
 };
 
@@ -25,17 +25,17 @@ inline const TetrisAction getActionFromPacketType(PacketType type)
     case PacketType::RIGHT:
         action = TetrisAction::RIGHT;
         break;
-    case PacketType::ROTATE_LEFT:
-        action = TetrisAction::ROTATE_LEFT;
+    case PacketType::ROTATE_CCW:
+        action = TetrisAction::ROTATE_CCW;
         break;
-    case PacketType::ROTATE_RIGHT:
-        action = TetrisAction::ROTATE_RIGHT;
+    case PacketType::ROTATE_CW:
+        action = TetrisAction::ROTATE_CW;
         break;
     case PacketType::DROP_FASTER:
         action = TetrisAction::DROP_FASTER;
         break;
-    case PacketType::DROP_INSTANT:
-        action = TetrisAction::DROP_INSTANT;
+    case PacketType::HARD_DROP:
+        action = TetrisAction::HARD_DROP;
         break;
     default:
         break;
@@ -52,14 +52,14 @@ inline std::string TetrisActionToString(TetrisAction action)
         return "LEFT";
     case TetrisAction::RIGHT:
         return "RIGHT";
-    case TetrisAction::ROTATE_LEFT:
-        return "ROTATE_LEFT";
-    case TetrisAction::ROTATE_RIGHT:
+    case TetrisAction::ROTATE_CCW:
+        return "ROTATE_CCW";
+    case TetrisAction::ROTATE_CW:
         return "ROTATE_RIGHT";
     case TetrisAction::DROP_FASTER:
         return "DROP_FASTER";
-    case TetrisAction::DROP_INSTANT:
-        return "DROP_INSTANT";
+    case TetrisAction::HARD_DROP:
+        return "HARD_DROP";
     default:
         return "UNKNOWN_ACTION";
     }

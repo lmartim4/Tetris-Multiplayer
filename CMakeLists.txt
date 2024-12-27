@@ -33,9 +33,8 @@ find_package(Threads REQUIRED)
 set(SERVER_SOURCES
     src/server/TetrisServer.cpp
     src/server/ServerManager.cpp
+    src/server/game/TetrisBoardController.cpp
     src/server/game/Tetromino.cpp
-    src/server/game/TetrisBoard.cpp
-    src/server/game/GameCell.cpp
     src/server/game/GameManager.cpp
     src/server/game/Game.cpp
 )
@@ -60,6 +59,9 @@ set(CLIENT_SOURCES
 set(COMMOM_SOURCES
     src/common/NetworkManager.cpp
     src/common/EndGameData.cpp
+    src/common/Cell.cpp
+    src/common/TetrisBoard.cpp
+    src/common/PlayerList.cpp
     src/common/PlayerData.cpp
     src/common/Debuggable.cpp
 )

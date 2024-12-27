@@ -41,10 +41,10 @@ void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
     case TetrisAction::DROP_FASTER:
         coordinate.x += sign;
         break;
-    case TetrisAction::ROTATE_LEFT:
+    case TetrisAction::ROTATE_CCW:
         rotate(forward ? false : true);
         break;
-    case TetrisAction::ROTATE_RIGHT:
+    case TetrisAction::ROTATE_CW:
         rotate(forward ? true : false);
         break;
     default:

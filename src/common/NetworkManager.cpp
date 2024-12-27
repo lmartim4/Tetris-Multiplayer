@@ -81,16 +81,17 @@ void NetworkManager::registerListener(PacketType packetType, std::function<void(
 
 void NetworkManager::handlePacket(Packet &packet, ENetPeer *peer)
 {
-    uint8_t packetType = static_cast<uint8_t>(packet.type);
+    uint8_t packetType = static_cast<uint8_t>(packet.getType());
+
     if (listeners.find(packetType) != listeners.end())
     {
-        packet.peer = peer;
+        packet.setENetPeer(peer);
         listeners[packetType](packet); // Pass both packet and the source peer
     }
     else
     {
         network_print("");
-        std::cout << "[" << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << "]" << " >> \"" << PacketTypeToString(packet.type) << "\" (No listener registred)\n";
+        std::cout << "[" << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << "]" << " >> \"" << PacketTypeToString(packet.getType()) << "\" (No listener registred)\n";
     }
 }
 
@@ -100,7 +101,7 @@ void NetworkManager::processIncomingPackets()
     {
         Packet packet = incommingPackets.front();
         incommingPackets.pop();
-        handlePacket(packet, packet.peer);
+        handlePacket(packet, packet.getPeer());
     }
 }
 
@@ -134,8 +135,9 @@ Packet NetworkManager::parsePacket(const ENetPacket *enetPacket, ENetPeer *sourc
         network_print("Failed to parse a packet from ");
         std::cout << uint32_to_ipv4(sourcePeer->address.host) << ":" << sourcePeer->address.port << std::endl;
 
-        return Packet(PacketType::PARSING_ERROR, 0, sourcePeer);
+        return Packet(PacketType::PARSING_ERROR, sourcePeer);
     }
+
     PacketType type = static_cast<PacketType>(enetPacket->data[0]);                             // First byte is the packet type
     std::vector<uint8_t> data(enetPacket->data + 1, enetPacket->data + enetPacket->dataLength); // Remaining data
     return Packet(type, data, sourcePeer);
@@ -143,7 +145,7 @@ Packet NetworkManager::parsePacket(const ENetPacket *enetPacket, ENetPeer *sourc
 
 ENetPacket *NetworkManager::createENetPacket(const Packet &packet)
 {
-    std::vector<uint8_t> rawData = packet.toRawData();
+    std::vector<uint8_t> rawData = packet.toRawPacket();
     return enet_packet_create(rawData.data(), rawData.size(), ENET_PACKET_FLAG_RELIABLE);
 }
 
@@ -184,18 +186,18 @@ void NetworkManager::sendOutgoingPackets()
         // std::cout << "Sending Packet\n";
         Packet packet = outgoingPackets.front();
         outgoingPackets.pop();
+        ENetPacket *enetPacket = createENetPacket(packet);
 
-        if (packet.peer)
+        if (packet.getPeer())
         {
-            ENetPacket *enetPacket = createENetPacket(packet);
-            enet_peer_send(packet.peer, 0, enetPacket);
+            enet_peer_send(packet.getPeer(), 0, enetPacket);
         }
         else
         {
-            std::vector<uint8_t> rawData = packet.toRawData();
+            /*std::vector<uint8_t> rawData = packet.getData();*/
             for (size_t i = 0; i < host->peerCount; ++i)
             {
-                ENetPacket *enetPacket = enet_packet_create(rawData.data(), rawData.size(), ENET_PACKET_FLAG_RELIABLE);
+                // ENetPacket *enetPacket = enet_packet_create(rawData.data(), rawData.size(), ENET_PACKET_FLAG_RELIABLE);
                 enet_peer_send(&host->peers[i], 0, enetPacket);
             }
         }

@@ -1,7 +1,7 @@
 #include "AudioManager.hpp"
 #include <iostream>
 
-bool AudioManager::loadSound(SoundType type, const std::string &filepath)
+bool AudioManager::tryLoadSound(SoundType type, const std::string &filepath)
 {
     sf::SoundBuffer buffer;
 
@@ -13,7 +13,7 @@ bool AudioManager::loadSound(SoundType type, const std::string &filepath)
 
     m_soundBuffers[type] = buffer;
     m_sounds[type].setBuffer(m_soundBuffers[type]);
-    //console_log("(+) Loaded file: " + filepath);
+    // console_log("(+) Loaded file: " + filepath);
     return true;
 }
 
@@ -25,7 +25,7 @@ void AudioManager::playSound(SoundType type)
         console_log("SoundType not loaded: " + std::to_string(static_cast<int>(type)));
         return;
     }
-
+    std::cout << "Playing " << std::to_string((int)type) << "\n";
     it->second.play();
 }
 
@@ -35,8 +35,6 @@ void AudioManager::loadAllSounds()
     {
         SoundType c = static_cast<SoundType>(i);
         std::string path = toFilePath(c);
-
-        if (!loadSound(c, path))
-            console_log("Could not load: " + path);
+        tryLoadSound(c, path);
     }
 }

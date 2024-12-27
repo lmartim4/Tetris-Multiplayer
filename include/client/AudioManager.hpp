@@ -16,7 +16,7 @@ public:
     void loadAllSounds();
 
 private:
-    bool loadSound(SoundType type, const std::string &filepath);
+    bool tryLoadSound(SoundType type, const std::string &filepath);
     std::map<SoundType, sf::SoundBuffer> m_soundBuffers;
     std::map<SoundType, sf::Sound> m_sounds;
 };

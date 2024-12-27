@@ -8,6 +8,7 @@
 
 #include "Player.hpp"
 #include "SoundType.hpp"
+#include "PlayerList.hpp"
 
 #include <json.hpp>
 #include <random>
@@ -18,7 +19,7 @@ private:
     int getNextAvailablePlayerID();
     void broadcastPlayerList();
     void createPlayerAndLink(ENetPeer *peer);
-
+    PlayerList players;
 protected:
     void onPeerConnect(ENetPeer *peer) override;
     void onPeerDisconnect(ENetPeer *peer) override;
@@ -33,16 +34,16 @@ public:
 
     static Player *getPlayerFromPacket(const Packet &packet)
     {
-        if (!packet.peer)
+        if (!packet.getPeer())
         {
             throw std::runtime_error("Error: Packet has no associated ENetPeer.");
         }
-        if (!packet.peer->data)
+        if (!packet.getPeer()->data)
         {
             throw std::runtime_error("Error: ENetPeer has no associated Player.");
         }
 
-        return static_cast<Player *>(packet.peer->data);
+        return static_cast<Player *>(packet.getPeer()->data);
     }
 
     std::vector<Player *> getPlayers()

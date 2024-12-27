@@ -4,22 +4,19 @@
 #include <memory>
 #include <string>
 #include "Screen.hpp"
-#include "TetrisCell.hpp"
+#include "CellRenderer.hpp"
+#include "TetrisBoard.hpp"
 #include "ClientManager.hpp"
 
 class BoardScreen : public Screen
 {
 private:
-    int BOARD_WIDTH = 10;
-    int BOARD_HEIGHT = 10;
     int CELL_SIZE = 30;
-    ClientManager &clientManager;
     
-    nlohmann::json lastBoard;
-    std::vector<std::vector<std::shared_ptr<TetrisCell>>> grid;
-
-    void setupCells();
-
+    ClientManager &clientManager;
+    std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid;
+    TetrisBoard board;
+    void setupRenderers();
 public:
     BoardScreen(ClientManager &clientManager);
 

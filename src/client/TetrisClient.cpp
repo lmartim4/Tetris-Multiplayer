@@ -1,7 +1,7 @@
 #include <iostream>
 #include <enet/enet.h>
 
-#include "TetrisCell.hpp"
+#include "CellRenderer.hpp"
 #include "ClientManager.hpp"
 #include "AudioManager.hpp"
 

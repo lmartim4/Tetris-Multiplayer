@@ -2,6 +2,8 @@
 
 #include <string>
 
+constexpr const char audio_path[] = "../assets/sounds/";
+
 enum class SoundType : int
 {
     LevelUp,
@@ -17,8 +19,11 @@ enum class SoundType : int
     OnJoinLobby,
     DeathSound,
     WinSound,
+    FallSound,         // Added
+    DenyErrorSound,    // Added
+    FabricImpactSound, // Added
 
-    /*Always Leave it as the last one*/
+    /* Always leave it as the last one */
     Count
 };
 
@@ -27,31 +32,55 @@ inline std::string toFilePath(SoundType type)
     switch (type)
     {
     case SoundType::OnJoinLobby:
-        return "assets/sounds/425165__varnsworth__videogamerisingsfxpart2.mp3";
+        return std::string(audio_path) + "425165__varnsworth__videogamerisingsfxpart2.mp3";
+
     case SoundType::LevelUp:
-        return "assets/sounds/682633__bastianhallo__level-up.ogg";
+        return std::string(audio_path) + "682633__bastianhallo__level-up.ogg";
+
     case SoundType::BreakLine:
-        return "assets/sounds/41348__datasoundsample__glass-shatter.wav";
+        return std::string(audio_path) + "41348__datasoundsample__glass-shatter.wav";
+
     case SoundType::Seeds:
-        return "assets/sounds/542752__panpiper5__seeds.wav";
+        return std::string(audio_path) + "542752__panpiper5__seeds.wav";
+
     case SoundType::DjembeSlap:
-        return "assets/sounds/659910__panpiper5__djembe-slap.wav";
+        return std::string(audio_path) + "659910__panpiper5__djembe-slap.wav";
+
     case SoundType::DjembeBass:
-        return "assets/sounds/659911__panpiper5__djembe-bass.wav";
+        return std::string(audio_path) + "659911__panpiper5__djembe-bass.wav";
+
     case SoundType::Lv256:
-        return "assets/sounds/509683__nutetoonstudios__lv-256.wav";
+        return std::string(audio_path) + "509683__nutetoonstudios__lv-256.wav";
+
     case SoundType::Lv4:
-        return "assets/sounds/507981__nutetoonstudios__lv-4.wav";
+        return std::string(audio_path) + "507981__nutetoonstudios__lv-4.wav";
+
     case SoundType::Lv3:
-        return "assets/sounds/507980__nutetoonstudios__lv-3.wav";
+        return std::string(audio_path) + "507980__nutetoonstudios__lv-3.wav";
+
     case SoundType::Lv2:
-        return "assets/sounds/507979__nutetoonstudios__lv-2.wav";
+        return std::string(audio_path) + "507979__nutetoonstudios__lv-2.wav";
+
     case SoundType::Lv1:
-        return "assets/sounds/507978__nutetoonstudios__lv-1.wav";
+        return std::string(audio_path) + "507978__nutetoonstudios__lv-1.wav";
+
     case SoundType::DeathSound:
-        return "assets/sounds/507977__nutetoonstudios__death-sound.wav";
+        return std::string(audio_path) + "507977__nutetoonstudios__death-sound.wav";
+
     case SoundType::WinSound:
-        return "assets/sounds/507976__nutetoonstudios__win-sound.wav";
+        return std::string(audio_path) + "507976__nutetoonstudios__win-sound.wav";
+
+    // Added FallSound
+    case SoundType::FallSound:
+        return std::string(audio_path) + "538151__fupicat__8bit-fall.wav";
+
+    // Added DenyErrorSound
+    case SoundType::DenyErrorSound:
+        return std::string(audio_path) + "551543__philracoindie__8-bit-denyerror-sound.wav";
+
+    // Added FabricImpactSound
+    case SoundType::FabricImpactSound:
+        return std::string(audio_path) + "777621__aquaash__fabricimpact.wav";
     }
 
     // Fallback (in case of an undefined enum)

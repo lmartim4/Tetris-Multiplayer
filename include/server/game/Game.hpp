@@ -1,11 +1,13 @@
 #pragma once
 
-#include "Debuggable.hpp"
+#include "TetrisBoardController.hpp"
+#include "EndGameData.hpp"
+#include "Player.hpp"
+#include "LevelData.hpp"
 
 #include "ThreadSafeQueue.hpp"
-#include "Player.hpp"
-#include "TetrisBoard.hpp"
-#include "EndGameData.hpp"
+#include "Debuggable.hpp"
+#include "ServerManager.hpp"
 
 #include <vector>
 #include <memory>
@@ -13,7 +15,6 @@
 #include <thread>
 #include <map>
 
-#include "LevelData.hpp"
 
 enum GameState
 {
@@ -25,16 +26,19 @@ enum GameState
     ENDED            // EVERYTHING IS ENDED
 };
 
-class Game : public Debuggable
+class Game
 {
 private:
     static int instanceCount;
     const int this_instance;
+    
+    Debuggable *logger;
 
     ServerManager &server;
     std::atomic<GameState> gameState = INITIALIZING;
     LevelData levelData;
 
+    TetrisBoardController *boardController;
     TetrisBoard board;
     std::vector<Player *> players;
     std::unique_ptr<Tetromino> currentTetromino;
@@ -45,11 +49,14 @@ private:
     void lockTetromino();
     void tryClearFullLines();
     int calculatePoints(int nLines, int level);
+    
     void spawnTetromino();
+    void tetrominoHasFallen();
+
     void broadcastBoardIfChanges() const;
     void broadcastEndGameStatus() const;
 
-    std::thread gameThread; // The thread running the game loop
+    std::thread gameThread;
 public:
     Game(ServerManager &sender);
     ~Game();

@@ -4,13 +4,7 @@
 #include <vector>
 #include "CellColor.hpp"
 #include "TetrisAction.hpp"
-
-struct Coordinate
-{
-    int x;
-    int y;
-    Coordinate(int xVal, int yVal) : x(xVal), y(yVal) {}
-};
+#include "Coordinate.hpp"
 
 class Tetromino
 {

@@ -32,7 +32,7 @@ void LobbyScreen::render(sf::RenderWindow &window)
 
     int index = 0;
     int maxColumns = 5; // Max number of circles per row
-    int numPlayers = clientMan.getDataPlayers().size();
+    int numPlayers = clientMan.getPlayerList().getPlayers().size();
 
     // Calculate the number of rows needed
     int rows = (numPlayers + maxColumns - 1) / maxColumns;
@@ -49,7 +49,7 @@ void LobbyScreen::render(sf::RenderWindow &window)
     float startY = (windowSize.y - totalHeight) / 2;
 
     clickableTexts.clear();
-    for (auto &pd : clientMan.getDataPlayers())
+    for (auto &pd : clientMan.getPlayerList().getPlayers())
     {
         sf::CircleShape circle(circleRadius);
 

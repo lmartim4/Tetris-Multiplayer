@@ -11,14 +11,19 @@ GameManager gm(server);
 void onReceiveArrow(const Packet &packet)
 {
     Player *player = ServerManager::getPlayerFromPacket(packet);
-    TetrisAction action = getActionFromPacketType(packet.type);
-    
+    TetrisAction action = getActionFromPacketType(packet.getType());
+
     player->enqueueAction(action);
 }
 
 void HeartbeatListener(const Packet &packet)
 {
     server.sendPacket(packet);
+}
+
+void ReceivePauseRequest(const Packet &packet)
+{
+    server.broadcastSound(SoundType::DenyErrorSound);
 }
 
 void StartGameListener(const Packet &packet)
@@ -29,9 +34,9 @@ void StartGameListener(const Packet &packet)
 void JoinRequestListener(const Packet &packet)
 {
     if (server.getHost()->connectedPeers < 4)
-        server.sendPacket(Packet(PacketType::JOIN_ACCEPTED, 0, packet.peer));
+        server.sendPacket(Packet(PacketType::JOIN_ACCEPTED, packet.getPeer()));
     else
-        server.sendPacket(Packet(PacketType::JOIN_DENIED, 0, packet.peer));
+        server.sendPacket(Packet(PacketType::JOIN_DENIED, packet.getPeer()));
 }
 
 int main(int argc, const char *argv[])
@@ -41,16 +46,18 @@ int main(int argc, const char *argv[])
     else
         return -1;
 
+    server.registerListener(PacketType::PAUSE, ReceivePauseRequest);
+
     server.registerListener(PacketType::JOIN_REQUEST, JoinRequestListener);
     server.registerListener(PacketType::HEARTBEAT, HeartbeatListener);
     server.registerListener(PacketType::REQUEST_START, StartGameListener);
 
     server.registerListener(PacketType::LEFT, onReceiveArrow);
     server.registerListener(PacketType::RIGHT, onReceiveArrow);
-    server.registerListener(PacketType::ROTATE_LEFT, onReceiveArrow);
-    server.registerListener(PacketType::ROTATE_RIGHT, onReceiveArrow);
+    server.registerListener(PacketType::ROTATE_CCW, onReceiveArrow);
+    server.registerListener(PacketType::ROTATE_CW, onReceiveArrow);
     server.registerListener(PacketType::DROP_FASTER, onReceiveArrow);
-    server.registerListener(PacketType::DROP_INSTANT, onReceiveArrow);
+    server.registerListener(PacketType::HARD_DROP, onReceiveArrow);
 
     while (server.isRunning())
         std::this_thread::sleep_for(std::chrono::milliseconds(1));

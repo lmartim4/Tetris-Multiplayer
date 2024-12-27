@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include "ISerializable.hpp"
 #include "enet/enet.h"
 #include "json.hpp"
 
@@ -18,18 +19,17 @@ enum class PacketType
     RESUME,
     LEFT,
     RIGHT,
-    ROTATE_LEFT,
-    ROTATE_RIGHT,
+    ROTATE_CCW,
+    ROTATE_CW,
     DROP_FASTER,
-    DROP_INSTANT,
+    HARD_DROP,
 
     // FROM SERVER TO CLIENT
     GAME_SCREEN,
     PLAYER_LIST,
     ENG_GAME_SCREEN,
     PLAY_SOUND,
-    
-    
+
     // Network/connection-related
     HEARTBEAT,  // A heartbeat packet to keep the connection alive
     CONNECT,    // A packet sent upon connecting
@@ -39,8 +39,7 @@ enum class PacketType
     PARSING_ERROR // Reserved for any custom packet types
 };
 
-// Utility function to convert PacketType to a string (for debugging)
-inline const char *PacketTypeToString(PacketType type)
+inline std::string PacketTypeToString(PacketType type)
 {
     switch (type)
     {
@@ -62,13 +61,13 @@ inline const char *PacketTypeToString(PacketType type)
         return "LEFT";
     case PacketType::RIGHT:
         return "RIGHT";
-    case PacketType::ROTATE_LEFT:
-        return "ROTATE_LEFT";
-    case PacketType::ROTATE_RIGHT:
-        return "ROTATE_RIGHT";
+    case PacketType::ROTATE_CCW:
+        return "ROTATE_CCW";
+    case PacketType::ROTATE_CW:
+        return "ROTATE_CW";
     case PacketType::DROP_FASTER:
         return "DROP_FASTER";
-    case PacketType::DROP_INSTANT:
+    case PacketType::HARD_DROP:
         return "DROP_INSTANT";
     case PacketType::HEARTBEAT:
         return "HEARTBEAT";
@@ -76,35 +75,39 @@ inline const char *PacketTypeToString(PacketType type)
         return "CONNECT";
     case PacketType::DISCONNECT:
         return "DISCONNECT";
+    case PacketType::PLAYER_LIST:
+        return "PLAYER_LIST";
+    case PacketType::PLAY_SOUND:
+        return "PLAY_SOUND";
     case PacketType::PARSING_ERROR:
         return "PARSING_ERROR";
     default:
-        return "UNKNOWN_PACKET_TYPE";
+        return "UNKNOWN_PACKET_TYPE (" + std::to_string(static_cast<int>(type)) + ")";
     }
 }
 
-struct Packet
+class Packet
 {
     PacketType type;           // The type of the packet (ACTION, HEARTBEAT, etc.)
     std::vector<uint8_t> data; // Data payload of the packet
     ENetPeer *peer;            // The peer that the packet is being sent to or received from
 
-    // Constructor to initialize a packet with its type, data, and optional destination peer.
-    Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *dest = nullptr)
-        : type(t), data(d), peer(dest) {}
+public:
+    Packet(PacketType t, ENetPeer *dest = nullptr)
+        : type(t), peer(dest) {}
 
-    // New constructor that accepts a JSON object
-    Packet(PacketType t, const nlohmann::json &j, ENetPeer *dest = nullptr)
+    Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *dest = nullptr) : type(t), data(d), peer(dest) {}
+    Packet(PacketType t, int i, ENetPeer *dest = nullptr) : type(t), peer(dest) { data.emplace_back(i); }
+
+    Packet(PacketType t, const ISerializable &serializable, ENetPeer *dest = nullptr)
         : type(t), peer(dest)
     {
-        // Convert JSON to string
-        std::string jsonStr = j.dump();
-        // Store as bytes
+        std::string jsonStr = serializable.serialize().dump();
         data.assign(jsonStr.begin(), jsonStr.end());
     }
 
     // Serialize the packet to raw byte data so it can be sent over the network.
-    std::vector<uint8_t> toRawData() const
+    std::vector<uint8_t> toRawPacket() const
     {
         std::vector<uint8_t> rawData;
         rawData.push_back(static_cast<uint8_t>(type));           // First byte stores the packet type
@@ -112,10 +115,29 @@ struct Packet
         return rawData;
     }
 
-    // Helper method to parse the data vector into a JSON object
-    nlohmann::json toJson() const
+    void setENetPeer(ENetPeer *p)
+    {
+        peer = p;
+    }
+
+    const std::vector<uint8_t> &getData() const
+    {
+        return data;
+    }
+
+    nlohmann::json getPayloadAsJson() const
     {
         std::string jsonStr(data.begin(), data.end());
         return nlohmann::json::parse(jsonStr);
+    }
+
+    PacketType getType() const
+    {
+        return type;
+    }
+
+    ENetPeer *getPeer() const
+    {
+        return peer;
     }
 };

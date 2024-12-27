@@ -6,6 +6,7 @@
 #include "AudioManager.hpp"
 #include "PlayerData.hpp"
 #include "EndGameData.hpp"
+#include "PlayerList.hpp"
 #include <ThreadSafeQueue.hpp>
 #include <thread>
 #include <atomic>
@@ -18,7 +19,7 @@ private:
     ENetPeer *serverPeer;
     std::atomic<bool> isConnected = false; // Client Connected to Server
 
-    std::vector<PlayerData> players; // Players in the match
+    PlayerList players; // Players in the match
 
     ThreadSafeQueue<nlohmann::json> boardBuffer;       // Buffer for received boards (always just the last one)
     ThreadSafeQueue<nlohmann::json> endGameDataBuffer; // Buffer for received end game information (always just the last one)
@@ -53,7 +54,8 @@ public:
     void disconnect();
 
     bool IsConnected() const { return isConnected; };
-    std::vector<PlayerData> &getDataPlayers() { return players; }
+    
+    PlayerList &getPlayerList() { return players; }
 
     bool hasBoard(nlohmann::json &board);
     bool hasEndGameData(nlohmann::json &board);

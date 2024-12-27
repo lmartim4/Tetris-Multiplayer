@@ -11,8 +11,9 @@ void ServerManager::onPeerConnect(ENetPeer *peer)
     std::cout << "[CONNECTED] " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
 
     createPlayerAndLink(peer);
+
     broadcastPlayerList();
-    
+
     broadcastSound(SoundType::OnJoinLobby);
 }
 
@@ -65,41 +66,40 @@ void ServerManager::createPlayerAndLink(ENetPeer *peer)
     Player *newPlayer = new Player(getNextAvailablePlayerID(), "Player_");
     peer->data = (void *)newPlayer;
     std::cout << "New client connected. Assigned PlayerID: " << newPlayer->getData().playerID << "\n";
+    players.addPlayer((*newPlayer).getData());
 }
 
 void ServerManager::broadcastPlayerList()
 {
-    nlohmann::json message = nlohmann::json::array();
+    //     nlohmann::json message = nlohmann::json::array();
 
-    for (ENetPeer *entry : getPeers())
-    {
-        if (!entry->data)
-        {
-            std::cout << "~ No player ~" << std::endl;
-            continue;
-        }
+    //     for (ENetPeer *entry : getPeers())
+    //     {
+    //         if (!entry->data)
+    //         {
+    //             std::cout << "~ No player ~" << std::endl;
+    //             continue;
+    //         }
 
-        Player *player = (Player *)entry->data;
+    //         Player *player = (Player *)entry->data;
 
-        nlohmann::json playerJson = player->getData().serialize();
+    //         nlohmann::json playerJson = player->getData().serialize();
 
-        message.push_back(nlohmann::json::array({playerJson}));
-    }
+    //         message.push_back(nlohmann::json::array({playerJson}));
+    //     }
 
-    std::cout << message << std::endl;
-    sendPacket(Packet(PacketType::PLAYER_LIST, message, nullptr));
+    std::cout << players.serialize() << std::endl;
+
+    sendPacket(Packet(PacketType::PLAYER_LIST, players, nullptr));
 }
 
 void ServerManager::broadcastSound(SoundType soundType)
 {
-    std::vector<uint8_t> payload(1);
-    payload[0] = (uint8_t)soundType;
-
-    Packet playSoundPacket(PacketType::PLAY_SOUND, payload, nullptr);
+    Packet playSoundPacket(PacketType::PLAY_SOUND, (uint8_t)soundType, nullptr);
     sendPacket(playSoundPacket);
 }
 
 void ServerManager::broadcast_starting_game()
 {
-    sendPacket(Packet(PacketType::STARTING_GAME, 0, nullptr));
+    sendPacket(Packet(PacketType::STARTING_GAME, nullptr));
 }
