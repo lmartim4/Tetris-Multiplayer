@@ -2,21 +2,12 @@
 #include <string>
 #include <iostream>
 
-// Just for clarity here, assume you have some struct to hold the end-game data
-// struct EndGameData {
-//     int totalPoints;
-//     float gameTime;
-//     int linesRemoved;
-//     int finalLevel;
-//     std::vector<PlayerData> players;
-// };
-
 float base_x = 250;
 float base_y = 380;
 float gap = 180;
 
-EndGameScreen::EndGameScreen(ClientManager &manager)
-    : clientManager(manager),
+EndGameScreen::EndGameScreen(ScreenManager &screenManager, ClientManager &clientManager)
+    : clientManager(clientManager), screenManager(screenManager),
       quitButton(defaultFont, "Quit", sf::Color::White, {base_x, base_y}, 24),
       playAgainButton(defaultFont, "Play Again", sf::Color::White, {base_x + gap, base_y}, 24)
 {
@@ -66,14 +57,13 @@ EndGameScreen::EndGameScreen(ClientManager &manager)
     quitButton.setOnClick([&]()
                           {
                               std::cout << "[Quit button clicked]\n";
-                              // manager.popScreen(), etc.
-                          });
+                              screenManager.setActiveScreen("main-menu");
+                              clientManager.disconnect(); });
 
     playAgainButton.setOnClick([&]()
                                {
                                    std::cout << "[Play Again button clicked]\n";
-                                   // Start a new game, manager.replaceScreen(...), etc.
-                               });
+                                  clientManager.request_game_start(); });
 }
 
 EndGameScreen::~EndGameScreen()
@@ -90,7 +80,7 @@ void EndGameScreen::handleEvent(sf::Event event, ScreenManager &manager)
 }
 
 void EndGameScreen::update(float deltaTime)
-{        
+{
     if (!hasFetchedData)
     {
 
@@ -100,7 +90,7 @@ void EndGameScreen::update(float deltaTime)
         if (success)
         {
             data.deserialize(endGameData);
-            
+
             // We got the data, now update our text fields:
             totalPoints.setString("Total Points: " + std::to_string(data.totalPoints));
             gameTime.setString("Game Time: " + std::to_string(data.gameTime) + " min");

@@ -8,7 +8,11 @@ GameManager::GameManager(ServerManager &server) : Debuggable("GameManager"), ser
 void GameManager::StartGameListener(const Packet &)
 {
     if (game != nullptr)
-        throw std::runtime_error("Game was already started!");
+        if (game->getState() == GameState::ENDED)
+        {
+            delete game;
+            game = new Game(server);
+        }
 
     game = new Game(server);
 
@@ -16,7 +20,7 @@ void GameManager::StartGameListener(const Packet &)
         game->addPlayer(p);
 
     server.broadcast_starting_game();
-    game->startGameLoop();
+    game->startGame();
 }
 
 GameManager::~GameManager()

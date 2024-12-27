@@ -11,7 +11,6 @@ void ServerManager::onPeerConnect(ENetPeer *peer)
     std::cout << "[CONNECTED] " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
 
     createPlayerAndLink(peer);
-
     broadcastPlayerList();
 
     broadcastSound(SoundType::OnJoinLobby);
@@ -21,8 +20,10 @@ void ServerManager::onPeerDisconnect(ENetPeer *peer)
 {
     network_print("");
     std::cout << "[DISCONNECTED] " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
-    delete (Player *)peer->data;
+    players.removePlayer(((Player *)peer->data)->getData());
     broadcastPlayerList();
+
+    delete (Player *)peer->data;
 }
 
 ServerManager::ServerManager(uint16_t port)
@@ -55,7 +56,7 @@ ServerManager::ServerManager(uint16_t port)
     TaskStartNetwork();
 }
 
-int ServerManager::getNextAvailablePlayerID()
+int ServerManager::getNextAvailableid()
 {
     static int currentID = 0;
     return currentID++;
@@ -63,33 +64,15 @@ int ServerManager::getNextAvailablePlayerID()
 
 void ServerManager::createPlayerAndLink(ENetPeer *peer)
 {
-    Player *newPlayer = new Player(getNextAvailablePlayerID(), "Player_");
+    Player *newPlayer = new Player(getNextAvailableid(), "Player_");
     peer->data = (void *)newPlayer;
-    std::cout << "New client connected. Assigned PlayerID: " << newPlayer->getData().playerID << "\n";
+    std::cout << "New client connected. Assigned id: " << newPlayer->getData().id << "\n";
     players.addPlayer((*newPlayer).getData());
 }
 
 void ServerManager::broadcastPlayerList()
 {
-    //     nlohmann::json message = nlohmann::json::array();
-
-    //     for (ENetPeer *entry : getPeers())
-    //     {
-    //         if (!entry->data)
-    //         {
-    //             std::cout << "~ No player ~" << std::endl;
-    //             continue;
-    //         }
-
-    //         Player *player = (Player *)entry->data;
-
-    //         nlohmann::json playerJson = player->getData().serialize();
-
-    //         message.push_back(nlohmann::json::array({playerJson}));
-    //     }
-
     std::cout << players.serialize() << std::endl;
-
     sendPacket(Packet(PacketType::PLAYER_LIST, players, nullptr));
 }
 

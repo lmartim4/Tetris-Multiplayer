@@ -11,7 +11,9 @@
 class EndGameScreen : public Screen
 {
 private:
+    ScreenManager &screenManager;
     ClientManager &clientManager;
+
     EndGameData data;
 
     // Text objects
@@ -31,7 +33,7 @@ private:
     bool hasFetchedData = false;
 
 public:
-    EndGameScreen(ClientManager &manager);
+    EndGameScreen(ScreenManager &screenManager, ClientManager &clientManager);
     ~EndGameScreen();
 
     void handleEvent(sf::Event event, ScreenManager &manager) override;

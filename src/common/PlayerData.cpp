@@ -3,7 +3,7 @@
 nlohmann::json PlayerData::serialize() const
 {
     return {
-        {"playerID", playerID},
+        {"id", id},
         {"playerName", playerName},
         {"score", score},
         {"isConnected", isConnected}};
@@ -11,7 +11,7 @@ nlohmann::json PlayerData::serialize() const
 
 void PlayerData::deserialize(const nlohmann::json &data)
 {
-    playerID = data.at("playerID").get<int>();
+    id = data.at("id").get<int>();
     playerName = data.at("playerName").get<std::string>();
     score = data.at("score").get<int>();
     isConnected = data.at("isConnected").get<bool>();

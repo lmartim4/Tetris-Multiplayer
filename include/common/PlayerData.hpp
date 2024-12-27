@@ -6,7 +6,7 @@
 
 struct PlayerData : public ISerializable
 {
-    int playerID = -1;
+    int id = -1;
     std::string playerName;
     int score = 0;
     bool isConnected = false;

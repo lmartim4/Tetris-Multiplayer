@@ -67,7 +67,7 @@ int main()
     screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(client));
     screenManager.addScreen("waiting-connection", std::make_unique<WaitingConnectionScreen>(screenManager, client));
     screenManager.addScreen("game", std::make_unique<BoardScreen>(client));
-    screenManager.addScreen("end-game", std::make_unique<EndGameScreen>(client));
+    screenManager.addScreen("end-game", std::make_unique<EndGameScreen>(screenManager, client));
 
     screenManager.setActiveScreen("main-menu");
     screenManager.startThread();

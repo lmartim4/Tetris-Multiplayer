@@ -7,17 +7,22 @@
 
 class Player
 {
+    
+private:
+    ThreadSafeQueue<TetrisAction> actions;
+    PlayerData data;
+
 public:
     Player(int id, const std::string &name)
     {
-        data.playerID = id;
+        data.id = id;
         data.playerName = name;
         data.score = 0;
     }
-    
+
     ~Player()
     {
-        std::cout << "Player " << data.playerID << " was deleted " << std::endl;
+        std::cout << "Player " << data.id << " was deleted " << std::endl;
     }
 
     const PlayerData getData() const
@@ -45,9 +50,9 @@ public:
         return data.isConnected;
     }
 
-    int getPlayerID()
+    int getid()
     {
-        return data.playerID;
+        return data.id;
     }
 
     void enqueueAction(const TetrisAction &action)
@@ -59,8 +64,4 @@ public:
     {
         return actions.pop(action);
     }
-
-private:
-    ThreadSafeQueue<TetrisAction> actions;
-    PlayerData data;
 };

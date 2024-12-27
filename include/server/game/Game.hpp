@@ -15,7 +15,6 @@
 #include <thread>
 #include <map>
 
-
 enum GameState
 {
     INITIALIZING,    // WAITING CLASS CREATION
@@ -31,7 +30,7 @@ class Game
 private:
     static int instanceCount;
     const int this_instance;
-    
+
     Debuggable *logger;
 
     ServerManager &server;
@@ -49,7 +48,7 @@ private:
     void lockTetromino();
     void tryClearFullLines();
     int calculatePoints(int nLines, int level);
-    
+
     void spawnTetromino();
     void tetrominoHasFallen();
 
@@ -57,12 +56,13 @@ private:
     void broadcastEndGameStatus() const;
 
     std::thread gameThread;
+
 public:
     Game(ServerManager &sender);
     ~Game();
-    
+
     void addPlayer(Player *player);
-    
-    void startGameLoop();
+    GameState getState() { return gameState; }
+    void startGame();
     void endGameLoop();
 };

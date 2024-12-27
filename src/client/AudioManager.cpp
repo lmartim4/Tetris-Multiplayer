@@ -25,7 +25,7 @@ void AudioManager::playSound(SoundType type)
         console_log("SoundType not loaded: " + std::to_string(static_cast<int>(type)));
         return;
     }
-    std::cout << "Playing " << std::to_string((int)type) << "\n";
+    
     it->second.play();
 }
 

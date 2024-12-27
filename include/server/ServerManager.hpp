@@ -16,7 +16,7 @@
 class ServerManager : public NetworkManager
 {
 private:
-    int getNextAvailablePlayerID();
+    int getNextAvailableid();
     void broadcastPlayerList();
     void createPlayerAndLink(ENetPeer *peer);
     PlayerList players;

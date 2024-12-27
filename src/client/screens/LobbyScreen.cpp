@@ -68,13 +68,13 @@ void LobbyScreen::render(sf::RenderWindow &window)
         // Create and position the text
         Button itext(
             defaultFont,
-            pd.playerName + " " + std::to_string(pd.playerID),
+            pd.playerName + " " + std::to_string(pd.id),
             sf::Color::Red,
             {x - circleRadius, y + 2 * circleRadius}, 20); // Centered text below circle
 
         itext.render(window);
         itext.setOnClick([&]()
-                         { std::cout << " clicked " << pd.playerID << std::endl; });
+                         { std::cout << " clicked " << pd.id << std::endl; });
 
         clickableTexts.emplace_back(itext);
 

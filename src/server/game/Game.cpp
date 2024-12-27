@@ -16,6 +16,7 @@ Game::Game(ServerManager &server) : server(server), board(16, 10), this_instance
 
 Game::~Game()
 {
+    endGameLoop();
     logger->console_log("Destroying Game (" + std::to_string(this_instance) + ")...");
 }
 
@@ -35,7 +36,7 @@ void Game::spawnTetromino()
     currentTetromino = TetrominoFactory::createTetromino();
 }
 
-void Game::startGameLoop()
+void Game::startGame()
 {
     static int instanceCount = 0;
 
@@ -53,14 +54,6 @@ void Game::startGameLoop()
 
 void Game::endGameLoop()
 {
-    if (gameState != RUNNNING)
-    {
-        logger->console_log("Cannot end a game that is not currently running");
-        return;
-    }
-
-    gameState = ENDING;
-
     if (gameThread.joinable())
         gameThread.join();
 
