@@ -56,14 +56,11 @@ EndGameScreen::EndGameScreen(ScreenManager &screenManager, ClientManager &client
     // ----------------------------------------------------------------------
     quitButton.setOnClick([&]()
                           {
-                              std::cout << "[Quit button clicked]\n";
                               screenManager.setActiveScreen("main-menu");
                               clientManager.disconnect(); });
 
     playAgainButton.setOnClick([&]()
-                               {
-                                   std::cout << "[Play Again button clicked]\n";
-                                  clientManager.request_game_start(); });
+                               { clientManager.request_game_start(); });
 }
 
 EndGameScreen::~EndGameScreen()

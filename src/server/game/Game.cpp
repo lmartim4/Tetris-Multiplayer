@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include "TetrominoFactory.hpp"
 #include "ServerManager.hpp"
+#include "Clock.hpp"
 
 #define LEVEL_UP_LINES 10
 
@@ -70,11 +71,11 @@ void Game::loop()
     while (gameState != ENDING)
     {
         processIncommingInputs();
-        if (levelData.hasGravityIntervalElapsed())
+        if (gravity.hasGravityIntervalElapsed())
             updateGame(TetrisAction::GRAVITY);
 
         broadcastBoardIfChanges();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     gameState = ENDED;
     broadcastEndGameStatus();
@@ -82,42 +83,42 @@ void Game::loop()
 
 void Game::updateGame(TetrisAction action)
 {
-    if (board.reachedTop())
+    if (!board.reachedTop())
     {
-        gameState = ENDING;
-        logger->console_log("Ending Game");
-        server.broadcastSound(SoundType::DeathSound);
-        return;
-    }
-
-    boardController->clearFallingTetrominos();
-    if (action == TetrisAction::HARD_DROP)
-    {
-        while (!(boardController->checkCollision(*currentTetromino, TetrisAction::GRAVITY)))
+        boardController->clearFallingTetrominos();
+        if (action == TetrisAction::HARD_DROP)
         {
-            // Evolving States Until Complete fall
-        }
-        tetrominoHasFallen();
-    }
-    else if (boardController->checkCollision(*currentTetromino, action))
-    {
-        if (action == TetrisAction::GRAVITY || action == TetrisAction::HARD_DROP)
-        {
-            // Place the tetromino was it finally dropped and locked
+            while (!(boardController->checkCollision(*currentTetromino, TetrisAction::GRAVITY)))
+            {
+            }
             tetrominoHasFallen();
+        }
+        else if (boardController->checkCollision(*currentTetromino, action))
+        {
+            if (action == TetrisAction::GRAVITY || action == TetrisAction::HARD_DROP)
+            {
+                // Place the tetromino was it finally dropped and locked
+                tetrominoHasFallen();
+            }
+            else
+            {
+                // Invalid move, revert the tetromino state
+                boardController->placeTetromino(*currentTetromino, false);
+                server.broadcastSound(SoundType::DenyErrorSound);
+            }
         }
         else
         {
-            // Invalid move, revert the tetromino state
+            // Valid Move
             boardController->placeTetromino(*currentTetromino, false);
-            server.broadcastSound(SoundType::DenyErrorSound);
+            server.broadcastSound(SoundType::FabricImpactSound);
         }
     }
     else
     {
-        // Valid Move
-        boardController->placeTetromino(*currentTetromino, false);
-        server.broadcastSound(SoundType::FabricImpactSound);
+        gameState = ENDING;
+        logger->console_log("Ending Game");
+        server.broadcastSound(SoundType::DeathSound);
     }
 }
 
@@ -128,15 +129,17 @@ void Game::lockTetromino()
     currentTetromino.reset();
 }
 
-void Game::tryClearFullLines()
+int Game::clearFullLines()
 {
     int clearedLines = boardController->clearFullLines();
 
     if (clearedLines > 0)
     {
-        levelData.addClearedLines(clearedLines);
+        gameData.addLinesClearedOnThisLevel(clearedLines);
+        gameData.addTotalLinesCleared(clearedLines);
         server.broadcastSound(SoundType::BreakLine);
     }
+    return clearedLines;
 }
 
 void Game::broadcastBoardIfChanges() const
@@ -144,7 +147,8 @@ void Game::broadcastBoardIfChanges() const
     if (!currentTetromino->shouldBroadcastState())
         return;
 
-    //board.printDebug();
+    // static int boardsSent = 0;
+    // logger->console_log("Sent " + std::to_string(boardsSent++) + "\n");
     server.sendPacket(Packet(PacketType::GAME_SCREEN, board, nullptr));
 }
 
@@ -154,10 +158,11 @@ void Game::broadcastEndGameStatus() const
         throw std::logic_error("Game is still running, why would you broadvst this status?");
 
     EndGameData endGame;
-    endGame.linesRemoved = levelData.getTotalLinesCleared();
-    endGame.totalPoints = levelData.getScore();
-    endGame.finalLevel = levelData.getLevel();
+    endGame.linesRemoved = gameData.getTotalLinesCleared();
+    endGame.totalPoints = gameData.getScore();
+    endGame.finalLevel = gameData.getLevel();
     endGame.gameTime = -1;
+
     for (Player *pl : players)
         endGame.players.emplace_back(pl->getData());
 
@@ -183,16 +188,18 @@ int Game::calculatePoints(int nLines, int level)
 void Game::tetrominoHasFallen()
 {
     lockTetromino();
-    tryClearFullLines();
+    int justClearedLines = clearFullLines();
 
-    if (levelData.tryLevelUp(LEVEL_UP_LINES))
+    gameData.addScore(calculatePoints(justClearedLines, gameData.getLevel()));
+
+    if (gameData.tryLevelUp(LEVEL_UP_LINES))
     {
         boardController->clearFallenTetrominos();
-        levelData.addScore(calculatePoints(levelData.getLinesClearedThisLevel(), levelData.getLevel()));
-
-        logger->console_log("Level Up: (" + std::to_string(levelData.getLevel()) + ")");
-
+        logger->console_log("Level Up: (" + std::to_string(gameData.getLevel()) + ")");
         server.broadcastSound(SoundType::LevelUp);
     }
+
+    server.sendPacket(Packet(PacketType::GAME_SCORE, gameData, nullptr));
+
     spawnTetromino();
 }

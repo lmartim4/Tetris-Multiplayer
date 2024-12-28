@@ -1,4 +1,5 @@
 #include "ClientManager.hpp"
+#include "Clock.hpp"
 #include <iostream>
 #include <chrono>
 #include <SFML/Graphics.hpp>
@@ -18,6 +19,12 @@ void ClientManager::onPeerDisconnect(ENetPeer *peer)
     isConnected = false;
     network_print("Disconnected from server\n");
     disconnect();
+}
+
+void ClientManager::on_receive_score(const Packet &packet)
+{
+    std::cout << packet.getPayloadAsJson() << std::endl;
+    score.deserialize(packet.getPayloadAsJson());
 }
 
 void ClientManager::on_receive_heartbeat()
@@ -133,7 +140,7 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
     try
     {
         nlohmann::json boardData = packet.getPayloadAsJson();
-        boardBuffer.clear();
+        // boardBuffer.clear();
         boardBuffer.push(boardData);
     }
     catch (const std::exception &e)
@@ -149,7 +156,7 @@ void ClientManager::on_receive_end_screen(const Packet &packet)
 
 void ClientManager::on_receive_play_sound(const Packet &packet)
 {
-    
+
     audio.playSound((SoundType)packet.getData()[0]);
 }
 

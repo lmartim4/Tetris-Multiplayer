@@ -11,12 +11,18 @@
 class BoardScreen : public Screen
 {
 private:
-    int CELL_SIZE = 30;
-    
+    const int CELL_SIZE = 30;
+
+    TetrisBoard board;
     ClientManager &clientManager;
     std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid;
-    TetrisBoard board;
+
+    sf::Text score;
+    sf::Text lines;
+    sf::Text level;
+
     void setupRenderers();
+
 public:
     BoardScreen(ClientManager &clientManager);
 

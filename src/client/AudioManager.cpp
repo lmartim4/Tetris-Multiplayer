@@ -13,7 +13,6 @@ bool AudioManager::tryLoadSound(SoundType type, const std::string &filepath)
 
     m_soundBuffers[type] = buffer;
     m_sounds[type].setBuffer(m_soundBuffers[type]);
-    // console_log("(+) Loaded file: " + filepath);
     return true;
 }
 
@@ -25,7 +24,7 @@ void AudioManager::playSound(SoundType type)
         console_log("SoundType not loaded: " + std::to_string(static_cast<int>(type)));
         return;
     }
-    
+
     it->second.play();
 }
 

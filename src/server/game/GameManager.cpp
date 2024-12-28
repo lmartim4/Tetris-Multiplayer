@@ -1,12 +1,14 @@
 #include "GameManager.hpp"
 
-GameManager::GameManager(ServerManager &server) : Debuggable("GameManager"), server(server)
+GameManager::GameManager(ServerManager &server) : server(server)
 {
-    console_log("GameManager()");
+    logger = new Debuggable("GameManager");
+    logger->console_log("GameManager()");
 }
 
 void GameManager::StartGameListener(const Packet &)
 {
+
     if (game != nullptr)
         if (game->getState() == GameState::ENDED)
         {

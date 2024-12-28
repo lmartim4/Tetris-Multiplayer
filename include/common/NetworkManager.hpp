@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PacketType.hpp"
+#include "Packet.hpp"
 #include <json.hpp>
 
 #include <enet/enet.h>

@@ -5,12 +5,13 @@
 #include "Debuggable.hpp"
 #include "TetrisAction.hpp"
 
-class GameManager : public Debuggable
+class GameManager
 {
 private:
+    Debuggable *logger;
     ServerManager &server;
 
-    Game *game; 
+    Game *game;
 
 public:
     void StartGameListener(const Packet &);

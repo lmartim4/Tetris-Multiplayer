@@ -3,6 +3,7 @@
 #include "TetrisBoardController.hpp"
 #include "EndGameData.hpp"
 #include "Player.hpp"
+#include "GameData.hpp"
 #include "LevelData.hpp"
 
 #include "ThreadSafeQueue.hpp"
@@ -35,7 +36,10 @@ private:
 
     ServerManager &server;
     std::atomic<GameState> gameState = INITIALIZING;
-    LevelData levelData;
+
+    GravityManager gravity;
+
+    GameData gameData;
 
     TetrisBoardController *boardController;
     TetrisBoard board;
@@ -46,7 +50,7 @@ private:
     void processIncommingInputs();
     void updateGame(TetrisAction action);
     void lockTetromino();
-    void tryClearFullLines();
+    int clearFullLines();
     int calculatePoints(int nLines, int level);
 
     void spawnTetromino();
@@ -61,8 +65,9 @@ public:
     Game(ServerManager &sender);
     ~Game();
 
-    void addPlayer(Player *player);
     GameState getState() { return gameState; }
+
+    void addPlayer(Player *player);
     void startGame();
     void endGameLoop();
 };

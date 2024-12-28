@@ -24,7 +24,10 @@ void heartbeat_listener(const Packet &packet)
 {
     client.on_receive_heartbeat();
 }
-
+void onGameScore(const Packet &packet)
+{
+    client.on_receive_score(packet);
+}
 void onPlaySoundPacket(const Packet &packet)
 {
     client.on_receive_play_sound(packet);
@@ -37,6 +40,10 @@ void onPlayerListPacket(const Packet &packet)
 
 void onGameScreenPacket(const Packet &packet)
 {
+    /*
+    static int frame_count = 0;
+    std::cout << "Received " + std::to_string(frame_count++) + " boards\n";
+    */
     client.on_receive_game_screen(packet);
 }
 
@@ -56,6 +63,7 @@ int main()
     audioManager.loadAllSounds();
     client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
     client.registerListener(PacketType::PLAYER_LIST, onPlayerListPacket);
+    client.registerListener(PacketType::GAME_SCORE, onGameScore);
     client.registerListener(PacketType::PLAY_SOUND, onPlaySoundPacket);
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);
     client.registerListener(PacketType::STARTING_GAME, onGameStartPacket);

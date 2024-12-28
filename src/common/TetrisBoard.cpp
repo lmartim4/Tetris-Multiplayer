@@ -1,4 +1,5 @@
 #include "TetrisBoard.hpp"
+#include "Clock.hpp"
 
 void TetrisBoard::setupCells()
 {
@@ -21,10 +22,7 @@ void TetrisBoard::setupCells()
 TetrisBoard::TetrisBoard(int h, int w) : height(h), width(w)
 {
     logger = new Debuggable("Tetris Board");
-    logger->console_log("Initializing Tetris-Board");
     setupCells();
-
-    logger->console_log("Cells setted!");
 }
 
 void TetrisBoard::printDebug() const

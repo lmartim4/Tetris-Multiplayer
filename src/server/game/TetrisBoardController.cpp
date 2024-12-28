@@ -14,15 +14,18 @@ bool TetrisBoardController::checkCollision(Tetromino &currentTetromino,
     currentTetromino.evolveStates(true, action);
 
     const auto &shape = currentTetromino.getShape();
+    auto &grid = board.getGrid();
+
+    int gridX, gridY;
 
     for (size_t x = 0; x < shape.size(); ++x)
         for (size_t y = 0; y < shape[x].size(); ++y)
             if (shape[x][y] != 0)
             {
-                int gridX = currentTetromino.getCoordinate().x + x;
-                int gridY = board.getNormalizedY(currentTetromino.getCoordinate().y + y);
+                gridX = currentTetromino.getCoordinate().x + x;
+                gridY = board.getNormalizedY(currentTetromino.getCoordinate().y + y);
 
-                if (gridX >= board.getHeight() || gridX < 0 || board.getGrid()[gridX][gridY]->getState() == FALLEN)
+                if (gridX >= board.getHeight() || gridX < 0 || grid[gridX][gridY]->getState() == FALLEN)
                 {
                     currentTetromino.evolveStates(false, action);
                     return true;
@@ -32,83 +35,88 @@ bool TetrisBoardController::checkCollision(Tetromino &currentTetromino,
     return false;
 }
 
-void TetrisBoardController::placeTetromino(const Tetromino &currentTetromino,
-                                           bool fallen)
+void TetrisBoardController::placeTetromino(const Tetromino &currentTetromino, bool fallen)
 {
     const auto &shape = currentTetromino.getShape();
+    auto &grid = board.getGrid();
+    auto tetroColor = currentTetromino.getColor();
+
+    CellState newState = fallen ? CellState::FALLEN : CellState::FALLING;
+
+    int baseX = currentTetromino.getCoordinate().x;
+    int baseY = currentTetromino.getCoordinate().y;
 
     for (size_t x = 0; x < shape.size(); x++)
+    {
         for (size_t y = 0; y < shape[x].size(); y++)
+        {
             if (shape[x][y] != 0)
             {
-                int gridX = currentTetromino.getCoordinate().x + x;
-                int gridY = board.getNormalizedY(currentTetromino.getCoordinate().y + y);
-                CellColor tetroColor = currentTetromino.getColor();
+                int gridX = baseX + static_cast<int>(x);
+                int gridY = board.getNormalizedY(baseY + static_cast<int>(y));
 
-                if (fallen)
+                if (grid[gridX][gridY]->getState() != newState)
                 {
-                    if (board.getGrid()[gridX][gridY]->getState() != CellState::FALLEN)
-                    {
-                        board.getGrid()[gridX][gridY]->setColor(tetroColor);
-                        board.getGrid()[gridX][gridY]->setState(CellState::FALLEN);
-                    }
-                }
-                else
-                {
-                    if (board.getGrid()[gridX][gridY]->getState() != FALLING)
-                    {
-                        board.getGrid()[gridX][gridY]->setState(CellState::FALLING);
-                        board.getGrid()[gridX][gridY]->setColor(tetroColor);
-                    }
+                    grid[gridX][gridY]->setState(newState);
+                    grid[gridX][gridY]->setColor(tetroColor);
                 }
             }
+        }
+    }
 }
 
 int TetrisBoardController::clearFullLines()
 {
+    auto &grid = board.getGrid();
+    int width = board.getWidth();
+    int height = board.getHeight();
+
+    int writeRow = height - 1;
     int numLinesCleared = 0;
 
-    // De baixo pra cima
-    for (int x = board.getHeight() - 1; x >= 0; --x)
+    // Go from bottom row up to top
+    for (int readRow = height - 1; readRow >= 0; --readRow)
     {
-        int sumLine = 0;
-        for (int y = 0; y < board.getWidth(); y++)
+        // Check if readRow is full
+        bool isFull = true;
+        for (int y = 0; y < width; ++y)
         {
-            if (board.getGrid()[x][y]->getState() == FALLEN)
-                sumLine++;
+            if (grid[readRow][y]->getState() != CellState::FALLEN)
+            {
+                isFull = false;
+                break;
+            }
         }
 
-        // ------- Clear -------
-        if (sumLine == board.getWidth())
+        if (!isFull)
         {
-            // 1 - Mudar o estado de todas as celulas daquela linha pra empty
-            for (int y = 0; y < board.getWidth(); ++y)
+            // Copy readRow -> writeRow if they differ
+            if (readRow != writeRow)
             {
-                board.getGrid()[x][y]->setEmpty();
-            }
-
-            // 2 - Carregar todos os fixos dali pra cima "pra baixo"
-            for (int x_clear = x; x_clear >= 1; --x_clear)
-            {
-                for (int y = 0; y < board.getWidth(); ++y)
+                for (int y = 0; y < width; ++y)
                 {
-                    // Se o de cima for algum bloco fixo
-                    if (board.getGrid()[x_clear - 1][y]->getState() == FALLEN)
-                    {
-                        // Setar o de baixo como fixo, com a cor do de cima
-                        board.getGrid()[x_clear][y]->setColor(board.getGrid()[x_clear - 1][y]->getColor());
-                        board.getGrid()[x_clear][y]->setState(CellState::FALLEN);
-
-                        // E deixar oq foi mudado como vazio
-                        board.getGrid()[x_clear - 1][y]->setEmpty();
-                    }
+                    // Copy color & state
+                    grid[writeRow][y]->setState(grid[readRow][y]->getState());
+                    grid[writeRow][y]->setColor(grid[readRow][y]->getColor());
                 }
             }
-
-            x++;
+            writeRow--;
+        }
+        else
+        {
             numLinesCleared++;
         }
     }
+
+    // Fill the remaining rows above writeRow with empty
+    for (int row = writeRow; row >= 0; --row)
+    {
+        for (int y = 0; y < width; ++y)
+        {
+            grid[row][y]->setEmpty();
+        }
+    }
+
     return numLinesCleared;
 }
 

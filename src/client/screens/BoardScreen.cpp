@@ -22,6 +22,27 @@ void BoardScreen::setupRenderers()
 
 BoardScreen::BoardScreen(ClientManager &clientManager) : clientManager(clientManager), board(3, 4)
 {
+    // 2. Configure our score text
+    score.setFont(defaultFont);
+    score.setString("Score: 0"); // Mocked-up text
+    score.setCharacterSize(24);  // Pixel size
+    score.setFillColor(sf::Color::White);
+    score.setPosition(400, 400); // Position on the screen
+
+    // 3. Configure our lines text
+    lines.setFont(defaultFont);
+    lines.setString("Lines: 0"); // Mocked-up text
+    lines.setCharacterSize(24);
+    lines.setFillColor(sf::Color::White);
+    lines.setPosition(400, 350);
+
+    // 4. Configure our level text
+    level.setFont(defaultFont);
+    level.setString("Level: 1"); // Mocked-up text
+    level.setCharacterSize(24);
+    level.setFillColor(sf::Color::White);
+    level.setPosition(400, 250);
+
     setupRenderers();
 }
 
@@ -42,11 +63,18 @@ void BoardScreen::render(sf::RenderWindow &window)
             renderCell->updateData();
             window.draw(*renderCell);
         }
+    window.draw(lines);
+    window.draw(level);
+    window.draw(score);
 }
 
 void BoardScreen::updateBoardFromJson(const nlohmann::json &boardData)
 {
     board.deserialize(boardData);
+    GameData data = clientManager.getGameData();
+    level.setString("Level: " + std::to_string(data.getLevel()));
+    lines.setString("Lines: " + std::to_string(data.getTotalLinesCleared()));
+    level.setString("Score: " + std::to_string(data.getScore()));
 
     // board.printDebug();
 

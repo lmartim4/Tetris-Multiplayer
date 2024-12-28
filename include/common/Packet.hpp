@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <cstdint>
 #include <vector>
 #include "ISerializable.hpp"
@@ -27,6 +28,7 @@ enum class PacketType
     // FROM SERVER TO CLIENT
     GAME_SCREEN,
     PLAYER_LIST,
+    GAME_SCORE,
     ENG_GAME_SCREEN,
     PLAY_SOUND,
 
@@ -43,6 +45,8 @@ inline std::string PacketTypeToString(PacketType type)
 {
     switch (type)
     {
+    case PacketType::GAME_SCORE:
+        return "GAME_SCORE";
     case PacketType::JOIN_REQUEST:
         return "JOIN_REQUEST";
     case PacketType::JOIN_ACCEPTED:
