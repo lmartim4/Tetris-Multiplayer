@@ -55,7 +55,7 @@ inline std::string TetrisActionToString(TetrisAction action)
     case TetrisAction::ROTATE_CCW:
         return "ROTATE_CCW";
     case TetrisAction::ROTATE_CW:
-        return "ROTATE_RIGHT";
+        return "ROTATE_CW";
     case TetrisAction::DROP_FASTER:
         return "DROP_FASTER";
     case TetrisAction::HARD_DROP:
