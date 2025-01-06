@@ -7,7 +7,7 @@ bool AudioManager::tryLoadSound(SoundType type, const std::string &filepath)
 
     if (!buffer.loadFromFile(filepath))
     {
-        console_log("(-) Failed to load file: " + filepath);
+        logger->console_log("(-) Failed to load file: " + filepath);
         return false;
     }
 
@@ -21,7 +21,7 @@ void AudioManager::playSound(SoundType type)
     auto it = m_sounds.find(type);
     if (it == m_sounds.end())
     {
-        console_log("SoundType not loaded: " + std::to_string(static_cast<int>(type)));
+        logger->console_log("SoundType not loaded: " + std::to_string(static_cast<int>(type)));
         return;
     }
 
