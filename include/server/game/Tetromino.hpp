@@ -10,6 +10,7 @@ class Tetromino
 {
 private:
     Coordinate coordinate;
+    int pieceId;
     bool hasChanged;
 
 protected:
@@ -22,12 +23,19 @@ public:
 
     Coordinate getCoordinate() const { return coordinate; }
 
-    Tetromino(Coordinate coord, CellColor color) : coordinate(coord), color(color) {}
+    Tetromino(Coordinate coord, CellColor color) : coordinate(coord), color(color)
+    {
+        static int nextId = 1;
+        pieceId = nextId++;
+        hasChanged = true;
+    }
     virtual ~Tetromino() = default;
 
     CellColor getColor() const;
 
     const std::vector<std::vector<int>> &getShape() const;
+
+    int getId() const { return pieceId; }
 
     bool shouldBroadcastState()
     {
@@ -36,7 +44,7 @@ public:
             hasChanged = false;
             return true;
         }
-        
+
         return false;
     }
 

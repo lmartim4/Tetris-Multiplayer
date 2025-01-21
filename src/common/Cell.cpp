@@ -17,10 +17,19 @@ void Cell::setState(CellState s)
     state = s;
 }
 
+int Cell::getPieceId() const
+{
+    return pieceId;
+}
+void Cell::setPieceId(int id)
+{
+    pieceId = id;
+}
+
 CellColor Cell::getColor() const
 {
     return color;
-};
+}
 
 CellState Cell::getState() const
 {

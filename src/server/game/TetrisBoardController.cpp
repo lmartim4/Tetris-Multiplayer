@@ -8,8 +8,7 @@ TetrisBoardController::TetrisBoardController(TetrisBoard &board)
 {
 }
 
-bool TetrisBoardController::checkCollision(Tetromino &currentTetromino,
-                                           TetrisAction action) const
+bool TetrisBoardController::checkCollision(Tetromino &currentTetromino, TetrisAction action) const
 {
     currentTetromino.evolveStates(true, action);
 
@@ -39,9 +38,9 @@ void TetrisBoardController::placeTetromino(const Tetromino &currentTetromino, bo
 {
     const auto &shape = currentTetromino.getShape();
     auto &grid = board.getGrid();
-    auto tetroColor = currentTetromino.getColor();
 
     CellState newState = fallen ? CellState::FALLEN : CellState::FALLING;
+    int myId = currentTetromino.getId();
 
     int baseX = currentTetromino.getCoordinate().x;
     int baseY = currentTetromino.getCoordinate().y;
@@ -52,14 +51,13 @@ void TetrisBoardController::placeTetromino(const Tetromino &currentTetromino, bo
         {
             if (shape[x][y] != 0)
             {
+
                 int gridX = baseX + static_cast<int>(x);
                 int gridY = board.getNormalizedY(baseY + static_cast<int>(y));
 
-                if (grid[gridX][gridY]->getState() != newState)
-                {
-                    grid[gridX][gridY]->setState(newState);
-                    grid[gridX][gridY]->setColor(tetroColor);
-                }
+                grid[gridX][gridY]->setState(newState);
+                grid[gridX][gridY]->setColor(currentTetromino.getColor());
+                grid[gridX][gridY]->setPieceId(myId);
             }
         }
     }
@@ -120,12 +118,38 @@ int TetrisBoardController::clearFullLines()
     return numLinesCleared;
 }
 
-void TetrisBoardController::clearFallingTetrominos()
+void TetrisBoardController::clearFallingTetromino(const Tetromino &currentTetromino)
 {
-    for (int x = 0; x < board.getHeight(); x++)
-        for (int y = 0; y < board.getWidth(); y++)
-            if (board.getGrid()[x][y]->getState() == FALLING)
-                board.getGrid()[x][y]->setEmpty();
+    /*    for (int x = 0; x < board.getHeight(); x++)
+            for (int y = 0; y < board.getWidth(); y++)
+                if (board.getGrid()[x][y]->getState() == FALLING)
+                    board.getGrid()[x][y]->setEmpty();
+    */
+
+    const auto &shape = currentTetromino.getShape();
+    auto &grid = board.getGrid();
+    auto tetroColor = currentTetromino.getColor();
+
+    int baseX = currentTetromino.getCoordinate().x;
+    int baseY = currentTetromino.getCoordinate().y;
+    int myId = currentTetromino.getId();
+
+    for (size_t x = 0; x < shape.size(); x++)
+    {
+        for (size_t y = 0; y < shape[x].size(); y++)
+        {
+            if (shape[x][y] != 0)
+            {
+                int gridX = baseX + static_cast<int>(x);
+                int gridY = board.getNormalizedY(baseY + static_cast<int>(y));
+
+                if (grid[gridX][gridY]->getPieceId() == myId)
+                {
+                    grid[gridX][gridY]->setEmpty();
+                }
+            }
+        }
+    }
 }
 
 void TetrisBoardController::clearFallenTetrominos()

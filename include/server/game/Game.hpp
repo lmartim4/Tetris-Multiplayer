@@ -44,17 +44,19 @@ private:
     TetrisBoardController *boardController;
     TetrisBoard board;
     std::vector<Player *> players;
-    std::unique_ptr<Tetromino> currentTetromino;
+
+    std::map<Player *, std::shared_ptr<Tetromino>> currentTetromino;
+    std::map<Player *, std::shared_ptr<Tetromino>> nextTetromino;
 
     void loop();
     void processIncommingInputs();
-    void updateGame(TetrisAction action);
-    void lockTetromino();
+    void updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action);
+    void lockTetromino(std::shared_ptr<Tetromino> tetromino);
     int clearFullLines();
     int calculatePoints(int nLines, int level);
 
-    void spawnTetromino();
-    void tetrominoHasFallen();
+    void spawnNextTetromino(Player *player);
+    void tetrominoHasFallen(std::shared_ptr<Tetromino> tetromino);
 
     void broadcastBoardIfChanges() const;
     void broadcastEndGameStatus() const;

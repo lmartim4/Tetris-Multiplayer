@@ -9,10 +9,11 @@ int Game::instanceCount = 0;
 
 Game::Game(ServerManager &server) : server(server), board(16, 10), this_instance(instanceCount++)
 {
-    logger = new Debuggable("Game");
-    logger->console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
     gameState = WAITING_PLAYERS;
     boardController = new TetrisBoardController(board);
+    logger = new Debuggable("Game");
+
+    logger->console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
 }
 
 Game::~Game()
@@ -24,17 +25,22 @@ Game::~Game()
 void Game::addPlayer(Player *player)
 {
     if (gameState != WAITING_PLAYERS)
-    {
-        logger->console_log("Cannot add player (not waiting for players)");
-        return;
-    }
-
+        throw std::logic_error("Cannot add player (not waiting for players)");
     players.emplace_back(player);
 }
 
-void Game::spawnTetromino()
+void Game::spawnNextTetromino(Player *player)
 {
-    currentTetromino = TetrominoFactory::createTetromino();
+    logger->console_log("spawnNextTetromino");
+    // Must have a previus next tetromino
+    if (nextTetromino.find(player) == nextTetromino.end())
+        nextTetromino.emplace(player, TetrominoFactory::createTetromino());
+
+    currentTetromino.erase(player);
+    currentTetromino.emplace(player, nextTetromino.find(player)->second);
+
+    nextTetromino.erase(player);
+    nextTetromino.emplace(player, TetrominoFactory::createTetromino());
 }
 
 void Game::startGame()
@@ -42,10 +48,7 @@ void Game::startGame()
     static int instanceCount = 0;
 
     if (gameState != WAITING_PLAYERS)
-    {
-        std::cerr << "Cannot start a game that is not currently waiting for players" << std::endl;
-        return;
-    }
+        throw std::logic_error("Cannot start a game that is not currently waiting for players");
 
     gameState = STARTING;
     logger->console_log("Starting Game (" + std::to_string(instanceCount++) + ")...");
@@ -67,50 +70,58 @@ void Game::endGameLoop()
 void Game::loop()
 {
     gameState = RUNNNING;
-    spawnTetromino();
+
+    for (Player *pl : players)
+        spawnNextTetromino(pl);
+
     while (gameState != ENDING)
     {
         processIncommingInputs();
+
         if (gravity.hasGravityIntervalElapsed())
-            updateGame(TetrisAction::GRAVITY);
+            for (const auto &pair : currentTetromino)
+                updateGame(pair.second, TetrisAction::GRAVITY);
 
         broadcastBoardIfChanges();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+
     gameState = ENDED;
     broadcastEndGameStatus();
 }
 
-void Game::updateGame(TetrisAction action)
+void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
 {
     if (!board.reachedTop())
     {
-        boardController->clearFallingTetrominos();
+        boardController->clearFallingTetromino(*tetromino);
+
         if (action == TetrisAction::HARD_DROP)
         {
-            while (!(boardController->checkCollision(*currentTetromino, TetrisAction::GRAVITY)))
+            while (!(boardController->checkCollision(*tetromino, TetrisAction::GRAVITY)))
             {
             }
-            tetrominoHasFallen();
+
+            tetrominoHasFallen(tetromino);
         }
-        else if (boardController->checkCollision(*currentTetromino, action))
+        else if (boardController->checkCollision(*tetromino, action))
         {
             if (action == TetrisAction::GRAVITY || action == TetrisAction::HARD_DROP)
             {
                 // Place the tetromino was it finally dropped and locked
-                tetrominoHasFallen();
+                tetrominoHasFallen(tetromino);
             }
             else
             {
                 // Invalid move, revert the tetromino state
-                boardController->placeTetromino(*currentTetromino, false);
+                boardController->placeTetromino(*tetromino, false);
                 server.broadcastSound(SoundType::DenyErrorSound);
             }
         }
         else
         {
             // Valid Move
-            boardController->placeTetromino(*currentTetromino, false);
+            boardController->placeTetromino(*tetromino, false);
             server.broadcastSound(SoundType::FabricImpactSound);
         }
     }
@@ -122,11 +133,11 @@ void Game::updateGame(TetrisAction action)
     }
 }
 
-void Game::lockTetromino()
+void Game::lockTetromino(std::shared_ptr<Tetromino> tetromino)
 {
     server.broadcastSound(SoundType::DjembeSlap);
-    boardController->placeTetromino(*currentTetromino, true);
-    currentTetromino.reset();
+    boardController->placeTetromino(*tetromino, true);
+    tetromino.reset();
 }
 
 int Game::clearFullLines()
@@ -144,9 +155,21 @@ int Game::clearFullLines()
 
 void Game::broadcastBoardIfChanges() const
 {
-    if (!currentTetromino->shouldBroadcastState())
+    bool send = false;
+
+    for (const auto &pair : currentTetromino)
+    {
+        if (pair.second->shouldBroadcastState())
+        {
+            send = true;
+            break;
+        }
+    }
+
+    if (!send)
         return;
 
+    board.printDebug();
     // static int boardsSent = 0;
     // logger->console_log("Sent " + std::to_string(boardsSent++) + "\n");
     server.sendPacket(Packet(PacketType::GAME_SCREEN, board, nullptr));
@@ -174,7 +197,7 @@ void Game::processIncommingInputs()
     TetrisAction action;
     for (Player *pl : players)
         while (pl->popAction(action))
-            updateGame(action);
+            updateGame(currentTetromino.at(pl), action);
 }
 
 int Game::calculatePoints(int nLines, int level)
@@ -185,9 +208,9 @@ int Game::calculatePoints(int nLines, int level)
     return (nLines > 0) ? P_x * (level + 1) : 0;
 }
 
-void Game::tetrominoHasFallen()
+void Game::tetrominoHasFallen(std::shared_ptr<Tetromino> tetromino)
 {
-    lockTetromino();
+    lockTetromino(tetromino);
     int justClearedLines = clearFullLines();
 
     gameData.addScore(calculatePoints(justClearedLines, gameData.getLevel()));
@@ -201,5 +224,17 @@ void Game::tetrominoHasFallen()
 
     server.sendPacket(Packet(PacketType::GAME_SCORE, gameData, nullptr));
 
-    spawnTetromino();
+    // TODO: Better organize the logic here
+
+    Player *foundKey = nullptr;
+    for (const auto &pair : currentTetromino)
+    {
+        if (pair.second == tetromino)
+        {
+            foundKey = pair.first;
+            break;
+        }
+    }
+
+    spawnNextTetromino(foundKey);
 }
