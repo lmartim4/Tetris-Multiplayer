@@ -23,7 +23,7 @@ void ClientManager::onPeerDisconnect(ENetPeer *peer)
 
 void ClientManager::on_receive_score(const Packet &packet)
 {
-    std::cout << packet.getPayloadAsJson() << std::endl;
+    //std::cout << packet.getPayloadAsJson() << std::endl;
     score.deserialize(packet.getPayloadAsJson());
 }
 

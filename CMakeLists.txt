@@ -63,7 +63,7 @@ set(COMMOM_SOURCES
     src/common/TetrisBoard.cpp
     src/common/PlayerList.cpp
     src/common/PlayerData.cpp
-    src/common/Debuggable.cpp
+    src/common/Logger.cpp
 )
 
 # Configure build types

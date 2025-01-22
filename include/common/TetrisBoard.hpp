@@ -4,7 +4,7 @@
 #include <vector>
 #include "Cell.hpp"
 #include "ISerializable.hpp"
-#include "Debuggable.hpp"
+#include "Logger.hpp"
 #include "json.hpp"
 
 /**
@@ -14,7 +14,7 @@
 class TetrisBoard : public ISerializable
 {
 private:
-    Debuggable *logger;
+    Logger *logger;
     int width;
     int height;
 

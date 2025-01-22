@@ -2,7 +2,7 @@
 
 GameManager::GameManager(ServerManager &server) : server(server)
 {
-    logger = new Debuggable("GameManager");
+    logger = new Logger("GameManager");
     logger->console_log("GameManager()");
 }
 

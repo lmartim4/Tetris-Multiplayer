@@ -21,7 +21,7 @@ void TetrisBoard::setupCells()
 
 TetrisBoard::TetrisBoard(int h, int w) : height(h), width(w)
 {
-    logger = new Debuggable("Tetris Board");
+    logger = new Logger("Tetris Board");
     setupCells();
 }
 

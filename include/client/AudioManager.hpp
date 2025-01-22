@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 #include "SoundType.hpp"
-#include "Debuggable.hpp"
+#include "Logger.hpp"
 
 class AudioManager
 {
@@ -16,7 +16,7 @@ public:
     void loadAllSounds();
 
 private:
-    Debuggable *logger = new Debuggable("Audio Manager");
+    Logger *logger = new Logger("Audio Manager");
     bool tryLoadSound(SoundType type, const std::string &filepath);
     std::map<SoundType, sf::SoundBuffer> m_soundBuffers;
     std::map<SoundType, sf::Sound> m_sounds;

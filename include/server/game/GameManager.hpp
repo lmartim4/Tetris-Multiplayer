@@ -2,13 +2,13 @@
 
 #include "Game.hpp"
 #include "ServerManager.hpp"
-#include "Debuggable.hpp"
+#include "Logger.hpp"
 #include "TetrisAction.hpp"
 
 class GameManager
 {
 private:
-    Debuggable *logger;
+    Logger *logger;
     ServerManager &server;
 
     Game *game;

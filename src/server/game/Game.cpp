@@ -11,7 +11,7 @@ Game::Game(ServerManager &server) : server(server), board(16, 10), this_instance
 {
     gameState = WAITING_PLAYERS;
     boardController = new TetrisBoardController(board);
-    logger = new Debuggable("Game");
+    logger = new Logger("Game");
 
     logger->console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
 }

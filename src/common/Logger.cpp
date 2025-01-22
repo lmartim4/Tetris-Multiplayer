@@ -1,6 +1,6 @@
-#include "Debuggable.hpp"
+#include "Logger.hpp"
 
-void Debuggable::console_log(const std::string &msg) const
+void Logger::console_log(const std::string &msg) const
 {
 
     auto now = std::chrono::system_clock::now();
@@ -13,10 +13,10 @@ void Debuggable::console_log(const std::string &msg) const
         << " " << msg << std::endl;
 }
 
-Debuggable::Debuggable(std::string name) : className(name)
+Logger::Logger(std::string name) : className(name)
 {
 }
 
-Debuggable::~Debuggable()
+Logger::~Logger()
 {
 }

@@ -7,7 +7,7 @@
 #include "LevelData.hpp"
 
 #include "ThreadSafeQueue.hpp"
-#include "Debuggable.hpp"
+#include "Logger.hpp"
 #include "ServerManager.hpp"
 
 #include <vector>
@@ -32,7 +32,7 @@ private:
     static int instanceCount;
     const int this_instance;
 
-    Debuggable *logger;
+    Logger *logger;
 
     ServerManager &server;
     std::atomic<GameState> gameState = INITIALIZING;
