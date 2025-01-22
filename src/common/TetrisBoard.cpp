@@ -160,6 +160,13 @@ void TetrisBoard::clearBoard() const
             grid[x][y]->setEmpty();
 }
 
+void TetrisBoard::setSize(int x, int y)
+{
+    height = x;
+    width = y;
+    setupCells();
+}
+
 int TetrisBoard::getNormalizedY(int y) const
 {
     y %= width;

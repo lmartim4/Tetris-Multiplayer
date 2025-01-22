@@ -42,7 +42,7 @@ private:
     GameData gameData;
 
     TetrisBoardController *boardController;
-    TetrisBoard board;
+    std::shared_ptr<TetrisBoard> board;
     std::vector<Player *> players;
 
     std::map<Player *, std::shared_ptr<Tetromino>> currentTetromino;

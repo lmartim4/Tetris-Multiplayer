@@ -7,8 +7,10 @@
 
 int Game::instanceCount = 0;
 
-Game::Game(ServerManager &server) : server(server), board(16, 10), this_instance(instanceCount++)
+Game::Game(ServerManager &server) : server(server), this_instance(instanceCount++)
 {
+    board = std::make_shared<TetrisBoard>(16, 10);
+
     gameState = WAITING_PLAYERS;
     boardController = new TetrisBoardController(board);
     logger = new Logger("Game");
@@ -26,12 +28,13 @@ void Game::addPlayer(Player *player)
 {
     if (gameState != WAITING_PLAYERS)
         throw std::logic_error("Cannot add player (not waiting for players)");
+
     players.emplace_back(player);
+    board->setSize(16, 10 + 3 * (players.size() - 1));
 }
 
 void Game::spawnNextTetromino(Player *player)
 {
-    logger->console_log("spawnNextTetromino");
     // Must have a previus next tetromino
     if (nextTetromino.find(player) == nextTetromino.end())
         nextTetromino.emplace(player, TetrominoFactory::createTetromino());
@@ -92,19 +95,19 @@ void Game::loop()
 
 void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
 {
-    if (!board.reachedTop())
+    if (!board->reachedTop())
     {
-        boardController->clearFallingTetromino(*tetromino);
+        boardController->clearFallingTetromino(tetromino);
 
         if (action == TetrisAction::HARD_DROP)
         {
-            while (!(boardController->checkCollision(*tetromino, TetrisAction::GRAVITY)))
+            while (!(boardController->checkCollision(tetromino, TetrisAction::GRAVITY)))
             {
             }
 
             tetrominoHasFallen(tetromino);
         }
-        else if (boardController->checkCollision(*tetromino, action))
+        else if (boardController->checkCollision(tetromino, action))
         {
             if (action == TetrisAction::GRAVITY || action == TetrisAction::HARD_DROP)
             {
@@ -114,14 +117,14 @@ void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
             else
             {
                 // Invalid move, revert the tetromino state
-                boardController->placeTetromino(*tetromino, false);
+                boardController->placeTetromino(tetromino, false);
                 server.broadcastSound(SoundType::DenyErrorSound);
             }
         }
         else
         {
             // Valid Move
-            boardController->placeTetromino(*tetromino, false);
+            boardController->placeTetromino(tetromino, false);
             server.broadcastSound(SoundType::FabricImpactSound);
         }
     }
@@ -136,7 +139,7 @@ void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
 void Game::lockTetromino(std::shared_ptr<Tetromino> tetromino)
 {
     server.broadcastSound(SoundType::DjembeSlap);
-    boardController->placeTetromino(*tetromino, true);
+    boardController->placeTetromino(tetromino, true);
     tetromino.reset();
 }
 
@@ -169,10 +172,9 @@ void Game::broadcastBoardIfChanges() const
     if (!send)
         return;
 
-    board.printDebug();
-    // static int boardsSent = 0;
-    // logger->console_log("Sent " + std::to_string(boardsSent++) + "\n");
-    server.sendPacket(Packet(PacketType::GAME_SCREEN, board, nullptr));
+    board->printDebug();
+
+    server.sendPacket(Packet(PacketType::GAME_SCREEN, *board, nullptr));
 }
 
 void Game::broadcastEndGameStatus() const

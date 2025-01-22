@@ -40,6 +40,9 @@ public:
     bool reachedTop() const;
     void clearBoard() const;
 
+
+    void setSize(int x, int y);
+
     // Serialization
     nlohmann::json serialize() const override;
     void deserialize(const nlohmann::json &data) override;

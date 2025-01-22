@@ -7,15 +7,15 @@
 class TetrisBoardController
 {
 private:
-    const TetrisBoard &board;
+    const std::shared_ptr<TetrisBoard> board;
 
 public:
-    TetrisBoardController(TetrisBoard &board);
+    TetrisBoardController(std::shared_ptr<TetrisBoard> board);
 
-    void clearFallingTetromino(const Tetromino &currentTetromino);
+    void clearFallingTetromino(const std::shared_ptr<Tetromino> currentTetromino);
     void clearFallenTetrominos();
 
-    bool checkCollision(Tetromino &currentTetromino, TetrisAction action) const;
-    void placeTetromino(const Tetromino &currentTetromino, bool fallen);
+    bool checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action) const;
+    void placeTetromino(const std::shared_ptr<Tetromino> currentTetromino, bool fallen);
     int clearFullLines();
 };
