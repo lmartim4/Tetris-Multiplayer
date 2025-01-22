@@ -33,9 +33,11 @@ void TetrisBoard::printDebug() const
               << std::endl;
     for (int x = 0; x < height; x++)
     {
+        // for (int y = 0; y < width; y++)  std::cout << (grid[x][y]->getState() == FALLING ? " # " : (grid[x][y]->getState() == EMPTY) ? " * "  : " $ ");
+
         for (int y = 0; y < width; y++)
-            std::cout << (grid[x][y]->getState() == FALLING ? " # " : (grid[x][y]->getState() == EMPTY) ? " * "
-                                                                                                        : " $ ");
+            std::cout << (grid[x][y]->getState() == FALLING ? (" " + std::to_string(grid[x][y]->getPieceId() % 10) + " ") : (grid[x][y]->getState() == EMPTY) ? " * "
+                                                                                                                                                              : " $ ");
         std::cout << std::endl;
     }
 

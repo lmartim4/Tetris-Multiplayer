@@ -1,6 +1,7 @@
 
 #include "TetrisBoardController.hpp"
 #include "Cell.hpp"
+
 #include <iostream>
 
 TetrisBoardController::TetrisBoardController(std::shared_ptr<TetrisBoard> board)
@@ -8,7 +9,7 @@ TetrisBoardController::TetrisBoardController(std::shared_ptr<TetrisBoard> board)
 {
 }
 
-bool TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action) const
+CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action) const
 {
     currentTetromino->evolveStates(true, action);
 
@@ -18,20 +19,40 @@ bool TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> currentTet
     int gridX, gridY;
 
     for (size_t x = 0; x < shape.size(); ++x)
+    {
         for (size_t y = 0; y < shape[x].size(); ++y)
+        {
             if (shape[x][y] != 0)
             {
                 gridX = currentTetromino->getCoordinate().x + x;
                 gridY = board->getNormalizedY(currentTetromino->getCoordinate().y + y);
 
-                if (gridX >= board->getHeight() || gridX < 0 || grid[gridX][gridY]->getState() == FALLEN)
+                // Check for out-of-bounds
+                if (gridX < 0 || gridX >= board->getHeight())
                 {
                     currentTetromino->evolveStates(false, action);
-                    return true;
+                    return CollisionType::OUT_OF_BOUNDS;
+                }
+
+                // Check for fallen blocks
+                if (grid[gridX][gridY]->getState() == CellState::FALLEN)
+                {
+                    currentTetromino->evolveStates(false, action);
+                    return CollisionType::FALLEN_OR_BOUNDARY;
+                }
+
+                // Check for collision with other falling Tetromino
+                if (grid[gridX][gridY]->getState() == CellState::FALLING && grid[gridX][gridY]->getPieceId() != currentTetromino->getId())
+                {
+                    currentTetromino->evolveStates(false, action);
+                    return CollisionType::FALLING_OTHER;
                 }
             }
+        }
+    }
 
-    return false;
+    // No collision
+    return CollisionType::NONE;
 }
 
 void TetrisBoardController::placeTetromino(const std::shared_ptr<Tetromino> currentTetromino, bool fallen)
