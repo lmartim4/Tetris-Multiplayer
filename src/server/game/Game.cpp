@@ -35,12 +35,21 @@ void Game::addPlayer(Player *player)
 
 void Game::spawnNextTetromino(Player *player)
 {
-    // Must have a previus next tetromino
     if (nextTetromino.find(player) == nextTetromino.end())
         nextTetromino.emplace(player, TetrominoFactory::createTetromino());
 
+    std::shared_ptr<Tetromino> spawningTetromino = nextTetromino.find(player)->second;
+
     currentTetromino.erase(player);
-    currentTetromino.emplace(player, nextTetromino.find(player)->second);
+    currentTetromino.emplace(player, spawningTetromino);
+
+    int maxTries = board->getWidth();
+    CollisionType col = boardController->checkCollision(spawningTetromino, TetrisAction::IDLE);
+
+    while (col != CollisionType::NONE && maxTries-- > 0)
+        spawningTetromino->evolveStates(true, TetrisAction::RIGHT);
+
+    boardController->setCellState(spawningTetromino, CellState::FALLING);
 
     nextTetromino.erase(player);
     nextTetromino.emplace(player, TetrominoFactory::createTetromino());

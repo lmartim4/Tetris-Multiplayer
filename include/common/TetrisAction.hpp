@@ -5,6 +5,7 @@
 
 enum class TetrisAction
 {
+    IDLE,
     LEFT,
     RIGHT,
     ROTATE_CCW,
