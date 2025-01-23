@@ -219,8 +219,9 @@ void NetworkManager::processENetEvent(ENetEvent &event)
         Packet packet = parsePacket(event.packet, event.peer);
         handlePacket(packet, event.peer);
         enet_packet_destroy(event.packet);
+        break;
     }
-    break;
+    
 
     case ENET_EVENT_TYPE_DISCONNECT:
     {
