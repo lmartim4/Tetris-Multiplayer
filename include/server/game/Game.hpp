@@ -16,6 +16,8 @@
 #include <thread>
 #include <map>
 
+#define GAME_DEBUG
+
 enum GameState
 {
     INITIALIZING,    // WAITING CLASS CREATION
@@ -51,12 +53,12 @@ private:
     void loop();
     void processIncommingInputs();
     void updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action);
-    void lockTetromino(std::shared_ptr<Tetromino> tetromino);
-    int clearFullLines();
+    void lockTetrominoInPlace(std::shared_ptr<Tetromino> tetromino);
+    int tryClearFullLines();
     int calculatePoints(int nLines, int level);
 
     void spawnNextTetromino(Player *player);
-    void tetrominoHasFallen(std::shared_ptr<Tetromino> tetromino);
+    void onTetrominoFall(std::shared_ptr<Tetromino> tetromino, CollisionType col);
 
     void broadcastBoardIfChanges() const;
     void broadcastEndGameStatus() const;

@@ -22,36 +22,44 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
     {
         for (size_t y = 0; y < shape[x].size(); ++y)
         {
-            if (shape[x][y] != 0)
+            if (shape[x][y] == 0)
+                continue;
+
+            gridX = currentTetromino->getCoordinate().x + x;
+            gridY = board->getNormalizedY(currentTetromino->getCoordinate().y + y);
+
+            // Check for out-of-bounds
+            if (gridX < 0 || gridX >= board->getHeight())
             {
-                gridX = currentTetromino->getCoordinate().x + x;
-                gridY = board->getNormalizedY(currentTetromino->getCoordinate().y + y);
+                currentTetromino->evolveStates(false, action);
 
-                // Check for out-of-bounds
-                if (gridX < 0 || gridX >= board->getHeight())
-                {
-                    currentTetromino->evolveStates(false, action);
-                    return CollisionType::OUT_OF_BOUNDS;
-                }
+                //std::cout << "Colision = OUT_OF_BOUNDS\n";
+                return CollisionType::OUT_OF_BOUNDS;
+            }
 
-                // Check for fallen blocks
-                if (grid[gridX][gridY]->getState() == CellState::FALLEN)
-                {
-                    currentTetromino->evolveStates(false, action);
-                    return CollisionType::FALLEN_OR_BOUNDARY;
-                }
+            // Check for fallen blocks
+            if (grid[gridX][gridY]->getState() == CellState::FALLEN)
+            {
+                currentTetromino->evolveStates(false, action);
 
-                // Check for collision with other falling Tetromino
-                if (grid[gridX][gridY]->getState() == CellState::FALLING && grid[gridX][gridY]->getPieceId() != currentTetromino->getId())
-                {
-                    currentTetromino->evolveStates(false, action);
-                    return CollisionType::FALLING_OTHER;
-                }
+                //std::cout << "Colision = FALLEN_OR_BOUNDARY\n";
+                return CollisionType::FALLEN_OR_BOUNDARY;
+            }
+
+            // Check for collision with other falling Tetromino
+            if (grid[gridX][gridY]->getState() == CellState::FALLING && grid[gridX][gridY]->getPieceId() != currentTetromino->getId())
+            {
+                currentTetromino->evolveStates(false, action);
+
+                //std::cout << "Colision = FALLING_OTHER\n";
+                return CollisionType::FALLING_OTHER;
             }
         }
     }
 
     // No collision
+
+    //std::cout << "Colision = NONE\n";
     return CollisionType::NONE;
 }
 
@@ -84,7 +92,7 @@ void TetrisBoardController::placeTetromino(const std::shared_ptr<Tetromino> curr
     }
 }
 
-int TetrisBoardController::clearFullLines()
+int TetrisBoardController::findAndClearFullLines()
 {
     auto &grid = board->getGrid();
     int width = board->getWidth();

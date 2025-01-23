@@ -25,5 +25,5 @@ public:
 
     CollisionType checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action) const;
     void placeTetromino(const std::shared_ptr<Tetromino> currentTetromino, bool fallen);
-    int clearFullLines();
+    int findAndClearFullLines();
 };

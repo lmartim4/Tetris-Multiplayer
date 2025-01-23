@@ -95,57 +95,62 @@ void Game::loop()
 
 void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
 {
-    if (!board->reachedTop())
-    {
-        boardController->clearFallingTetromino(tetromino);
-
-        if (action == TetrisAction::HARD_DROP)
-        {
-            while (!(boardController->checkCollision(tetromino, TetrisAction::GRAVITY)))
-            {
-            }
-
-            tetrominoHasFallen(tetromino);
-        }
-        else if (boardController->checkCollision(tetromino, action))
-        {
-            if (action == TetrisAction::GRAVITY || action == TetrisAction::HARD_DROP)
-            {
-                // Place the tetromino was it finally dropped and locked
-                tetrominoHasFallen(tetromino);
-            }
-            else
-            {
-                // Invalid move, revert the tetromino state
-                boardController->placeTetromino(tetromino, false);
-                server.broadcastSound(SoundType::DenyErrorSound);
-            }
-        }
-        else
-        {
-            // Valid Move
-            boardController->placeTetromino(tetromino, false);
-            server.broadcastSound(SoundType::FabricImpactSound);
-        }
-    }
-    else
+    if (board->reachedTop())
     {
         gameState = ENDING;
         logger->console_log("Ending Game");
         server.broadcastSound(SoundType::DeathSound);
+        return;
+    }
+
+    boardController->clearFallingTetromino(tetromino);
+
+    CollisionType colision;
+
+    if (action == TetrisAction::HARD_DROP)
+    {
+        do
+        {
+            colision = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
+        } while (colision == CollisionType::NONE);
+
+        onTetrominoFall(tetromino, colision);
+        return;
+    }
+
+    colision = boardController->checkCollision(tetromino, action);
+
+    if (colision != CollisionType::NONE)
+    {
+        if (action == TetrisAction::GRAVITY)
+        {
+            onTetrominoFall(tetromino, colision);
+        }
+        else
+        {
+            // Invalid move, revert the tetromino state
+            boardController->placeTetromino(tetromino, false);
+            server.broadcastSound(SoundType::DenyErrorSound);
+        }
+    }
+    else
+    {
+        // Valid Move
+        boardController->placeTetromino(tetromino, false);
+        server.broadcastSound(SoundType::FabricImpactSound);
     }
 }
 
-void Game::lockTetromino(std::shared_ptr<Tetromino> tetromino)
+void Game::lockTetrominoInPlace(std::shared_ptr<Tetromino> tetromino)
 {
     server.broadcastSound(SoundType::DjembeSlap);
     boardController->placeTetromino(tetromino, true);
     tetromino.reset();
 }
 
-int Game::clearFullLines()
+int Game::tryClearFullLines()
 {
-    int clearedLines = boardController->clearFullLines();
+    int clearedLines = boardController->findAndClearFullLines();
 
     if (clearedLines > 0)
     {
@@ -172,7 +177,9 @@ void Game::broadcastBoardIfChanges() const
     if (!send)
         return;
 
+#ifdef GAME_DEBUG
     board->printDebug();
+#endif
 
     server.sendPacket(Packet(PacketType::GAME_SCREEN, *board, nullptr));
 }
@@ -183,6 +190,7 @@ void Game::broadcastEndGameStatus() const
         throw std::logic_error("Game is still running, why would you broadvst this status?");
 
     EndGameData endGame;
+
     endGame.linesRemoved = gameData.getTotalLinesCleared();
     endGame.totalPoints = gameData.getScore();
     endGame.finalLevel = gameData.getLevel();
@@ -210,12 +218,18 @@ int Game::calculatePoints(int nLines, int level)
     return (nLines > 0) ? P_x * (level + 1) : 0;
 }
 
-void Game::tetrominoHasFallen(std::shared_ptr<Tetromino> tetromino)
+void Game::onTetrominoFall(std::shared_ptr<Tetromino> tetromino, CollisionType col)
 {
-    lockTetromino(tetromino);
-    int justClearedLines = clearFullLines();
+    if (col == CollisionType::FALLING_OTHER)
+        return;
+
+    lockTetrominoInPlace(tetromino);
+
+    int justClearedLines = tryClearFullLines();
 
     gameData.addScore(calculatePoints(justClearedLines, gameData.getLevel()));
+
+    server.sendPacket(Packet(PacketType::GAME_SCORE, gameData, nullptr));
 
     if (gameData.tryLevelUp(LEVEL_UP_LINES))
     {
@@ -223,8 +237,6 @@ void Game::tetrominoHasFallen(std::shared_ptr<Tetromino> tetromino)
         logger->console_log("Level Up: (" + std::to_string(gameData.getLevel()) + ")");
         server.broadcastSound(SoundType::LevelUp);
     }
-
-    server.sendPacket(Packet(PacketType::GAME_SCORE, gameData, nullptr));
 
     // TODO: Better organize the logic here
 
