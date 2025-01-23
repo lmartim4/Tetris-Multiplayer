@@ -4,7 +4,7 @@
 #include "EndGameData.hpp"
 #include "Player.hpp"
 #include "GameData.hpp"
-#include "LevelData.hpp"
+#include "GravityManager.hpp"
 
 #include "ThreadSafeQueue.hpp"
 #include "Logger.hpp"

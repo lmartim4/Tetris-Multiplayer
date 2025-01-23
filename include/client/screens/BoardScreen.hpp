@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <mutex>
 #include "Screen.hpp"
 #include "CellRenderer.hpp"
 #include "TetrisBoard.hpp"
@@ -20,6 +21,8 @@ private:
     sf::Text score;
     sf::Text lines;
     sf::Text level;
+
+    std::mutex renderMutex;
 
     void setupRenderers();
 

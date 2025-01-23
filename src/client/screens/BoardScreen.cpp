@@ -2,6 +2,8 @@
 
 void BoardScreen::setupRenderers()
 {
+    std::lock_guard<std::mutex> lock(renderMutex);
+
     renderGrid.clear();
 
     for (int x = 0; x < board.getHeight(); ++x)
@@ -48,6 +50,8 @@ BoardScreen::BoardScreen(ClientManager &clientManager) : clientManager(clientMan
 
 void BoardScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
+    std::lock_guard<std::mutex> lock(renderMutex);
+    
     handleKeyPress(event);
 
     for (auto &row : renderGrid)
