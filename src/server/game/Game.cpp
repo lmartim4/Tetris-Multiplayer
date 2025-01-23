@@ -82,8 +82,7 @@ void Game::loop()
         processIncommingInputs();
 
         if (gravity.hasGravityIntervalElapsed())
-            for (const auto &pair : currentTetromino)
-                updateGame(pair.second, TetrisAction::GRAVITY);
+            processGravity();
 
         broadcastBoardIfChanges();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -111,10 +110,17 @@ void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
     {
         do
         {
+
             colision = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
+            if (colision == CollisionType::NONE)
+                tetromino->evolveStates(true, TetrisAction::GRAVITY);
+
         } while (colision == CollisionType::NONE);
 
-        onTetrominoFall(tetromino, colision);
+        std::cout << "Sai do hard drop com " << colision << std::endl;
+
+        boardController->setCellState(tetromino, CellState::FALLING);
+        onTetrominoColide(tetromino, colision);
         return;
     }
 
@@ -122,30 +128,17 @@ void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
 
     if (colision != CollisionType::NONE)
     {
-        if (action == TetrisAction::GRAVITY)
-        {
-            onTetrominoFall(tetromino, colision);
-        }
-        else
-        {
-            // Invalid move, revert the tetromino state
-            boardController->placeTetromino(tetromino, false);
-            server.broadcastSound(SoundType::DenyErrorSound);
-        }
+        // Invalid move, revert the tetromino state
+        boardController->setCellState(tetromino, CellState::FALLING);
+        server.broadcastSound(SoundType::DenyErrorSound);
     }
     else
     {
         // Valid Move
-        boardController->placeTetromino(tetromino, false);
+        tetromino->evolveStates(true, action);
+        boardController->setCellState(tetromino, CellState::FALLING);
         server.broadcastSound(SoundType::FabricImpactSound);
     }
-}
-
-void Game::lockTetrominoInPlace(std::shared_ptr<Tetromino> tetromino)
-{
-    server.broadcastSound(SoundType::DjembeSlap);
-    boardController->placeTetromino(tetromino, true);
-    tetromino.reset();
 }
 
 int Game::tryClearFullLines()
@@ -202,6 +195,80 @@ void Game::broadcastEndGameStatus() const
     server.sendPacket((Packet(PacketType::ENG_GAME_SCREEN, endGame, nullptr)));
 }
 
+int Game::countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetrominos)
+{
+    int count = 0;
+
+    for (const std::shared_ptr<Tetromino> tetromino : tetrominos)
+    {
+        CollisionType col = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
+
+        if (col == CollisionType::FALLEN_FIXED || col == CollisionType::GROUND)
+            if (!tetromino->lockedInPlace)
+                count++;
+    }
+
+    std::cout << "Applied = " << count << "\n";
+
+    if (count > 0)
+    {
+        std::cout << "Worked\n";
+    }
+
+    return count;
+}
+
+void Game::processGravity()
+{
+    CollisionType colision;
+
+    std::vector<std::shared_ptr<Tetromino>> tetrominosToApplyGravity;
+
+    for (const auto &pair : currentTetromino)
+    {
+        tetrominosToApplyGravity.emplace_back(pair.second);
+        pair.second->canMove = false;
+        pair.second->lockedInPlace = false;
+    }
+
+    while (countNewLockedTetrominos(tetrominosToApplyGravity) > 0)
+    {
+
+        for (const std::shared_ptr<Tetromino> tetromino : tetrominosToApplyGravity)
+        {
+            if (tetromino->lockedInPlace)
+                continue;
+
+            colision = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
+
+            if (colision == CollisionType::GROUND || colision == CollisionType::FALLEN_FIXED)
+            {
+                tetromino->canMove = false;
+
+                boardController->setCellState(tetromino, CellState::FALLING);
+                onTetrominoColide(tetromino, colision);
+            }
+            else if (colision == CollisionType::FALLING_OTHER || colision == CollisionType::NONE)
+            {
+                tetromino->canMove = true;
+            }
+        }
+    }
+
+    for (const std::shared_ptr<Tetromino> tetromino : tetrominosToApplyGravity)
+    {
+
+        CollisionType col = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
+
+        if (col == CollisionType::FALLING_OTHER || col == CollisionType::NONE)
+        {
+            boardController->clearFallingTetromino(tetromino);
+            tetromino->evolveStates(true, TetrisAction::GRAVITY);
+            boardController->setCellState(tetromino, CellState::FALLING);
+        }
+    }
+}
+
 void Game::processIncommingInputs()
 {
     TetrisAction action;
@@ -218,12 +285,15 @@ int Game::calculatePoints(int nLines, int level)
     return (nLines > 0) ? P_x * (level + 1) : 0;
 }
 
-void Game::onTetrominoFall(std::shared_ptr<Tetromino> tetromino, CollisionType col)
+void Game::onTetrominoColide(std::shared_ptr<Tetromino> tetromino, CollisionType col)
 {
     if (col == CollisionType::FALLING_OTHER)
         return;
 
-    lockTetrominoInPlace(tetromino);
+    tetromino->lockedInPlace = true;
+    server.broadcastSound(SoundType::DjembeSlap);
+    boardController->setCellState(tetromino, CellState::FALLEN);
+    // tetromino.reset();
 
     int justClearedLines = tryClearFullLines();
 

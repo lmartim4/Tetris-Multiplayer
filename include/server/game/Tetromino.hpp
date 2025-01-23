@@ -22,13 +22,16 @@ public:
     static const std::vector<CellColor> tetromino_colors;
     static const std::vector<char> types;
 
+    bool canMove = false;
+    bool lockedInPlace = false;
+
     Coordinate getCoordinate() const { return coordinate; }
 
     Tetromino(Coordinate coord, CellColor color) : coordinate(coord), color(color)
     {
         static int nextId = 1;
         pieceId = nextId++;
-        
+
         hasChanged = true;
     }
     virtual ~Tetromino() = default;

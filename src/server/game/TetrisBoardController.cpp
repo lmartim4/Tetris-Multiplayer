@@ -33,8 +33,8 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
             {
                 currentTetromino->evolveStates(false, action);
 
-                //std::cout << "Colision = OUT_OF_BOUNDS\n";
-                return CollisionType::OUT_OF_BOUNDS;
+                // std::cout << "Colision = OUT_OF_BOUNDS\n";
+                return CollisionType::GROUND;
             }
 
             // Check for fallen blocks
@@ -42,8 +42,8 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
             {
                 currentTetromino->evolveStates(false, action);
 
-                //std::cout << "Colision = FALLEN_OR_BOUNDARY\n";
-                return CollisionType::FALLEN_OR_BOUNDARY;
+                // std::cout << "Colision = FALLEN_OR_BOUNDARY\n";
+                return CollisionType::FALLEN_FIXED;
             }
 
             // Check for collision with other falling Tetromino
@@ -51,7 +51,7 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
             {
                 currentTetromino->evolveStates(false, action);
 
-                //std::cout << "Colision = FALLING_OTHER\n";
+                // std::cout << "Colision = FALLING_OTHER\n";
                 return CollisionType::FALLING_OTHER;
             }
         }
@@ -59,16 +59,15 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
 
     // No collision
 
-    //std::cout << "Colision = NONE\n";
+    currentTetromino->evolveStates(false, action);
     return CollisionType::NONE;
 }
 
-void TetrisBoardController::placeTetromino(const std::shared_ptr<Tetromino> currentTetromino, bool fallen)
+void TetrisBoardController::setCellState(const std::shared_ptr<Tetromino> currentTetromino, CellState state)
 {
     const auto &shape = currentTetromino->getShape();
     auto &grid = board->getGrid();
 
-    CellState newState = fallen ? CellState::FALLEN : CellState::FALLING;
     int myId = currentTetromino->getId();
 
     int baseX = currentTetromino->getCoordinate().x;
@@ -84,7 +83,7 @@ void TetrisBoardController::placeTetromino(const std::shared_ptr<Tetromino> curr
                 int gridX = baseX + static_cast<int>(x);
                 int gridY = board->getNormalizedY(baseY + static_cast<int>(y));
 
-                grid[gridX][gridY]->setState(newState);
+                grid[gridX][gridY]->setState(state);
                 grid[gridX][gridY]->setColor(currentTetromino->getColor());
                 grid[gridX][gridY]->setPieceId(myId);
             }
@@ -179,6 +178,6 @@ void TetrisBoardController::clearFallenTetrominos()
 {
     for (int x = 0; x < board->getHeight(); x++)
         for (int y = 0; y < board->getWidth(); y++)
-            if (board->getGrid()[x][y]->getState() == FALLEN)
+            if (board->getGrid()[x][y]->getState() == CellState::FALLEN)
                 board->getGrid()[x][y]->setEmpty();
 }

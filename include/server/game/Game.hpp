@@ -53,15 +53,19 @@ private:
     void loop();
     void processIncommingInputs();
     void updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action);
-    void lockTetrominoInPlace(std::shared_ptr<Tetromino> tetromino);
+
     int tryClearFullLines();
     int calculatePoints(int nLines, int level);
 
     void spawnNextTetromino(Player *player);
-    void onTetrominoFall(std::shared_ptr<Tetromino> tetromino, CollisionType col);
+    void onTetrominoColide(std::shared_ptr<Tetromino> tetromino, CollisionType col);
 
     void broadcastBoardIfChanges() const;
     void broadcastEndGameStatus() const;
+
+    int countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetrominos);
+
+    void processGravity();
 
     std::thread gameThread;
 
