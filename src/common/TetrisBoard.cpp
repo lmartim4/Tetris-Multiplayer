@@ -146,15 +146,6 @@ void TetrisBoard::deserialize(const nlohmann::json &data)
     }
 }
 
-bool TetrisBoard::reachedTop() const
-{
-    for (int y = 0; y < width; y++)
-        if (grid.at(0).at(y)->getState() == FALLEN)
-            return true;
-
-    return false;
-}
-
 void TetrisBoard::clearBoard() const
 {
     for (int x = 0; x < height; x++)

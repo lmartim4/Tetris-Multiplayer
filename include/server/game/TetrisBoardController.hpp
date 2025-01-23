@@ -6,10 +6,10 @@
 
 enum CollisionType
 {
-    NONE,               // No collision occurred
+    NONE,          // No collision occurred
+    FALLING_OTHER, // Collided with another falling Tetromino
     FALLEN_FIXED, // Collided with a boundary or a fallen block
-    FALLING_OTHER,      // Collided with another falling Tetromino
-    GROUND,      // Attempted to place Tetromino outside the board
+    GROUND,       // Attempted to place Tetromino outside the board
 };
 
 class TetrisBoardController

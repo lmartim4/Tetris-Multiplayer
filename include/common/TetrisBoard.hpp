@@ -36,10 +36,7 @@ public:
     std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid() { return grid; }
     const std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid() const { return grid; }
 
-    // Board-level utility
-    bool reachedTop() const;
     void clearBoard() const;
-
 
     void setSize(int x, int y);
 

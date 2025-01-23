@@ -18,6 +18,8 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
 
     int gridX, gridY;
 
+    CollisionType worstCollision = CollisionType::NONE;
+
     for (size_t x = 0; x < shape.size(); ++x)
     {
         for (size_t y = 0; y < shape[x].size(); ++y)
@@ -28,31 +30,21 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
             gridX = currentTetromino->getCoordinate().x + x;
             gridY = board->getNormalizedY(currentTetromino->getCoordinate().y + y);
 
-            // Check for out-of-bounds
             if (gridX < 0 || gridX >= board->getHeight())
             {
-                currentTetromino->evolveStates(false, action);
-
-                // std::cout << "Colision = OUT_OF_BOUNDS\n";
-                return CollisionType::GROUND;
+                worstCollision = CollisionType::GROUND;
             }
-
-            // Check for fallen blocks
-            if (grid[gridX][gridY]->getState() == CellState::FALLEN)
+            else if (grid[gridX][gridY]->getState() == CellState::FALLEN)
             {
-                currentTetromino->evolveStates(false, action);
 
-                // std::cout << "Colision = FALLEN_OR_BOUNDARY\n";
-                return CollisionType::FALLEN_FIXED;
+                if (worstCollision < CollisionType::FALLEN_FIXED)
+                    worstCollision = CollisionType::FALLEN_FIXED;
             }
-
-            // Check for collision with other falling Tetromino
-            if (grid[gridX][gridY]->getState() == CellState::FALLING && grid[gridX][gridY]->getPieceId() != currentTetromino->getId())
+            else if (grid[gridX][gridY]->getState() == CellState::FALLING && grid[gridX][gridY]->getPieceId() != currentTetromino->getId())
             {
-                currentTetromino->evolveStates(false, action);
 
-                // std::cout << "Colision = FALLING_OTHER\n";
-                return CollisionType::FALLING_OTHER;
+                if (worstCollision < CollisionType::FALLING_OTHER)
+                    worstCollision = CollisionType::FALLING_OTHER;
             }
         }
     }
@@ -60,7 +52,7 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
     // No collision
 
     currentTetromino->evolveStates(false, action);
-    return CollisionType::NONE;
+    return worstCollision;
 }
 
 void TetrisBoardController::setCellState(const std::shared_ptr<Tetromino> currentTetromino, CellState state)

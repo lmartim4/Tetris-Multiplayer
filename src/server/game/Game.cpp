@@ -47,7 +47,17 @@ void Game::spawnNextTetromino(Player *player)
     CollisionType col = boardController->checkCollision(spawningTetromino, TetrisAction::IDLE);
 
     while (col != CollisionType::NONE && maxTries-- > 0)
+    {
         spawningTetromino->evolveStates(true, TetrisAction::RIGHT);
+        col = boardController->checkCollision(spawningTetromino, TetrisAction::IDLE);
+
+        if (maxTries == 0)
+        {
+            gameState = GameState::ENDING;
+            logger->console_log("Ending Game");
+            server.broadcastSound(SoundType::DeathSound);
+        }
+    }
 
     boardController->setCellState(spawningTetromino, CellState::FALLING);
 
@@ -103,13 +113,6 @@ void Game::loop()
 
 void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
 {
-    if (board->reachedTop())
-    {
-        gameState = ENDING;
-        logger->console_log("Ending Game");
-        server.broadcastSound(SoundType::DeathSound);
-        return;
-    }
 
     boardController->clearFallingTetromino(tetromino);
 
@@ -125,8 +128,6 @@ void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
                 tetromino->evolveStates(true, TetrisAction::GRAVITY);
 
         } while (colision == CollisionType::NONE);
-
-        std::cout << "Sai do hard drop com " << colision << std::endl;
 
         boardController->setCellState(tetromino, CellState::FALLING);
         onTetrominoColide(tetromino, colision);
@@ -216,14 +217,7 @@ int Game::countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetro
             if (!tetromino->lockedInPlace)
                 count++;
     }
-
-    std::cout << "Applied = " << count << "\n";
-
-    if (count > 0)
-    {
-        std::cout << "Worked\n";
-    }
-
+    
     return count;
 }
 
