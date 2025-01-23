@@ -6,7 +6,7 @@ class GravityManager
 {
 private:
     static constexpr int kMinGravityTimeMs = 400; // Minimum gravity time
-    int gravityTimeMs = 500;                     // Current gravity time
+    int gravityTimeMs = 5000;                     // Current gravity time
     int gravityDecrementPerLevel = 50;           // How much to reduce per level
     std::chrono::steady_clock::time_point lastGravityUpdate = std::chrono::steady_clock::now();
 

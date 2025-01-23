@@ -10,6 +10,7 @@ class Tetromino
 {
 private:
     Coordinate coordinate;
+
     int pieceId;
     bool hasChanged;
 
@@ -27,6 +28,7 @@ public:
     {
         static int nextId = 1;
         pieceId = nextId++;
+        
         hasChanged = true;
     }
     virtual ~Tetromino() = default;

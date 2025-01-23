@@ -235,7 +235,7 @@ void ClientManager::onPressKey(sf::Event::KeyEvent e)
     case sf::Keyboard::S:
         if (debugEnabled)
             network_print("Tecla S pressionada.\n");
-        sendPacket(Packet(PacketType::ROTATE_CW, serverPeer));
+        sendPacket(Packet(PacketType::DROP_FASTER, serverPeer));
         break;
 
     case sf::Keyboard::D:
