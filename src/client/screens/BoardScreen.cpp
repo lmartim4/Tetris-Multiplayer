@@ -51,7 +51,7 @@ BoardScreen::BoardScreen(ClientManager &clientManager) : clientManager(clientMan
 void BoardScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
     std::lock_guard<std::mutex> lock(renderMutex);
-    
+
     handleKeyPress(event);
 
     for (auto &row : renderGrid)
@@ -61,12 +61,17 @@ void BoardScreen::handleEvent(sf::Event event, ScreenManager &manager)
 
 void BoardScreen::render(sf::RenderWindow &window)
 {
-    for (auto &row : renderGrid)
-        for (auto &renderCell : row)
+    std::lock_guard<std::mutex> lock(renderMutex);
+
+    for (std::vector<std::shared_ptr<CellRenderer>> row : renderGrid)
+    {
+        for (std::shared_ptr<CellRenderer> renderCell : row)
         {
             renderCell->updateData();
             window.draw(*renderCell);
         }
+    }
+
     window.draw(lines);
     window.draw(level);
     window.draw(score);
