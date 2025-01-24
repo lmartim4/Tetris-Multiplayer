@@ -1,21 +1,22 @@
 #include "NetworkManager.hpp"
 #include <iomanip>
-#include <iostream>
 #include <thread>
 
-char *NetworkManager::uint32_to_ipv4(uint32_t ip_addr)
+std::string NetworkManager::uint32_to_ipv4(uint32_t ip_addr)
 {
-    static char ip_str[16];
     ip_addr = htonl(ip_addr);
+    char ip_str[16]; // Temporary buffer for formatting
     snprintf(ip_str, sizeof(ip_str), "%u.%u.%u.%u",
              (ip_addr >> 24) & 0xFF,
              (ip_addr >> 16) & 0xFF,
              (ip_addr >> 8) & 0xFF,
              ip_addr & 0xFF);
-    return ip_str;
+    return std::string(ip_str); // Return as a std::string
 }
+
 NetworkManager::NetworkManager()
 {
+    logger = new Logger("NetworkManager");
     if (enet_initialize() != 0)
     {
         std::cerr << "Failed to initialize ENET!" << std::endl;
@@ -38,17 +39,6 @@ void NetworkManager::broadcastPacket(const Packet &packet)
     outgoingPackets.push(packet);
 }
 
-void NetworkManager::network_print(const char *array)
-{
-    // Get current time as time_t (seconds since epoch)
-    auto now = std::chrono::system_clock::now();
-    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-
-    // Convert time_t to local time (struct tm)
-    std::tm *localTime = std::localtime(&currentTime);
-    std::cout << "[" << std::put_time(localTime, "%H:%M:%S") << "] " << array;
-}
-
 void NetworkManager::TaskStartNetwork()
 {
     if (mainTask)
@@ -57,7 +47,7 @@ void NetworkManager::TaskStartNetwork()
         return;
     }
 
-    network_print("Initializing Network Task...\n");
+    logger->console_log("Initializing Network Task...\n");
 
     mainTask = true;
     sending = true;
@@ -84,8 +74,8 @@ void NetworkManager::handlePacket(Packet &packet, ENetPeer *peer)
     }
     else
     {
-        network_print("");
-        std::cout << "[" << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << "]" << " >> \"" << PacketTypeToString(packet.getType()) << "\" (No listener registred)\n";
+        logger->console_log("[" + uint32_to_ipv4(peer->address.host) + ":" + std::to_string(peer->address.port) + "] >> \"" +
+                            PacketTypeToString(packet.getType()) + "\" (No listener registered)\n");
     }
 }
 
@@ -126,8 +116,7 @@ Packet NetworkManager::parsePacket(const ENetPacket *enetPacket, ENetPeer *sourc
 {
     if (enetPacket->dataLength < 1)
     {
-        network_print("Failed to parse a packet from ");
-        std::cout << uint32_to_ipv4(sourcePeer->address.host) << ":" << sourcePeer->address.port << std::endl;
+        logger->console_log("Failed to parse a packet from " + uint32_to_ipv4(sourcePeer->address.host) + ":" + std::to_string(sourcePeer->address.port));
 
         return Packet(PacketType::PARSING_ERROR, sourcePeer);
     }

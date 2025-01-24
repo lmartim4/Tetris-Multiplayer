@@ -42,7 +42,7 @@ void JoinRequestListener(const Packet &packet)
 int main(int argc, const char *argv[])
 {
     if (server.isRunning())
-        server.network_print("Waiting connections...\n");
+        std::cout << "Waiting connections...\n";
     else
         return -1;
 

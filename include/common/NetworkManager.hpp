@@ -13,6 +13,7 @@
 #include <memory>
 #include <mutex>
 #include <condition_variable>
+#include "Logger.hpp"
 
 // The NetworkManager class is responsible for managing all network communication.
 // It sets up the network host, handles incoming and outgoing packets, and provides
@@ -34,10 +35,7 @@ public:
     bool isRunning() const;
 
     // Utility function to convert a 32-bit integer IP address to an IPv4 string (e.g., "192.168.1.1").
-    static char *uint32_to_ipv4(uint32_t ip_addr);
-
-    // Prints a message with a timestamp to the console for debugging purposes.
-    static void network_print(const char *array);
+    std::string uint32_to_ipv4(uint32_t ip_addr);
 
     // Returns the ENetHost object, which represents either the client or server in ENet.
     ENetHost *getHost();
@@ -51,10 +49,11 @@ public:
     virtual void broadcastPacket(const Packet &packet);
 
 protected:
+    Logger *logger;
     ENetHost *host = nullptr; // ENet host, which can either be a server or a client.
 
     // Converts an ENet packet into a custom Packet structure by extracting the packet type and data.
-    static Packet parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer);
+    Packet parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer);
 
     // Handles a received packet by calling the registered listener for its packet type.
     void handlePacket(Packet &packet, ENetPeer *peer);

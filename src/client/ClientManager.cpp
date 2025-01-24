@@ -10,14 +10,14 @@ void ClientManager::onPeerConnect(ENetPeer *peer)
 {
     isConnected = true;
     std::cout << std::endl;
-    network_print("");
+    logger->console_log("");
     std::cout << "Connection successful to " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
 }
 
 void ClientManager::onPeerDisconnect(ENetPeer *peer)
 {
     isConnected = false;
-    network_print("Disconnected from server\n");
+    logger->console_log("Disconnected from server\n");
     disconnect();
 }
 
@@ -41,7 +41,7 @@ void ClientManager::on_receive_player_list(const Packet &packet)
 
 void ClientManager::TaskStartHeartbeat()
 {
-    network_print("Initializing Heartbeat Task...\n");
+    logger->console_log("Initializing Heartbeat Task...\n");
     ThreadHeartbeat = std::thread(&ClientManager::TaskHeartbeat, this);
 }
 
@@ -60,9 +60,9 @@ void ClientManager::toggleDebug()
 {
     bool oldState = debugEnabled;
     debugEnabled = !debugEnabled;
-    network_print(("Debug mode from " + std::string(oldState ? "Enabled" : "Disabled") +
-                   " to " + std::string(debugEnabled ? "Enabled" : "Disabled") + "\n")
-                      .c_str());
+    logger->console_log(("Debug mode from " + std::string(oldState ? "Enabled" : "Disabled") +
+                         " to " + std::string(debugEnabled ? "Enabled" : "Disabled") + "\n")
+                            .c_str());
 }
 
 void ClientManager::TaskStopHeartbeat()
@@ -140,8 +140,8 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
     try
     {
         nlohmann::json boardData = packet.getPayloadAsJson();
-        
-        //std::cout << boardData << std::endl;
+
+        // std::cout << boardData << std::endl;
 
         boardBuffer.push(boardData);
     }
@@ -183,72 +183,72 @@ void ClientManager::onPressKey(sf::Event::KeyEvent e)
     {
     case sf::Keyboard::P:
         if (debugEnabled)
-            network_print("Tecla P pressionada. Pausar o jogo.\n");
+            logger->console_log("Tecla P pressionada. Pausar o jogo.\n");
         sendPacket(Packet(PacketType::PAUSE, serverPeer));
         break;
 
     case sf::Keyboard::R:
         if (debugEnabled)
-            network_print("Tecla R pressionada. Reiniciar o jogo.\n");
+            logger->console_log("Tecla R pressionada. Reiniciar o jogo.\n");
         sendPacket(Packet(PacketType::RESTART, serverPeer));
         break;
     case sf::Keyboard::Up:
         if (debugEnabled)
-            network_print("Tecla Cima (Up) pressionada.\n");
+            logger->console_log("Tecla Cima (Up) pressionada.\n");
         sendPacket(Packet(PacketType::ROTATE_CW, serverPeer));
         break;
 
     case sf::Keyboard::Down:
         if (debugEnabled)
-            network_print("Tecla Baixo (Down) pressionada.\n");
+            logger->console_log("Tecla Baixo (Down) pressionada.\n");
         sendPacket(Packet(PacketType::ROTATE_CCW, serverPeer));
         break;
 
     case sf::Keyboard::Left:
         if (debugEnabled)
-            network_print("Tecla Esquerda (Left) pressionada.\n");
+            logger->console_log("Tecla Esquerda (Left) pressionada.\n");
         sendPacket(Packet(PacketType::LEFT, serverPeer));
         break;
 
     case sf::Keyboard::Right:
         if (debugEnabled)
-            network_print("Tecla Direita (Right) pressionada.\n");
+            logger->console_log("Tecla Direita (Right) pressionada.\n");
         sendPacket(Packet(PacketType::RIGHT, serverPeer));
         break;
 
     case sf::Keyboard::Space:
         if (debugEnabled)
-            network_print("Tecla Espaco (Space) pressionada.\n");
+            logger->console_log("Tecla Espaco (Space) pressionada.\n");
         sendPacket(Packet(PacketType::HARD_DROP, serverPeer));
         break;
 
     case sf::Keyboard::W:
         if (debugEnabled)
-            network_print("Tecla W pressionada.\n");
+            logger->console_log("Tecla W pressionada.\n");
         sendPacket(Packet(PacketType::ROTATE_CCW, serverPeer));
         break;
 
     case sf::Keyboard::A:
         if (debugEnabled)
-            network_print("Tecla A pressionada.\n");
+            logger->console_log("Tecla A pressionada.\n");
         sendPacket(Packet(PacketType::LEFT, serverPeer));
         break;
 
     case sf::Keyboard::S:
         if (debugEnabled)
-            network_print("Tecla S pressionada.\n");
+            logger->console_log("Tecla S pressionada.\n");
         sendPacket(Packet(PacketType::DROP_FASTER, serverPeer));
         break;
 
     case sf::Keyboard::D:
         if (debugEnabled)
-            network_print("Tecla D pressionada.\n");
+            logger->console_log("Tecla D pressionada.\n");
         sendPacket(Packet(PacketType::RIGHT, serverPeer));
         break;
 
     case sf::Keyboard::Enter:
         if (debugEnabled)
-            network_print("Tecla Espaco (Enter) pressionada.\n");
+            logger->console_log("Tecla Espaco (Enter) pressionada.\n");
         sendPacket(Packet(PacketType::DROP_FASTER, serverPeer));
         break;
 
