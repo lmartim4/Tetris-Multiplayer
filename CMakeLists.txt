@@ -34,6 +34,7 @@ set(SERVER_SOURCES
     src/server/TetrisServer.cpp
     src/server/ServerManager.cpp
     src/server/game/TetrisBoardController.cpp
+    src/server/game/TetrominoFactory.cpp
     src/server/game/Tetromino.cpp
     src/server/game/GameManager.cpp
     src/server/game/Game.cpp

@@ -21,7 +21,6 @@ protected:
 
 public:
     static const std::vector<CellColor> tetromino_colors;
-    static const std::vector<char> types;
 
     bool canMove = false;
     bool lockedInPlace = false;

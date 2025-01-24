@@ -6,7 +6,6 @@ const std::vector<CellColor> Tetromino::tetromino_colors = {
     CellColor::Yellow,
     CellColor::Green};
 
-const std::vector<char> Tetromino::types = {'I', 'O', 'T', 'L', 'J', 'S', 'Z'};
 
 CellColor Tetromino::getColor() const
 {
@@ -17,6 +16,7 @@ const TetrominoShape Tetromino::getShape() const
 {
     return shape;
 }
+
 void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
 {
     int sign = (forward) ? 1 : -1;
