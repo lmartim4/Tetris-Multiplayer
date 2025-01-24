@@ -33,7 +33,7 @@ private:
     bool hasFetchedData = false;
 
 public:
-    EndGameScreen(ScreenManager &screenManager, ClientManager &clientManager);
+    EndGameScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager);
     ~EndGameScreen();
 
     void handleEvent(sf::Event event, ScreenManager &manager) override;

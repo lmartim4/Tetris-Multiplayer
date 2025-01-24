@@ -6,8 +6,9 @@ float base_x = 250;
 float base_y = 380;
 float gap = 180;
 
-EndGameScreen::EndGameScreen(ScreenManager &screenManager, ClientManager &clientManager)
-    : clientManager(clientManager), screenManager(screenManager),
+EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager)
+    : Screen(window),
+      clientManager(clientManager), screenManager(screenManager),
       quitButton(defaultFont, "Quit", sf::Color::White, {base_x, base_y}, 24),
       playAgainButton(defaultFont, "Play Again", sf::Color::White, {base_x + gap, base_y}, 24)
 {

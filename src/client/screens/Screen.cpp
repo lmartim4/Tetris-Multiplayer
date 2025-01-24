@@ -1,6 +1,6 @@
 #include "Screen.hpp"
 
-Screen::Screen()
+Screen::Screen(sf::RenderWindow &window) : window(window)
 {
     if (!defaultFont.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"))
     {

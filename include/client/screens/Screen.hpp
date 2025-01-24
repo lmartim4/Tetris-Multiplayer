@@ -11,8 +11,9 @@
 #include "ScreenManager.hpp"
 class Screen
 {
+
 public:
-    Screen();
+    Screen(sf::RenderWindow &window);
     void stop();
     virtual ~Screen() {}
 
@@ -23,4 +24,5 @@ public:
 protected:
     std::atomic<bool> running{true};
     sf::Font defaultFont;
+    sf::RenderWindow &window;
 };

@@ -21,7 +21,7 @@ class WaitingConnectionScreen : public Screen
     static constexpr float x_offset_screen = 100.0f;
     static constexpr float y_offset_screen = 120.0f;
 public:
-    WaitingConnectionScreen(ScreenManager &screenManager, ClientManager &clientManager);
+    WaitingConnectionScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager);
     void handleEvent(sf::Event event, ScreenManager &manager) override;
     void update(float deltaTime) override;
     void render(sf::RenderWindow &window) override;

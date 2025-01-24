@@ -1,7 +1,8 @@
 #include "LobbyScreen.hpp"
 
-LobbyScreen::LobbyScreen(ClientManager &clientManager)
-    : clientMan(clientManager),
+LobbyScreen::LobbyScreen(sf::RenderWindow &window, ClientManager &clientManager)
+    : Screen(window),
+      clientMan(clientManager),
       mainText(defaultFont, "Tetris Lobby", sf::Color::Blue, {230, 20}, 50),
       startGameText(defaultFont, "Start Game", sf::Color::Green, {230, 380}, 40)
 {

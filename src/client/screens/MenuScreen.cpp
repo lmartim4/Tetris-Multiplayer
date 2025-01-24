@@ -1,7 +1,8 @@
 #include "MenuScreen.hpp"
 
-MenuScreen::MenuScreen(ScreenManager &screenManager, ClientManager &clientManager)
-    : titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}, 40),
+MenuScreen::MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager)
+    : Screen(window),
+      titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}, 40),
       connectText(defaultFont, "Connect", sf::Color::White, {x_offset_screen + 330, y_offset_screen + 200}, 25),
       quitText(defaultFont, "Quit", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}, 25),
       manager(screenManager), clientMan(clientManager)

@@ -13,7 +13,7 @@ CellColor Tetromino::getColor() const
     return color;
 }
 
-const std::vector<std::vector<int>> &Tetromino::getShape() const
+const TetrominoShape Tetromino::getShape() const
 {
     return shape;
 }
@@ -42,10 +42,10 @@ void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
         coordinate.x += sign;
         break;
     case TetrisAction::ROTATE_CCW:
-        rotate(forward ? false : true);
+        shape.rotate(forward ? false : true);
         break;
     case TetrisAction::ROTATE_CW:
-        rotate(forward ? true : false);
+        shape.rotate(forward ? true : false);
         break;
     default:
         break;

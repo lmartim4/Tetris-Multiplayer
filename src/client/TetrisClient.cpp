@@ -71,11 +71,11 @@ int main()
 
     sf::RenderWindow window(sf::VideoMode(800, 480), "Multi-Threaded Screens");
 
-    screenManager.addScreen("main-menu", std::make_unique<MenuScreen>(screenManager, client));
-    screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(client));
-    screenManager.addScreen("waiting-connection", std::make_unique<WaitingConnectionScreen>(screenManager, client));
-    screenManager.addScreen("game", std::make_unique<BoardScreen>(client));
-    screenManager.addScreen("end-game", std::make_unique<EndGameScreen>(screenManager, client));
+    screenManager.addScreen("main-menu", std::make_unique<MenuScreen>(window, screenManager, client));
+    screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(window, client));
+    screenManager.addScreen("waiting-connection", std::make_unique<WaitingConnectionScreen>(window, screenManager, client));
+    screenManager.addScreen("game", std::make_unique<BoardScreen>(window, client));
+    screenManager.addScreen("end-game", std::make_unique<EndGameScreen>(window, screenManager, client));
 
     screenManager.setActiveScreen("main-menu");
     screenManager.startThread();

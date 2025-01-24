@@ -12,8 +12,6 @@
 class BoardScreen : public Screen
 {
 private:
-    const int CELL_SIZE = 30;
-
     TetrisBoard board;
     ClientManager &clientManager;
     std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid;
@@ -27,11 +25,12 @@ private:
     void setupRenderers();
 
 public:
-    BoardScreen(ClientManager &clientManager);
+    BoardScreen(sf::RenderWindow &window, ClientManager &clientManager);
 
     void handleEvent(sf::Event event, ScreenManager &manager) override;
     void render(sf::RenderWindow &window) override;
     void updateBoardFromJson(const nlohmann::json &boardData);
     void update(float deltaTime) override;
     void handleKeyPress(sf::Event event);
+    float computeCellSize() const;
 };

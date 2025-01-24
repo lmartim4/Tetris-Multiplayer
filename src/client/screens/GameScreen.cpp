@@ -1,6 +1,6 @@
 #include "GameScreen.hpp"
 
-GameScreen::GameScreen()
+GameScreen::GameScreen(sf::RenderWindow &window) : Screen(window)
 {
     gameText.setFont(defaultFont);
     gameText.setString("Game Screen");

@@ -1,7 +1,8 @@
 #include "WaitingConnectionScreen.hpp"
 
-WaitingConnectionScreen::WaitingConnectionScreen(ScreenManager &screenManager, ClientManager &clientManager)
-    : titleText(defaultFont, "Waiting for server...", sf::Color::White, {(x_offset_screen + 100.0f), (y_offset_screen + 50.0f)}, 40),
+WaitingConnectionScreen::WaitingConnectionScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager)
+    : Screen(window),
+      titleText(defaultFont, "Waiting for server...", sf::Color::White, {(x_offset_screen + 100.0f), (y_offset_screen + 50.0f)}, 40),
       backText(defaultFont, "Back", sf::Color::White, {(x_offset_screen + 300.0f), (y_offset_screen + 170.0f)}, 25),
       screenMan(screenManager), clientMan(clientManager)
 {

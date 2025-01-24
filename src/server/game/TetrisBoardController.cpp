@@ -11,9 +11,12 @@ TetrisBoardController::TetrisBoardController(std::shared_ptr<TetrisBoard> board)
 
 CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action) const
 {
+
+    TetrominoShape tshape = currentTetromino->getShape();
+    const std::vector<std::vector<int>> shape = tshape.getShape();
+
     currentTetromino->evolveStates(true, action);
 
-    const auto &shape = currentTetromino->getShape();
     auto &grid = board->getGrid();
 
     int gridX, gridY;
@@ -57,7 +60,10 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
 
 void TetrisBoardController::setCellState(const std::shared_ptr<Tetromino> currentTetromino, CellState state)
 {
-    const auto &shape = currentTetromino->getShape();
+
+    TetrominoShape tshape = currentTetromino->getShape();
+    const std::vector<std::vector<int>> shape = tshape.getShape();
+
     auto &grid = board->getGrid();
 
     int myId = currentTetromino->getId();
@@ -140,7 +146,9 @@ int TetrisBoardController::findAndClearFullLines()
 
 void TetrisBoardController::clearFallingTetromino(const std::shared_ptr<Tetromino> currentTetromino)
 {
-    const auto &shape = currentTetromino->getShape();
+    TetrominoShape tshape = currentTetromino->getShape();
+    const std::vector<std::vector<int>> shape = tshape.getShape();
+
     auto &grid = board->getGrid();
     auto tetroColor = currentTetromino->getColor();
 

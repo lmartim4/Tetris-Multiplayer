@@ -19,7 +19,7 @@ class LobbyScreen : public Screen
     std::vector<Button> clickableTexts;
 
 public:
-    LobbyScreen(ClientManager &clientManager);
+    LobbyScreen(sf::RenderWindow &window, ClientManager &clientManager);
     void handleEvent(sf::Event event, ScreenManager &manager) override;
     void update(float deltaTime) override;
     void render(sf::RenderWindow &window) override;

@@ -1,10 +1,22 @@
 #include "BoardScreen.hpp"
 
+#define MAX_BOARD_WIDTH 800
+#define MAX_BOARD_HEIGHT 480
+
 void BoardScreen::setupRenderers()
 {
     std::lock_guard<std::mutex> lock(renderMutex);
 
     renderGrid.clear();
+
+    // 2) Compute the dynamic cell size
+    float CELL_SIZE = computeCellSize();
+
+    if (CELL_SIZE <= 0.f)
+    {
+        // Avoid doing anything if the board is zero-dimension
+        return;
+    }
 
     for (int x = 0; x < board.getHeight(); ++x)
     {
@@ -22,7 +34,7 @@ void BoardScreen::setupRenderers()
     }
 }
 
-BoardScreen::BoardScreen(ClientManager &clientManager) : clientManager(clientManager), board(3, 4)
+BoardScreen::BoardScreen(sf::RenderWindow &window, ClientManager &clientManager) : Screen(window), clientManager(clientManager), board(1, 1)
 {
     // 2. Configure our score text
     score.setFont(defaultFont);
@@ -102,4 +114,38 @@ void BoardScreen::handleKeyPress(sf::Event event)
 {
     if (event.type == sf::Event::KeyPressed)
         clientManager.onPressKey(event.key);
+}
+
+float BoardScreen::computeCellSize() const
+{
+    // 1) Get the board dimensions
+    int boardWidth = board.getWidth();
+    int boardHeight = board.getHeight();
+
+    // Safety checks in case board is empty (avoid dividing by zero)
+    if (boardWidth <= 0 || boardHeight <= 0)
+        return 0.f;
+
+    // 2) Decide how big an area we want for the board:
+    //    (In this example, we either use some fixed region,
+    //     or we can read from the window dimensions to allow it
+    //     to fill the entire window.)
+    //
+    //    Let's do a fixed region approach here:
+    float maxBoardWidth = window.getSize().x * 0.8; // e.g. 400
+    float maxBoardHeight = window.getSize().y;      // e.g. 600
+
+    // If you prefer to fill up the entire window, you could do:
+    // float maxBoardWidth  = window.getSize().x;
+    // float maxBoardHeight = window.getSize().y;
+
+    // 3) Figure out how large each cell can be so that the entire board fits
+    float cellSizeByWidth = maxBoardWidth / boardWidth;
+    float cellSizeByHeight = maxBoardHeight / boardHeight;
+
+    // The actual cell size is the smaller of the two,
+    // so that we don't exceed either dimension.
+    float computedCellSize = std::min(cellSizeByWidth, cellSizeByHeight);
+
+    return computedCellSize;
 }
