@@ -20,6 +20,7 @@ class MenuScreen : public Screen
     Button titleText;
     Button connectText;
     Button quitText;
+    
     ScreenManager &manager;
     ClientManager &clientMan;
 

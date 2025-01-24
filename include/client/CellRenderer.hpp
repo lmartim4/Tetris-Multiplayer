@@ -21,6 +21,12 @@ public:
         setOutlineColor(sf::Color::Black);
     }
 
+    void refreshPosition(sf::Vector2f size, sf::Vector2f position)
+    {
+        setSize(size);
+        setPosition(position);
+    }
+
     void setOnClick(const std::function<void()> &callback) { onClickCallback = callback; }
 
     void handleEvent(const sf::Event &event)

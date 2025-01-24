@@ -21,10 +21,7 @@ void LobbyScreen::handleEvent(sf::Event event, ScreenManager &manager)
         std::cout << "Lobby event: escape pressed" << std::endl;
 }
 
-void LobbyScreen::update(float deltaTime)
-{
-    // Update logic for lobby screen (e.g., fetching player list from server)
-}
+void LobbyScreen::update(float deltaTime) {}
 
 void LobbyScreen::render(sf::RenderWindow &window)
 {
@@ -42,14 +39,13 @@ void LobbyScreen::render(sf::RenderWindow &window)
     float totalWidth = maxColumns * (2 * circleRadius + padding) - padding;
     float totalHeight = rows * (2 * circleRadius + padding) - padding;
 
-    // Get window size
-    sf::Vector2u windowSize = window.getSize();
-
-    // Calculate starting position to center the grid
-    float startX = (windowSize.x - totalWidth) / 2;
-    float startY = (windowSize.y - totalHeight) / 2;
+    // Get the size of the *active view*, not raw window pixels
+    sf::Vector2f viewSize = window.getView().getSize();
+    float startX = (viewSize.x - totalWidth) / 2.f;
+    float startY = (viewSize.y - totalHeight) / 2.f;
 
     clickableTexts.clear();
+
     for (auto &pd : clientMan.getPlayerList().getPlayers())
     {
         sf::CircleShape circle(circleRadius);

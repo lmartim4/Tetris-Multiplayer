@@ -5,6 +5,7 @@
 #include <string>
 #include <mutex>
 #include "Screen.hpp"
+#include "Button.hpp"
 #include "CellRenderer.hpp"
 #include "TetrisBoard.hpp"
 #include "ClientManager.hpp"
@@ -12,18 +13,21 @@
 class BoardScreen : public Screen
 {
 private:
-
     TetrisBoard board;
     ClientManager &clientManager;
     std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid;
-    
-    sf::Text score;
-    sf::Text lines;
-    sf::Text level;
+
+    Button score;
+    Button lines;
+    Button level;
 
     std::mutex renderMutex;
 
-    void setupRenderers();
+    float computeCellSize() const;
+
+    void createRenders();
+    void refreshAllCellRenders();
+    void updateTextPositions();
 
 public:
     BoardScreen(sf::RenderWindow &window, ClientManager &clientManager);
@@ -33,5 +37,4 @@ public:
     void updateBoardFromJson(const nlohmann::json &boardData);
     void update(float deltaTime) override;
     void handleKeyPress(sf::Event event);
-    float computeCellSize() const;
 };

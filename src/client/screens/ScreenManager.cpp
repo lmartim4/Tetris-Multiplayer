@@ -24,6 +24,14 @@ void ScreenManager::setActiveScreen(const std::string &name)
 {
     {
         std::lock_guard<std::mutex> lock(mtx);
+        
+        sf::View defaultView(sf::FloatRect(
+            0.f,
+            0.f,
+            static_cast<float>(window.getSize().x),
+            static_cast<float>(window.getSize().y)));
+        window.setView(defaultView);
+
         activeScreen = screens[name].get();
     }
     cv.notify_one();

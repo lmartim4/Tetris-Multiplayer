@@ -10,7 +10,8 @@ MenuScreen::MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, C
     connectText.setOnClick([this]()
                            {
                                 manager.setActiveScreen("waiting-connection");
-                                clientMan.connect(); });
+                                clientMan.connect();
+                            });
 
     quitText.setOnClick([this]()
                         { manager.quit(); });
