@@ -13,7 +13,8 @@
 #include "screens/BoardScreen.hpp"
 #include "screens/EndGameScreen.hpp"
 
-ScreenManager screenManager;
+sf::RenderWindow window(sf::VideoMode(800, 480), "Multi-Threaded Screens");
+ScreenManager screenManager(window);
 AudioManager audioManager;
 
 ClientManager client(audioManager);
@@ -37,7 +38,7 @@ void onGameStartPacket(const Packet &packet) { screenManager.setActiveScreen("ga
 int main()
 {
     audioManager.loadAllSounds();
-    
+
     client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
     client.registerListener(PacketType::PLAYER_LIST, onPlayerListPacket);
     client.registerListener(PacketType::GAME_SCORE, onGameScore);
@@ -45,8 +46,6 @@ int main()
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);
     client.registerListener(PacketType::STARTING_GAME, onGameStartPacket);
     client.registerListener(PacketType::ENG_GAME_SCREEN, onGameEndPacket);
-
-    sf::RenderWindow window(sf::VideoMode(800, 480), "Multi-Threaded Screens");
 
     screenManager.addScreen("main-menu", std::make_unique<MenuScreen>(window, screenManager, client));
     screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(window, client));
@@ -72,6 +71,8 @@ int main()
 
             screenManager.handleEvent(event);
         }
+
+        // std::cout << " x " << window.getSize().x << " || y = " << window.getSize().y << std::endl;
     }
 
     client.disconnect();

@@ -6,21 +6,16 @@
 class TetrominoShape : public ISerializable
 {
 private:
-    // 2D grid representing the shape of the Tetromino
     std::vector<std::vector<int>> shape;
 
 public:
-    // Default constructor
     TetrominoShape() = default;
 
-    // Constructor with shape initialization
     TetrominoShape(const std::vector<std::vector<int>> &shape) : shape(shape) {}
 
-    // Getters and setters
     const std::vector<std::vector<int>> &getShape() const { return shape; }
     void setShape(const std::vector<std::vector<int>> &newShape) { shape = newShape; }
 
-    // ISerializable implementation
     nlohmann::json serialize() const override
     {
         return nlohmann::json{{"shape", shape}};
@@ -29,16 +24,11 @@ public:
     void deserialize(const nlohmann::json &data) override
     {
         if (data.contains("shape") && data["shape"].is_array())
-        {
             shape = data["shape"].get<std::vector<std::vector<int>>>();
-        }
         else
-        {
             throw std::runtime_error("Invalid shape data during deserialization");
-        }
     }
 
-    // Rotate the shape (clockwise or counterclockwise)
     void rotate(bool clockwise)
     {
         size_t rows = shape.size();

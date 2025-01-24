@@ -18,8 +18,8 @@ MenuScreen::MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, C
 
 void MenuScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
-    connectText.handleEvent(event);
-    quitText.handleEvent(event);
+    connectText.handleEvent(event, manager.getWindow());
+    quitText.handleEvent(event, manager.getWindow());
 }
 
 void MenuScreen::update(float deltaTime)

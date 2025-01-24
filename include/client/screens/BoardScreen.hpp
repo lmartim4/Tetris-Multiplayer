@@ -12,10 +12,11 @@
 class BoardScreen : public Screen
 {
 private:
+
     TetrisBoard board;
     ClientManager &clientManager;
     std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid;
-
+    
     sf::Text score;
     sf::Text lines;
     sf::Text level;

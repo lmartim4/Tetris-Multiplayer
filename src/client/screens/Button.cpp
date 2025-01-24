@@ -11,12 +11,16 @@ Button::Button(const sf::Font &font, const std::string &str, sf::Color color, sf
 
 void Button::setOnClick(const std::function<void()> &callback) { onClickCallback = callback; }
 
-void Button::handleEvent(const sf::Event &event)
+void Button::handleEvent(const sf::Event &event, sf::RenderWindow &window)
 {
     if (event.type == sf::Event::MouseButtonPressed)
-        if (getGlobalBounds().contains(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y)))
+    {
+        sf::Vector2f mousePos = window.mapPixelToCoords({event.mouseButton.x, event.mouseButton.y});
+
+        if (getGlobalBounds().contains(mousePos))
             if (onClickCallback)
                 onClickCallback();
+    }
 }
 
 void Button::render(sf::RenderWindow &window) { window.draw(*this); }

@@ -12,10 +12,10 @@ LobbyScreen::LobbyScreen(sf::RenderWindow &window, ClientManager &clientManager)
 
 void LobbyScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
-    startGameText.handleEvent(event);
+    startGameText.handleEvent(event, manager.getWindow());
 
     for (Button ct : clickableTexts)
-        ct.handleEvent(event);
+        ct.handleEvent(event, manager.getWindow());
 
     if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
         std::cout << "Lobby event: escape pressed" << std::endl;

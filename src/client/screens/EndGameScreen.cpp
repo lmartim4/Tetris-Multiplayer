@@ -71,8 +71,8 @@ EndGameScreen::~EndGameScreen()
 void EndGameScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
     // Let the buttons detect clicks
-    quitButton.handleEvent(event);
-    playAgainButton.handleEvent(event);
+    quitButton.handleEvent(event, manager.getWindow());
+    playAgainButton.handleEvent(event, manager.getWindow());
 
     // Possibly do something like manager.popScreen();
 }

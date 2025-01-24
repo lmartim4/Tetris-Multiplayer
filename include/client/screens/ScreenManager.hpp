@@ -13,10 +13,10 @@ class Screen;
 
 class ScreenManager
 {
+    sf::RenderWindow &window;
     std::map<std::string, std::unique_ptr<Screen>> screens;
-    
-    Screen *activeScreen = nullptr;
 
+    Screen *activeScreen = nullptr;
     std::thread screenThread;
     std::mutex mtx;
     std::condition_variable cv;
@@ -24,8 +24,11 @@ class ScreenManager
     std::atomic<bool> threadRunning{false};
 
 public:
-    ScreenManager();
+    ScreenManager(sf::RenderWindow &window);
     ~ScreenManager();
+
+    sf::RenderWindow &getWindow() { return window; }
+
     void quit();
     void addScreen(const std::string &name, std::unique_ptr<Screen> screen);
     void setActiveScreen(const std::string &name);

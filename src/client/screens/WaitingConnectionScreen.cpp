@@ -14,7 +14,7 @@ WaitingConnectionScreen::WaitingConnectionScreen(sf::RenderWindow &window, Scree
 
 void WaitingConnectionScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
-    backText.handleEvent(event);
+    backText.handleEvent(event, manager.getWindow());
 }
 
 void WaitingConnectionScreen::update(float deltaTime)

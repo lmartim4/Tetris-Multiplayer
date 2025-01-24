@@ -1,7 +1,9 @@
 #include "ScreenManager.hpp"
 #include "Screen.hpp"
 
-ScreenManager::ScreenManager() {}
+ScreenManager::ScreenManager(sf::RenderWindow &window) : window(window)
+{
+}
 
 ScreenManager::~ScreenManager()
 {
