@@ -40,3 +40,20 @@ void Cell::setColor(CellColor c)
 {
     color = c;
 }
+
+nlohmann::json Cell::serialize() const
+{
+    return nlohmann::json{
+        {"state", state},
+        {"color", color},
+        {"coordinate", coordinate.serialize()},
+        {"pieceId", pieceId}};
+}
+
+void Cell::deserialize(const nlohmann::json &json)
+{
+    coordinate.deserialize(json.at("coordinate"));
+    setState(static_cast<CellState>(json.at("state").get<int>()));
+    setColor(static_cast<CellColor>(json.at("color").get<int>()));
+    setPieceId(json.at("pieceId").get<int>());
+}

@@ -23,7 +23,7 @@ void ClientManager::onPeerDisconnect(ENetPeer *peer)
 
 void ClientManager::on_receive_score(const Packet &packet)
 {
-    //std::cout << packet.getPayloadAsJson() << std::endl;
+    // std::cout << packet.getPayloadAsJson() << std::endl;
     score.deserialize(packet.getPayloadAsJson());
 }
 
@@ -140,7 +140,9 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
     try
     {
         nlohmann::json boardData = packet.getPayloadAsJson();
-        // boardBuffer.clear();
+        
+        std::cout << boardData << std::endl;
+
         boardBuffer.push(boardData);
     }
     catch (const std::exception &e)

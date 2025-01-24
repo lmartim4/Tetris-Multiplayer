@@ -30,8 +30,8 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
             if (shape[x][y] == 0)
                 continue;
 
-            gridX = currentTetromino->getCoordinate().x + x;
-            gridY = board->getNormalizedY(currentTetromino->getCoordinate().y + y);
+            gridX = currentTetromino->getCoordinate().getX() + x;
+            gridY = board->getNormalizedY(currentTetromino->getCoordinate().getY() + y);
 
             if (gridX < 0 || gridX >= board->getHeight())
             {
@@ -68,8 +68,8 @@ void TetrisBoardController::setCellState(const std::shared_ptr<Tetromino> curren
 
     int myId = currentTetromino->getId();
 
-    int baseX = currentTetromino->getCoordinate().x;
-    int baseY = currentTetromino->getCoordinate().y;
+    int baseX = currentTetromino->getCoordinate().getX();
+    int baseY = currentTetromino->getCoordinate().getY();
 
     for (size_t x = 0; x < shape.size(); x++)
     {
@@ -152,8 +152,8 @@ void TetrisBoardController::clearFallingTetromino(const std::shared_ptr<Tetromin
     auto &grid = board->getGrid();
     auto tetroColor = currentTetromino->getColor();
 
-    int baseX = currentTetromino->getCoordinate().x;
-    int baseY = currentTetromino->getCoordinate().y;
+    int baseX = currentTetromino->getCoordinate().getX();
+    int baseY = currentTetromino->getCoordinate().getY();
     int myId = currentTetromino->getId();
 
     for (size_t x = 0; x < shape.size(); x++)

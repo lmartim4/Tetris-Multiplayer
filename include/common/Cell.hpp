@@ -1,20 +1,36 @@
 #pragma once
 
 #include "Coordinate.hpp"
-#include "CellColor.hpp"
+#include "ISerializable.hpp"
 
-class Cell
+enum CellState
+{
+    FALLEN,
+    EMPTY,
+    FALLING
+};
+
+enum CellColor
+{
+    Empty,
+    Red,
+    Green,
+    Blue,
+    Yellow,
+};
+
+class Cell : public ISerializable
 {
 private:
     CellState state;
     CellColor color;
     Coordinate coordinate;
-
+    
     int pieceId = 0;
 
 public:
     Cell(Coordinate coord);
-    ~Cell() {}
+    ~Cell() override {}
 
     int getPieceId() const;
     void setPieceId(int id);
@@ -26,4 +42,7 @@ public:
     void setState(CellState s);
 
     void setEmpty();
+
+    nlohmann::json serialize() const override;
+    void deserialize(const nlohmann::json &json);
 };

@@ -217,7 +217,7 @@ int Game::countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetro
             if (!tetromino->lockedInPlace)
                 count++;
     }
-    
+
     return count;
 }
 
@@ -292,20 +292,20 @@ void Game::onTetrominoColide(std::shared_ptr<Tetromino> tetromino, CollisionType
 {
     if (col == CollisionType::FALLING_OTHER)
         return;
+    
+    int justClearedLines = tryClearFullLines();
 
     tetromino->lockedInPlace = true;
     server.broadcastSound(SoundType::DjembeSlap);
     boardController->setCellState(tetromino, CellState::FALLEN);
-    // tetromino.reset();
-
-    int justClearedLines = tryClearFullLines();
 
     gameData.addScore(calculatePoints(justClearedLines, gameData.getLevel()));
 
     server.sendPacket(Packet(PacketType::GAME_SCORE, gameData, nullptr));
 
-    if (gameData.tryLevelUp(LEVEL_UP_LINES))
+    if (gameData.shouldLevelUp())
     {
+        gravity.increaseGravityDifficulty();
         boardController->clearFallenTetrominos();
         logger->console_log("Level Up: (" + std::to_string(gameData.getLevel()) + ")");
         server.broadcastSound(SoundType::LevelUp);

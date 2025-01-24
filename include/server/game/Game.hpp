@@ -3,7 +3,7 @@
 #include "TetrisBoardController.hpp"
 #include "EndGameData.hpp"
 #include "Player.hpp"
-#include "GameData.hpp"
+#include "GameStatus.hpp"
 #include "GravityManager.hpp"
 
 #include "ThreadSafeQueue.hpp"
@@ -41,7 +41,7 @@ private:
 
     GravityManager gravity;
 
-    GameData gameData;
+    GameStatus gameData;
 
     TetrisBoardController *boardController;
     std::shared_ptr<TetrisBoard> board;

@@ -5,13 +5,35 @@
 const std::vector<char> TetrominoFactory::tetrominoTypes = {'I', 'O', 'T', 'L', 'J', 'S', 'Z'};
 
 const std::unordered_map<char, TetrominoFactory::TetrominoCreator> TetrominoFactory::tetrominoCreators = {
-    {'I', [](Coordinate coord, CellColor color) { return std::make_unique<TetrominoI>(coord, color); }},
-    {'O', [](Coordinate coord, CellColor color) { return std::make_unique<TetrominoO>(coord, color); }},
-    {'T', [](Coordinate coord, CellColor color) { return std::make_unique<TetrominoT>(coord, color); }},
-    {'L', [](Coordinate coord, CellColor color) { return std::make_unique<TetrominoL>(coord, color); }},
-    {'J', [](Coordinate coord, CellColor color) { return std::make_unique<TetrominoL>(coord, color, true); }},
-    {'S', [](Coordinate coord, CellColor color) { return std::make_unique<TetrominoS>(coord, color); }},
-    {'Z', [](Coordinate coord, CellColor color) { return std::make_unique<TetrominoS>(coord, color, true); }},
+
+    {'I', [](Coordinate coord, CellColor color) { return std::make_unique<Tetromino>(coord, color, std::vector<std::vector<int>>{{1, 1, 1, 1}});
+                                                                                                                                 }},
+
+    {'O', [](Coordinate coord, CellColor color) { return std::make_unique<Tetromino>(coord, color, std::vector<std::vector<int>>{{1, 1},
+                                                                                                                                 {1, 1}});
+                                                                                                                                 }},
+
+    {'T', [](Coordinate coord, CellColor color) { return std::make_unique<Tetromino>(coord, color, std::vector<std::vector<int>>{{0, 1, 0},
+                                                                                                                                 {1, 1, 1}});
+                                                                                                                                 }},
+
+    {'L', [](Coordinate coord, CellColor color) { return std::make_unique<Tetromino>(coord, color, std::vector<std::vector<int>>{{1, 0},
+                                                                                                                                 {1, 0},
+                                                                                                                                 {1, 1}});
+                                                                                                                                 }},
+
+    {'J', [](Coordinate coord, CellColor color) { return std::make_unique<Tetromino>(coord, color, std::vector<std::vector<int>>{{0, 1},
+                                                                                                                                 {0, 1},
+                                                                                                                                 {1, 1}});
+                                                                                                                                 }},
+
+    {'S', [](Coordinate coord, CellColor color) { return std::make_unique<Tetromino>(coord, color, std::vector<std::vector<int>>{{0, 1, 1},
+                                                                                                                                 {1, 1, 0}}); 
+                                                                                                                                }},
+
+    {'Z', [](Coordinate coord, CellColor color) { return std::make_unique<Tetromino>(coord, color, std::vector<std::vector<int>>{{1, 1, 0},
+                                                                                                                                 {0, 1, 1}});
+                                                                                                                                }},
 };
 
 std::unique_ptr<Tetromino> TetrominoFactory::createTetromino()
@@ -23,7 +45,7 @@ std::unique_ptr<Tetromino> TetrominoFactory::createTetromino()
     auto it = tetrominoCreators.find(randomType);
     if (it != tetrominoCreators.end())
     {
-        return it->second(Coordinate(0, y0), randomColor); // Call the creator function
+        return it->second(Coordinate(0, y0), randomColor);
     }
     throw std::invalid_argument("Invalid Tetromino type");
 }

@@ -3,10 +3,8 @@
 
 #include "CellRenderer.hpp"
 #include "ClientManager.hpp"
+
 #include "AudioManager.hpp"
-
-#include "SoundType.hpp"
-
 #include "screens/ScreenManager.hpp"
 #include "screens/WaitingConnectionScreen.hpp"
 #include "screens/GameScreen.hpp"
@@ -20,32 +18,13 @@ AudioManager audioManager;
 
 ClientManager client(audioManager);
 
-void heartbeat_listener(const Packet &packet)
-{
-    client.on_receive_heartbeat();
-}
-void onGameScore(const Packet &packet)
-{
-    client.on_receive_score(packet);
-}
-void onPlaySoundPacket(const Packet &packet)
-{
-    client.on_receive_play_sound(packet);
-}
+void heartbeat_listener(const Packet &packet) { client.on_receive_heartbeat(); }
+void onGameScore(const Packet &packet) { client.on_receive_score(packet); }
+void onPlaySoundPacket(const Packet &packet) { client.on_receive_play_sound(packet); }
 
-void onPlayerListPacket(const Packet &packet)
-{
-    client.on_receive_player_list(packet);
-}
+void onPlayerListPacket(const Packet &packet) { client.on_receive_player_list(packet); }
 
-void onGameScreenPacket(const Packet &packet)
-{
-    /*
-    static int frame_count = 0;
-    std::cout << "Received " + std::to_string(frame_count++) + " boards\n";
-    */
-    client.on_receive_game_screen(packet);
-}
+void onGameScreenPacket(const Packet &packet) { client.on_receive_game_screen(packet); }
 
 void onGameEndPacket(const Packet &packet)
 {
@@ -53,14 +32,12 @@ void onGameEndPacket(const Packet &packet)
     client.on_receive_end_screen(packet);
 }
 
-void onGameStartPacket(const Packet &packet)
-{
-    screenManager.setActiveScreen("game");
-}
+void onGameStartPacket(const Packet &packet) { screenManager.setActiveScreen("game"); }
 
 int main()
 {
     audioManager.loadAllSounds();
+    
     client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
     client.registerListener(PacketType::PLAYER_LIST, onPlayerListPacket);
     client.registerListener(PacketType::GAME_SCORE, onGameScore);
@@ -80,13 +57,9 @@ int main()
     screenManager.setActiveScreen("main-menu");
     screenManager.startThread();
 
-    sf::Clock clock;
-
     while (window.isOpen())
     {
         sf::Event event;
-
-        float deltaTime = clock.restart().asSeconds();
 
         window.clear(sf::Color::Black);
         screenManager.render(window);

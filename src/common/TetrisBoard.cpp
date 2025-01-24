@@ -1,7 +1,7 @@
 #include "TetrisBoard.hpp"
 #include "Clock.hpp"
 
-void TetrisBoard::setupCells()
+void TetrisBoard::setupGrid()
 {
     grid.clear();
 
@@ -22,19 +22,17 @@ void TetrisBoard::setupCells()
 TetrisBoard::TetrisBoard(int h, int w) : height(h), width(w)
 {
     logger = new Logger("Tetris Board");
-    setupCells();
+
+    setupGrid();
 }
 
 void TetrisBoard::printDebug() const
 {
     // system("clear");
-
-    std::cout << "\nEstado da Board:\n"
+    std::cout << "\nBoard State: \n"
               << std::endl;
     for (int x = 0; x < height; x++)
     {
-        // for (int y = 0; y < width; y++)  std::cout << (grid[x][y]->getState() == FALLING ? " # " : (grid[x][y]->getState() == EMPTY) ? " * "  : " $ ");
-
         for (int y = 0; y < width; y++)
             std::cout << (grid[x][y]->getState() == FALLING ? (" " + std::to_string(grid[x][y]->getPieceId() % 10) + " ") : (grid[x][y]->getState() == EMPTY) ? " * "
                                                                                                                                                               : " $ ");
@@ -55,6 +53,7 @@ TetrisBoard::~TetrisBoard()
 nlohmann::json TetrisBoard::serialize() const
 {
     nlohmann::json boardJson;
+
     boardJson["width"] = width;
     boardJson["height"] = height;
 
@@ -67,12 +66,15 @@ nlohmann::json TetrisBoard::serialize() const
         for (int y = 0; y < width; ++y)
         {
             const auto &cell = grid.at(x).at(y);
+
             CellColor color = cell->getColor();
-            CellState state = cell->getState(); // e.g. EMPTY, FALLING, FALLEN
+            CellState state = cell->getState();
 
             nlohmann::json cellObj;
-            cellObj["c"] = color; // store color
-            cellObj["s"] = state; // store state
+
+            cellObj["c"] = color;
+            cellObj["s"] = state;
+
             rowJson.push_back(cellObj);
         }
         cells.push_back(rowJson);
@@ -110,7 +112,7 @@ void TetrisBoard::deserialize(const nlohmann::json &data)
     // If size changed, rebuild the grid
     if (sizeChanged)
     {
-        setupCells();
+        setupGrid();
     }
 
     // Now parse the "cells" array
@@ -157,7 +159,7 @@ void TetrisBoard::setSize(int x, int y)
 {
     height = x;
     width = y;
-    setupCells();
+    setupGrid();
 }
 
 int TetrisBoard::getNormalizedY(int y) const

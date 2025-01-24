@@ -7,40 +7,43 @@
 #include "Logger.hpp"
 #include "json.hpp"
 
-/**
- * TetrisBoard: purely a container for cells,
- * no direct methods for moving Tetrominoes.
- */
 class TetrisBoard : public ISerializable
 {
 private:
     Logger *logger;
+
     int width;
     int height;
 
-    // The grid of cells
     std::vector<std::vector<std::shared_ptr<Cell>>> grid;
-    void setupCells();
+    void setupGrid();
+
 public:
     TetrisBoard(int h, int w);
     ~TetrisBoard();
 
     void printDebug() const;
 
-    // Basic getters
-    int getWidth() const { return width; }
-    int getHeight() const { return height; }
-    int getNormalizedY(int y) const;
+    int getWidth() const
+    {
+        return width;
+    }
+    int getHeight() const
+    {
+        return height;
+    }
 
-    // Access the grid
-    std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid() { return grid; }
-    const std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid() const { return grid; }
+    std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid()
+    {
+        return grid;
+    }
 
     void clearBoard() const;
 
     void setSize(int x, int y);
 
-    // Serialization
+    int getNormalizedY(int y) const;
+
     nlohmann::json serialize() const override;
     void deserialize(const nlohmann::json &data) override;
 };

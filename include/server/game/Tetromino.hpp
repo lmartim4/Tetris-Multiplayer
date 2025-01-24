@@ -2,7 +2,8 @@
 
 #include <string>
 #include <vector>
-#include "CellColor.hpp"
+
+#include "Cell.hpp"
 #include "TetrominoShape.hpp"
 #include "TetrisAction.hpp"
 #include "Coordinate.hpp"
@@ -27,7 +28,7 @@ public:
 
     Coordinate getCoordinate() const { return coordinate; }
 
-    Tetromino(Coordinate coord, CellColor color) : coordinate(coord), color(color)
+    Tetromino(Coordinate coord, CellColor color, const std::vector<std::vector<int>> &shape) : coordinate(coord), color(color), shape(shape)
     {
         static int nextId = 1;
         pieceId = nextId++;
@@ -54,10 +55,4 @@ public:
     }
 
     void evolveStates(bool forward, TetrisAction lastMove);
-};
-
-class NonSymmetricTetromino : public Tetromino
-{
-public:
-    NonSymmetricTetromino(Coordinate coord, CellColor color, bool invert = false) : Tetromino(coord, color) {}
 };

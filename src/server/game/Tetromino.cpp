@@ -6,7 +6,6 @@ const std::vector<CellColor> Tetromino::tetromino_colors = {
     CellColor::Yellow,
     CellColor::Green};
 
-
 CellColor Tetromino::getColor() const
 {
     return color;
@@ -29,17 +28,16 @@ void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
     switch (lastMove)
     {
     case TetrisAction::GRAVITY:
-        coordinate.x += sign;
+        coordinate.setX(coordinate.getX() + sign);
         break;
-
     case TetrisAction::LEFT:
-        coordinate.y -= sign;
+        coordinate.setY(coordinate.getY() - sign);
         break;
     case TetrisAction::RIGHT:
-        coordinate.y += sign;
+        coordinate.setY(coordinate.getY() + sign);
         break;
     case TetrisAction::DROP_FASTER:
-        coordinate.x += sign;
+        coordinate.setX(coordinate.getX() + sign);
         break;
     case TetrisAction::ROTATE_CCW:
         shape.rotate(forward ? false : true);

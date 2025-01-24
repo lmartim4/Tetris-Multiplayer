@@ -11,7 +11,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
-#include "GameData.hpp"
+#include "GameStatus.hpp"
 
 class ClientManager : public NetworkManager
 {
@@ -20,7 +20,7 @@ private:
     ENetPeer *serverPeer;
     std::atomic<bool> isConnected = false; // Client Connected to Server
 
-    GameData score;
+    GameStatus score;
     PlayerList players; // Players in the match
 
     ThreadSafeQueue<nlohmann::json> boardBuffer;       // Buffer for received boards (always just the last one)
@@ -40,7 +40,7 @@ public:
     ClientManager(AudioManager &audioManager) : audio(audioManager) {};
     ~ClientManager() {};
 
-    const GameData &getGameData() const { return score; }
+    const GameStatus &getGameData() const { return score; }
 
     void toggleDebug();
 

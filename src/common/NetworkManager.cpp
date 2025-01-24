@@ -5,19 +5,13 @@
 
 char *NetworkManager::uint32_to_ipv4(uint32_t ip_addr)
 {
-    // Allocate memory for the resulting IP address string (e.g., "255.255.255.255\0" is 16 characters)
     static char ip_str[16];
-
-    // Convert from host byte order to network byte order
     ip_addr = htonl(ip_addr);
-
-    // Break the integer into its four bytes and format as an IPv4 address string
     snprintf(ip_str, sizeof(ip_str), "%u.%u.%u.%u",
              (ip_addr >> 24) & 0xFF,
              (ip_addr >> 16) & 0xFF,
              (ip_addr >> 8) & 0xFF,
              ip_addr & 0xFF);
-
     return ip_str;
 }
 NetworkManager::NetworkManager()
@@ -221,7 +215,6 @@ void NetworkManager::processENetEvent(ENetEvent &event)
         enet_packet_destroy(event.packet);
         break;
     }
-    
 
     case ENET_EVENT_TYPE_DISCONNECT:
     {
@@ -241,17 +234,17 @@ ENetHost *NetworkManager::getHost() { return host; }
 std::vector<ENetPeer *> NetworkManager::getPeers()
 {
     std::vector<ENetPeer *> peers;
+
     if (!host)
-        return peers; // If host is not initialized, just return empty.
+        return peers;
 
     for (size_t i = 0; i < host->peerCount; ++i)
     {
         ENetPeer &p = host->peers[i];
-        // Only consider peers that are fully connected
+
         if (p.state == ENET_PEER_STATE_CONNECTED)
-        {
             peers.push_back(&p);
-        }
     }
-    return peers; // Return by value, so the caller gets a valid copy.
+
+    return peers;
 }

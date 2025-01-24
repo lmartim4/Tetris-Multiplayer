@@ -3,7 +3,6 @@
 #include <memory>
 #include <SFML/Graphics.hpp>
 #include <functional>
-#include "CellColor.hpp"
 #include "Cell.hpp"
 
 class CellRenderer : public sf::RectangleShape
@@ -32,10 +31,7 @@ public:
                     onClickCallback();
     }
 
-    void updateData()
-    {
-        setColor(cell->getColor());
-    }
+    void updateData() { setColor(cell->getColor()); }
 
     void setColor(const CellColor tc) { setFillColor(getColorFromType(tc)); }
 

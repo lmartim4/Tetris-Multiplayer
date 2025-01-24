@@ -19,9 +19,9 @@ enum class SoundType : int
     OnJoinLobby,
     DeathSound,
     WinSound,
-    FallSound,         // Added
-    DenyErrorSound,    // Added
-    FabricImpactSound, // Added
+    FallSound,
+    DenyErrorSound,
+    FabricImpactSound,
 
     /* Always leave it as the last one */
     Count
@@ -70,15 +70,12 @@ inline std::string toFilePath(SoundType type)
     case SoundType::WinSound:
         return std::string(audio_path) + "507976__nutetoonstudios__win-sound.wav";
 
-    // Added FallSound
     case SoundType::FallSound:
         return std::string(audio_path) + "538151__fupicat__8bit-fall.wav";
 
-    // Added DenyErrorSound
     case SoundType::DenyErrorSound:
         return std::string(audio_path) + "551543__philracoindie__8-bit-denyerror-sound.wav";
 
-    // Added FabricImpactSound
     case SoundType::FabricImpactSound:
         return std::string(audio_path) + "777621__aquaash__fabricimpact.wav";
     }

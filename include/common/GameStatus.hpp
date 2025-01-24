@@ -2,7 +2,7 @@
 
 #include "ISerializable.hpp"
 
-class GameData : public ISerializable
+class GameStatus : public ISerializable
 {
 private:
     int score = 0;
@@ -11,12 +11,11 @@ private:
     int linesClearedOnThisLevel = 0;
 
 public:
-    // Constructors / Destructor
-    GameData() = default;
-    ~GameData() override = default;
+    GameStatus() = default;
+    ~GameStatus() override = default;
 
     // Attempt to level up
-    bool tryLevelUp(int requiredLinesForLevelUp = 10)
+    bool shouldLevelUp(int requiredLinesForLevelUp = 10)
     {
         if (linesClearedOnThisLevel >= requiredLinesForLevelUp)
         {
@@ -39,7 +38,6 @@ public:
     void addTotalLinesCleared(int t) { totalLinesCleared += t; }
     void addLinesClearedOnThisLevel(int c) { linesClearedOnThisLevel += c; }
 
-    // ---- ISerializable interface ----
     nlohmann::json serialize() const override
     {
         nlohmann::json j;
@@ -52,7 +50,6 @@ public:
 
     void deserialize(const nlohmann::json &data) override
     {
-        // Use 'contains' to safely check for JSON fields
         if (data.contains("score"))
             data["score"].get_to(score);
         if (data.contains("level"))
