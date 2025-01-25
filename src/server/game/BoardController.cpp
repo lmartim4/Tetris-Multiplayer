@@ -1,27 +1,28 @@
 
-#include "TetrisBoardController.hpp"
+#include "BoardController.hpp"
 #include "Cell.hpp"
 
 #include <iostream>
 
-TetrisBoardController::TetrisBoardController(std::shared_ptr<TetrisBoard> board)
+BoardController::BoardController(std::shared_ptr<TetrisBoard> board)
     : board(board)
 {
 }
 
-CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action) const
+CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action) const
 {
-
-    TetrominoShape tshape = currentTetromino->getShape();
-    const std::vector<std::vector<int>> shape = tshape.getShape();
+    std::cout << "Check piece (" << currentTetromino->getId() << ")\n";
+    const std::vector<std::vector<int>> shape = currentTetromino->getShape().getShape();
 
     currentTetromino->evolveStates(true, action);
 
-    auto &grid = board->getGrid();
+    std::vector<std::vector<std::shared_ptr<Cell>>> &grid = board->getGrid();
+
+    CollisionType worstCollision = CollisionType::NONE;
 
     int gridX, gridY;
 
-    CollisionType worstCollision = CollisionType::NONE;
+    int tests = 0;
 
     for (size_t x = 0; x < shape.size(); ++x)
     {
@@ -33,32 +34,37 @@ CollisionType TetrisBoardController::checkCollision(std::shared_ptr<Tetromino> c
             gridX = currentTetromino->getCoordinate().getX() + x;
             gridY = board->getNormalizedY(currentTetromino->getCoordinate().getY() + y);
 
+            CellState state = grid[gridX][gridY]->getState();
+
+            tests++;
+
+            std::cout << "Test " << tests << " got " << std::to_string(state) << std::endl;
+
             if (gridX < 0 || gridX >= board->getHeight())
             {
                 worstCollision = CollisionType::GROUND;
             }
-            else if (grid[gridX][gridY]->getState() == CellState::FALLEN)
+            else if (state == CellState::FALLEN)
             {
-
                 if (worstCollision < CollisionType::FALLEN_FIXED)
                     worstCollision = CollisionType::FALLEN_FIXED;
             }
-            else if (grid[gridX][gridY]->getState() == CellState::FALLING && grid[gridX][gridY]->getPieceId() != currentTetromino->getId())
+            else if (state == CellState::FALLING && grid[gridX][gridY]->getPieceId() != currentTetromino->getId())
             {
-
                 if (worstCollision < CollisionType::FALLING_OTHER)
                     worstCollision = CollisionType::FALLING_OTHER;
             }
         }
     }
 
-    // No collision
-
     currentTetromino->evolveStates(false, action);
+
+    std::cout << "Collision = " << worstCollision << " tested " << tests << " points" << std::endl;
+
     return worstCollision;
 }
 
-void TetrisBoardController::setCellState(const std::shared_ptr<Tetromino> currentTetromino, CellState state)
+void BoardController::setCellState(const std::shared_ptr<Tetromino> currentTetromino, CellState state)
 {
 
     TetrominoShape tshape = currentTetromino->getShape();
@@ -75,21 +81,20 @@ void TetrisBoardController::setCellState(const std::shared_ptr<Tetromino> curren
     {
         for (size_t y = 0; y < shape[x].size(); y++)
         {
-            if (shape[x][y] != 0)
-            {
+            if (shape[x][y] == 0)
+                continue;
 
-                int gridX = baseX + static_cast<int>(x);
-                int gridY = board->getNormalizedY(baseY + static_cast<int>(y));
+            int gridX = baseX + static_cast<int>(x);
+            int gridY = board->getNormalizedY(baseY + static_cast<int>(y));
 
-                grid[gridX][gridY]->setState(state);
-                grid[gridX][gridY]->setColor(currentTetromino->getColor());
-                grid[gridX][gridY]->setPieceId(myId);
-            }
+            grid[gridX][gridY]->setState(state);
+            grid[gridX][gridY]->setColor(currentTetromino->getColor());
+            grid[gridX][gridY]->setPieceId(myId);
         }
     }
 }
 
-int TetrisBoardController::findAndClearFullLines()
+int BoardController::findAndClearFullLines()
 {
     auto &grid = board->getGrid();
     int width = board->getWidth();
@@ -134,17 +139,13 @@ int TetrisBoardController::findAndClearFullLines()
 
     // Fill the remaining rows above writeRow with empty
     for (int row = writeRow; row >= 0; --row)
-    {
         for (int y = 0; y < width; ++y)
-        {
             grid[row][y]->setEmpty();
-        }
-    }
 
     return numLinesCleared;
 }
 
-void TetrisBoardController::clearFallingTetromino(const std::shared_ptr<Tetromino> currentTetromino)
+void BoardController::clearFallingTetromino(const std::shared_ptr<Tetromino> currentTetromino)
 {
     TetrominoShape tshape = currentTetromino->getShape();
     const std::vector<std::vector<int>> shape = tshape.getShape();
@@ -160,21 +161,21 @@ void TetrisBoardController::clearFallingTetromino(const std::shared_ptr<Tetromin
     {
         for (size_t y = 0; y < shape[x].size(); y++)
         {
-            if (shape[x][y] != 0)
-            {
-                int gridX = baseX + static_cast<int>(x);
-                int gridY = board->getNormalizedY(baseY + static_cast<int>(y));
+            if (shape[x][y] == 0)
+                continue;
 
-                if (grid[gridX][gridY]->getPieceId() == myId)
-                {
-                    grid[gridX][gridY]->setEmpty();
-                }
+            int gridX = baseX + static_cast<int>(x);
+            int gridY = board->getNormalizedY(baseY + static_cast<int>(y));
+
+            if (grid[gridX][gridY]->getPieceId() == myId)
+            {
+                grid[gridX][gridY]->setEmpty();
             }
         }
     }
 }
 
-void TetrisBoardController::clearFallenTetrominos()
+void BoardController::clearFallenTetrominos()
 {
     for (int x = 0; x < board->getHeight(); x++)
         for (int y = 0; y < board->getWidth(); y++)

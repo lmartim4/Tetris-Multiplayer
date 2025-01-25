@@ -12,13 +12,13 @@ enum CollisionType
     GROUND,       // Attempted to place Tetromino outside the board
 };
 
-class TetrisBoardController
+class BoardController
 {
 private:
     const std::shared_ptr<TetrisBoard> board;
 
 public:
-    TetrisBoardController(std::shared_ptr<TetrisBoard> board);
+    BoardController(std::shared_ptr<TetrisBoard> board);
 
     void clearFallingTetromino(const std::shared_ptr<Tetromino> currentTetromino);
     void clearFallenTetrominos();

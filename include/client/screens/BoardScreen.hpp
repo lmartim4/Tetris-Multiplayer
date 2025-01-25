@@ -17,9 +17,7 @@ private:
     ClientManager &clientManager;
     std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid;
 
-    Button score;
-    Button lines;
-    Button level;
+    Button score, lines, level;
 
     std::mutex renderMutex;
 

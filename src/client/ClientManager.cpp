@@ -142,7 +142,8 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
         nlohmann::json boardData = packet.getPayloadAsJson();
 
         // std::cout << boardData << std::endl;
-
+        //POSSIBLE CRASH ALERT
+        boardBuffer.clear();
         boardBuffer.push(boardData);
     }
     catch (const std::exception &e)

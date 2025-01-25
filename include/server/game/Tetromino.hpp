@@ -14,8 +14,7 @@ private:
     Coordinate coordinate;
 
     int pieceId;
-    bool hasChanged;
-
+    bool hasChanged = true;
 protected:
     TetrominoShape shape;
     CellColor color;

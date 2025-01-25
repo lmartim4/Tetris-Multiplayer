@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TetrisBoardController.hpp"
+#include "BoardController.hpp"
 #include "EndGameData.hpp"
 #include "Player.hpp"
 #include "GameStatus.hpp"
@@ -43,7 +43,7 @@ private:
 
     GameStatus gameData;
 
-    TetrisBoardController *boardController;
+    BoardController *boardController;
     std::shared_ptr<TetrisBoard> board;
     std::vector<Player *> players;
 

@@ -9,11 +9,14 @@ int Game::instanceCount = 0;
 
 Game::Game(ServerManager &server) : server(server), this_instance(instanceCount++)
 {
+    logger = new Logger("Game");
+
     board = std::make_shared<TetrisBoard>(16, 10);
 
     gameState = WAITING_PLAYERS;
-    boardController = new TetrisBoardController(board);
-    logger = new Logger("Game");
+
+    boardController = new BoardController(board);
+    board->clearBoard();
 
     logger->console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
 }
@@ -30,6 +33,8 @@ void Game::addPlayer(Player *player)
         throw std::logic_error("Cannot add player (not waiting for players)");
 
     players.emplace_back(player);
+
+    // board size definition
     board->setSize(16, 10 + 3 * (players.size() - 1));
 }
 
@@ -63,6 +68,8 @@ void Game::spawnNextTetromino(Player *player)
 
     nextTetromino.erase(player);
     nextTetromino.emplace(player, TetrominoFactory::createTetromino());
+
+    broadcastBoardIfChanges();
 }
 
 void Game::startGame()
@@ -118,34 +125,38 @@ void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
 
     CollisionType colision;
 
-    if (action == TetrisAction::HARD_DROP)
+    /*if (action == TetrisAction::HARD_DROP)
     {
         do
         {
-
             colision = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
+
             if (colision == CollisionType::NONE)
                 tetromino->evolveStates(true, TetrisAction::GRAVITY);
 
         } while (colision == CollisionType::NONE);
 
         boardController->setCellState(tetromino, CellState::FALLING);
+
         onTetrominoColide(tetromino, colision);
+
         return;
-    }
+    }*/
 
     colision = boardController->checkCollision(tetromino, action);
 
     if (colision != CollisionType::NONE)
     {
         // Invalid move, revert the tetromino state
-        boardController->setCellState(tetromino, CellState::FALLING);
         server.broadcastSound(SoundType::DenyErrorSound);
+        boardController->setCellState(tetromino, CellState::FALLING);
+        //onTetrominoColide(tetromino, colision);
     }
     else
     {
         // Valid Move
         tetromino->evolveStates(true, action);
+
         boardController->setCellState(tetromino, CellState::FALLING);
         server.broadcastSound(SoundType::FabricImpactSound);
     }
@@ -292,10 +303,11 @@ void Game::onTetrominoColide(std::shared_ptr<Tetromino> tetromino, CollisionType
 {
     if (col == CollisionType::FALLING_OTHER)
         return;
-    
+
     int justClearedLines = tryClearFullLines();
 
     tetromino->lockedInPlace = true;
+
     server.broadcastSound(SoundType::DjembeSlap);
     boardController->setCellState(tetromino, CellState::FALLEN);
 

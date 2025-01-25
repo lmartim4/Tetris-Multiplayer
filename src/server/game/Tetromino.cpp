@@ -40,10 +40,10 @@ void Tetromino::evolveStates(bool forward, TetrisAction lastMove)
         coordinate.setX(coordinate.getX() + sign);
         break;
     case TetrisAction::ROTATE_CCW:
-        shape.rotate(forward ? false : true);
+        shape.rotate(!forward);
         break;
     case TetrisAction::ROTATE_CW:
-        shape.rotate(forward ? true : false);
+        shape.rotate(forward);
         break;
     default:
         break;

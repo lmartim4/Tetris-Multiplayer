@@ -28,10 +28,11 @@ BoardScreen::BoardScreen(sf::RenderWindow &window, ClientManager &clientManager)
     : Screen(window), clientManager(clientManager), board(2, 2),
       score(defaultFont, "Score: 0", sf::Color::White, sf::Vector2f(400, 400), 24),
       lines(defaultFont, "Lines: 0", sf::Color::White, sf::Vector2f(400, 350), 24),
-      level(defaultFont, "Level: 1", sf::Color::White, sf::Vector2f(400, 250), 24)
+      level(defaultFont, "Level: 0", sf::Color::White, sf::Vector2f(400, 250), 24)
 {
-    updateTextPositions();
+
     createRenders();
+    updateTextPositions();
 }
 
 void BoardScreen::handleEvent(sf::Event event, ScreenManager &manager)
@@ -143,11 +144,11 @@ void BoardScreen::updateTextPositions()
     float h = static_cast<float>(window.getSize().y);
 
     // Margins
-    float marginLeft = 20.f;   // distance from the left of the right region
-    float marginRight = 20.f;  // distance from the right edge of the window
+    float marginLeft = 20.f;  // distance from the left of the right region
+    float marginRight = 20.f; // distance from the right edge of the window
 
     // The "right side" region is from 80% of the width up to the window’s right edge
-    float regionLeft  = w * 0.8f + marginLeft;
+    float regionLeft = w * 0.8f + marginLeft;
     float regionRight = w - marginRight;
 
     // Bottom margin start (for stacking the texts vertically upward)
@@ -162,7 +163,7 @@ void BoardScreen::updateTextPositions()
     // leaving 20px from the window’s right border.
 
     // -----------------------------------
-    // If instead you wanted them "anchored" on the right edge, 
+    // If instead you wanted them "anchored" on the right edge,
     // you'd subtract each text's width from 'regionRight'. For example:
     /*
         float textWidth = lines.getLocalBounds().width;

@@ -6,15 +6,21 @@ GameManager::GameManager(ServerManager &server) : server(server)
     logger->console_log("GameManager()");
 }
 
-void GameManager::StartGameListener(const Packet &)
+void GameManager::StartGameListener(const Packet &p)
 {
 
     if (game != nullptr)
+    {
         if (game->getState() == GameState::ENDED)
         {
             delete game;
-            game = new Game(server);
         }
+        else
+        {
+            logger->console_log("Cannot start a match while on is already running. Client should wait until next match!");
+            return;
+        }
+    }
 
     game = new Game(server);
 

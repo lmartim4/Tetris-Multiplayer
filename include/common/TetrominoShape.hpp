@@ -57,7 +57,7 @@ public:
             }
         }
 
-        shape = rotated;
+        setShape(rotated);
     }
 
     void invertShape()
