@@ -5,10 +5,10 @@
 class GravityManager
 {
 private:
-    static constexpr int kMinGravityTimeMs = 100;      // Minimum gravity time (hard cap)
+    static constexpr int kMinGravityTimeMs = 400;      // Minimum gravity time (hard cap)
     static constexpr int kInitialGravityTimeMs = 1000; // Starting gravity time
-    static constexpr double kDifficultyRate = 0.05;    // Rate at which difficulty increases (adjustable)
-
+    static constexpr double kDifficultyRate = 0.2;     // Rate at which difficulty increases (adjustable)
+    
     int gravityTimeMs = kInitialGravityTimeMs; // Current gravity time in milliseconds
     int level = 0;                             // Tracks the current level of difficulty
 
@@ -19,7 +19,7 @@ public:
 
     void increaseGravityDifficulty()
     {
-        ++level;
+        level++;
 
         // Calculate the new gravity time using an exponential decay function
         gravityTimeMs = static_cast<int>(

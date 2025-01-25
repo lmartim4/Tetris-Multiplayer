@@ -20,7 +20,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "CMake Build Debug"
+            "preLaunchTask": "Run Server Debug"
         },
         {
             "name": "Debug Client",
@@ -41,7 +41,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "CMake Build Debug"
+            "preLaunchTask": "Run Client Debug"
         }
     ]
 }

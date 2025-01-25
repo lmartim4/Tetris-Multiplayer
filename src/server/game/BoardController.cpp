@@ -9,15 +9,32 @@ BoardController::BoardController(std::shared_ptr<TetrisBoard> board)
 {
 }
 
+void BoardController::printMatrix(const std::vector<std::vector<int>> &matrix, const std::string &label)
+{
+    std::cout << label << ":\n";
+    for (const auto &row : matrix)
+    {
+        for (const auto &cell : row)
+            std::cout << cell << " ";
+        std::cout << "\n";
+    }
+    std::cout << std::endl;
+}
+
 CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action) const
 {
-    std::cout << "Check piece (" << currentTetromino->getId() << ")\n";
+    // const std::vector<std::vector<int>> before = currentTetromino->getShape().getShape();
+    // printMatrix(before, "Before");
+
+    // MUST EVOLVE BEFORE GRABBING THE SHAPE
+    currentTetromino->evolveStates(true, action);
     const std::vector<std::vector<int>> shape = currentTetromino->getShape().getShape();
 
-    currentTetromino->evolveStates(true, action);
+    // printMatrix(shape, "After");
 
     std::vector<std::vector<std::shared_ptr<Cell>>> &grid = board->getGrid();
 
+    CellState state = CellState::EMPTY;
     CollisionType worstCollision = CollisionType::NONE;
 
     int gridX, gridY;
@@ -28,23 +45,25 @@ CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> current
     {
         for (size_t y = 0; y < shape[x].size(); ++y)
         {
+            // skip tetrominios empty slots
             if (shape[x][y] == 0)
                 continue;
 
+            // gridX might be out of a vector value but gridY is always protected
             gridX = currentTetromino->getCoordinate().getX() + x;
             gridY = board->getNormalizedY(currentTetromino->getCoordinate().getY() + y);
 
-            CellState state = grid[gridX][gridY]->getState();
-
             tests++;
-
-            std::cout << "Test " << tests << " got " << std::to_string(state) << std::endl;
 
             if (gridX < 0 || gridX >= board->getHeight())
             {
                 worstCollision = CollisionType::GROUND;
+                continue;
             }
-            else if (state == CellState::FALLEN)
+
+            state = grid[gridX][gridY]->getState();
+
+            if (state == CellState::FALLEN)
             {
                 if (worstCollision < CollisionType::FALLEN_FIXED)
                     worstCollision = CollisionType::FALLEN_FIXED;
@@ -59,8 +78,7 @@ CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> current
 
     currentTetromino->evolveStates(false, action);
 
-    std::cout << "Collision = " << worstCollision << " tested " << tests << " points" << std::endl;
-
+    // std::cout << "Detected worst collision as " << worstCollision << " tested " << tests << " board points" << std::endl;
     return worstCollision;
 }
 

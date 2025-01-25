@@ -2,72 +2,36 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "CMake Build Debug",
+            "label": "Run Server Debug",
             "type": "shell",
-            "command": "cmake",
+            "command": "make",
             "args": [
-                "-DCMAKE_BUILD_TYPE=Debug",
-                ".."
+                "server_debug_build"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/build"
             },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "detail": "Generates Makefiles and builds the project in Debug mode"
-        },
-        {
-            "label": "CMake Build Release",
-            "type": "shell",
-            "command": "cmake",
-            "args": [
-                "-DCMAKE_BUILD_TYPE=Release",
-                ".."
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}/build"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "detail": "Generates Makefiles and builds the project in Release mode"
-        },
-        {
-            "label": "Run Server",
-            "type": "shell",
-            "command": "./server",
-            "options": {
-                "cwd": "${workspaceFolder}/build"
-            },
-            "group": "test",
+            "group": "build",
             "presentation": {
                 "reveal": "always",
                 "panel": "shared"
-            },
-            "problemMatcher": []
+            }
         },
         {
-            "label": "Run Client",
+            "label": "Run Client Debug",
             "type": "shell",
-            "command": "./client",
+            "command": "make",
+            "args": [
+                "client_debug_build"
+            ],
             "options": {
                 "cwd": "${workspaceFolder}/build"
             },
-            "group": "test",
+            "group": "build",
             "presentation": {
                 "reveal": "always",
                 "panel": "shared"
-            },
-            "problemMatcher": []
+            }
         }
     ]
 }
