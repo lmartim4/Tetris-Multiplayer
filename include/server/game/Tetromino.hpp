@@ -8,50 +8,62 @@
 #include "TetrisAction.hpp"
 #include "Coordinate.hpp"
 
+class TetrominoController;
 class Tetromino
 {
 private:
     Coordinate coordinate;
 
     int pieceId;
-    bool hasChanged = true;
+    bool changed = true;
+
+    /*ControlVariables for gravity processing*/
+    bool canMove = false;
+    bool lockedInPlace = false;
+    
+    void setShape(std::vector<std::vector<int>> &s);
+    void setCoordinate(Coordinate &coord);
+    void setChanged(bool c) { changed = c; };
+
 protected:
-    TetrominoShape shape;
+    std::shared_ptr<TetrominoShape> shape;
     CellColor color;
 
 public:
     static const std::vector<CellColor> tetromino_colors;
 
-    bool canMove = false;
-    bool lockedInPlace = false;
-
     Coordinate getCoordinate() const { return coordinate; }
 
-    Tetromino(Coordinate coord, CellColor color, const std::vector<std::vector<int>> &shape) : coordinate(coord), color(color), shape(shape)
+    Tetromino(Coordinate coord, CellColor color, const std::vector<std::vector<int>> &s) : coordinate(coord), color(color)
     {
+        shape = std::make_shared<TetrominoShape>(s);
+
         static int nextId = 1;
         pieceId = nextId++;
 
-        hasChanged = true;
+        changed = true;
     }
+
     virtual ~Tetromino() = default;
 
     CellColor getColor() const;
 
-    const TetrominoShape getShape() const;
+    std::shared_ptr<TetrominoShape> getShape() const;
+
+    Coordinate &getCoordinate() { return coordinate; };
 
     int getId() const { return pieceId; }
 
+    bool hasChanged() { return changed; }
+
     bool shouldBroadcastState()
     {
-        if (hasChanged)
-        {
-            hasChanged = false;
-            return true;
-        }
+        if (!hasChanged())
+            return false;
 
-        return false;
+        setChanged(false);
+        return true;
     }
 
-    void evolveStates(bool forward, TetrisAction lastMove);
+    friend class TetrominoController;
 };

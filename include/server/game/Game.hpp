@@ -4,9 +4,9 @@
 #include "EndGameData.hpp"
 #include "Player.hpp"
 #include "GameStatus.hpp"
-#include "GravityManager.hpp"
-
-#include "ThreadSafeQueue.hpp"
+#include "GamePhysics.hpp"
+#include "TetrominoController.hpp"
+#include "TetrominoManager.hpp"
 #include "Logger.hpp"
 #include "ServerManager.hpp"
 
@@ -37,35 +37,33 @@ private:
     Logger *logger;
 
     ServerManager &server;
+
     std::atomic<GameState> gameState = INITIALIZING;
 
-    GravityManager gravity;
+    GamePhysics physics;
 
     GameStatus gameData;
 
-    BoardController *boardController;
+    std::shared_ptr<TetrominoManager> tetrominoManager;
+    std::shared_ptr<TetrominoController> tetrominoController;
+    std::shared_ptr<BoardController> boardController;
+
     std::shared_ptr<TetrisBoard> board;
     std::vector<Player *> players;
 
-    std::map<Player *, std::shared_ptr<Tetromino>> currentTetromino;
-    std::map<Player *, std::shared_ptr<Tetromino>> nextTetromino;
+    void processPlayersActions();
 
     void loop();
-    void processIncommingInputs();
-    void updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action);
+    void updateGame(Player *player, std::shared_ptr<Tetromino> tetromino, TetrisAction action);
 
-    int tryClearFullLines();
+    void checkForPlacedTetrominos();
+
     int calculatePoints(int nLines, int level);
 
-    void spawnNextTetromino(Player *player);
-    void onTetrominoColide(std::shared_ptr<Tetromino> tetromino, CollisionType col);
+    void trySpawnTetromino(Player *player);
 
     void broadcastBoardIfChanges() const;
     void broadcastEndGameStatus() const;
-
-    int countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetrominos);
-
-    void processGravity();
 
     std::thread gameThread;
 

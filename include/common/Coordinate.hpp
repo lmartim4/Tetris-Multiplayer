@@ -13,6 +13,16 @@ public:
 
     int getX() { return x; }
     int getY() { return y; }
+    
+    void addX(int x)
+    {
+        setX(getX() + x);
+    }
+
+    void addY(int y)
+    {
+        setY(getY() + y);
+    }
 
     void setX(int x) { this->x = x; }
     void setY(int y) { this->y = y; }

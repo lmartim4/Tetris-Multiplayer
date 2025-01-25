@@ -1,5 +1,7 @@
 
 #include "BoardController.hpp"
+#include "TetrominoController.hpp"
+
 #include "Cell.hpp"
 
 #include <iostream>
@@ -9,7 +11,12 @@ BoardController::BoardController(std::shared_ptr<TetrisBoard> board)
 {
 }
 
-void BoardController::printMatrix(const std::vector<std::vector<int>> &matrix, const std::string &label)
+std::shared_ptr<TetrisBoard> BoardController::getBoard()
+{
+    return board;
+}
+
+void BoardController::printMatrix(const std::vector<std::vector<int>> &matrix, const std::string &label) const
 {
     std::cout << label << ":\n";
     for (const auto &row : matrix)
@@ -21,16 +28,14 @@ void BoardController::printMatrix(const std::vector<std::vector<int>> &matrix, c
     std::cout << std::endl;
 }
 
-CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action) const
+CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action, std::shared_ptr<TetrominoController> tetrominoController) const
 {
-    // const std::vector<std::vector<int>> before = currentTetromino->getShape().getShape();
-    // printMatrix(before, "Before");
 
-    // MUST EVOLVE BEFORE GRABBING THE SHAPE
-    currentTetromino->evolveStates(true, action);
-    const std::vector<std::vector<int>> shape = currentTetromino->getShape().getShape();
-
-    // printMatrix(shape, "After");
+    const std::vector<std::vector<int>> before = currentTetromino->getShape()->getShape();
+    printMatrix(before, "Before");
+    tetrominoController->transform(currentTetromino, action, true);
+    const std::vector<std::vector<int>> shape = currentTetromino->getShape()->getShape();
+    printMatrix(shape, "After");
 
     std::vector<std::vector<std::shared_ptr<Cell>>> &grid = board->getGrid();
 
@@ -41,9 +46,9 @@ CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> current
 
     int tests = 0;
 
-    for (size_t x = 0; x < shape.size(); ++x)
+    for (size_t x = 0; x < shape.size(); x++)
     {
-        for (size_t y = 0; y < shape[x].size(); ++y)
+        for (size_t y = 0; y < shape[x].size(); y++)
         {
             // skip tetrominios empty slots
             if (shape[x][y] == 0)
@@ -76,7 +81,7 @@ CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> current
         }
     }
 
-    currentTetromino->evolveStates(false, action);
+    tetrominoController->transform(currentTetromino, action, false);
 
     // std::cout << "Detected worst collision as " << worstCollision << " tested " << tests << " board points" << std::endl;
     return worstCollision;
@@ -85,8 +90,8 @@ CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> current
 void BoardController::setCellState(const std::shared_ptr<Tetromino> currentTetromino, CellState state)
 {
 
-    TetrominoShape tshape = currentTetromino->getShape();
-    const std::vector<std::vector<int>> shape = tshape.getShape();
+    std::shared_ptr<TetrominoShape> tshape = currentTetromino->getShape();
+    const std::vector<std::vector<int>> shape = tshape->getShape();
 
     auto &grid = board->getGrid();
 
@@ -165,8 +170,8 @@ int BoardController::findAndClearFullLines()
 
 void BoardController::clearFallingTetromino(const std::shared_ptr<Tetromino> currentTetromino)
 {
-    TetrominoShape tshape = currentTetromino->getShape();
-    const std::vector<std::vector<int>> shape = tshape.getShape();
+    std::shared_ptr<TetrominoShape> tshape = currentTetromino->getShape();
+    const std::vector<std::vector<int>> shape = tshape->getShape();
 
     auto &grid = board->getGrid();
     auto tetroColor = currentTetromino->getColor();

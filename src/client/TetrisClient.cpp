@@ -24,7 +24,11 @@ void heartbeat_listener(const Packet &packet) { client.on_receive_heartbeat(); }
 void onGameScore(const Packet &packet) { client.on_receive_score(packet); }
 void onPlaySoundPacket(const Packet &packet) { client.on_receive_play_sound(packet); }
 void onPlayerListPacket(const Packet &packet) { client.on_receive_player_list(packet); }
-void onGameScreenPacket(const Packet &packet) { client.on_receive_game_screen(packet); }
+void onGameScreenPacket(const Packet &packet)
+{
+    screenManager.setActiveScreen("game");
+    client.on_receive_game_screen(packet);
+}
 
 void onGameEndPacket(const Packet &packet)
 {

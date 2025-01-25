@@ -36,8 +36,10 @@ set(SERVER_SOURCES
     src/server/game/BoardController.cpp
     src/server/game/TetrominoFactory.cpp
     src/server/game/Tetromino.cpp
+    src/server/game/TetrominoManager.cpp
     src/server/game/GameManager.cpp
     src/server/game/Game.cpp
+    src/server/game/GamePhysics.cpp
 )
 
 # Source files for the client

@@ -11,13 +11,15 @@ int Game::instanceCount = 0;
 
 Game::Game(ServerManager &server) : server(server), this_instance(instanceCount++)
 {
-    logger = new Logger("Game");
-
-    board = std::make_shared<TetrisBoard>(16, 10);
-
     gameState = WAITING_PLAYERS;
 
-    boardController = new BoardController(board);
+    logger = new Logger("Game");
+
+    board = std::make_shared<TetrisBoard>(1, 1);
+    tetrominoController = std::make_shared<TetrominoController>();
+    tetrominoManager = std::make_shared<TetrominoManager>();
+    boardController = std::make_shared<BoardController>(board);
+
     board->clearBoard();
 
     logger->console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
@@ -37,48 +39,7 @@ void Game::addPlayer(Player *player)
     players.emplace_back(player);
 
     // board size definition
-    board->setSize(16, 10 + 3 * (players.size() - 1));
-}
-
-void Game::spawnNextTetromino(Player *player)
-{
-    if (nextTetromino.find(player) == nextTetromino.end())
-        nextTetromino.emplace(player, TetrominoFactory::createTetromino());
-
-    std::shared_ptr<Tetromino> spawningTetromino = nextTetromino.find(player)->second;
-
-    currentTetromino.erase(player);
-    currentTetromino.emplace(player, spawningTetromino);
-
-    int maxTries = board->getWidth();
-
-    CollisionType col;
-
-    do
-    {
-        spawningTetromino->evolveStates(true, TetrisAction::RIGHT);
-        col = boardController->checkCollision(spawningTetromino, TetrisAction::RIGHT);
-
-        if (maxTries == 0)
-        {
-            gameState = GameState::ENDING;
-            logger->console_log("Ending Game");
-            server.broadcastSound(SoundType::DeathSound);
-            return;
-        }
-
-    } while (col != CollisionType::NONE && maxTries-- > 0);
-
-    if (col == CollisionType::NONE)
-    {
-        spawningTetromino->evolveStates(true, TetrisAction::RIGHT);
-        boardController->setCellState(spawningTetromino, CellState::FALLING);
-    }
-
-    broadcastBoardIfChanges();
-
-    nextTetromino.erase(player);
-    nextTetromino.emplace(player, TetrominoFactory::createTetromino());
+    board->setSize(16 + 2 * (players.size() - 1), 10 + 4 * (players.size() - 1));
 }
 
 void Game::startGame()
@@ -100,7 +61,7 @@ void Game::endGameLoop()
         gameThread.join();
 
     if (gameState == ENDED)
-        logger->console_log("Successfully ended gameLoop");
+        logger->console_log("Successfully ended game Loop");
     else
         throw std::runtime_error("Failed to end game Loop");
 }
@@ -109,42 +70,38 @@ void Game::endGameLoop()
 
 #pragma region util_logic
 
-void Game::processIncommingInputs()
+void Game::trySpawnTetromino(Player *player)
+{
+    if (tetrominoManager->spawnNextTetromino(player, boardController, tetrominoController))
+        return;
+
+    gameState = GameState::ENDING;
+    logger->console_log("Ending Game");
+    server.broadcastSound(SoundType::DeathSound);
+}
+
+void Game::processPlayersActions()
 {
     TetrisAction action;
     for (Player *pl : players)
         while (pl->popAction(action))
-            updateGame(currentTetromino.at(pl), action);
+            updateGame(pl, tetrominoManager->getCurrentTetromino(pl), action);
 }
 
 int Game::calculatePoints(int nLines, int level)
 {
     int x = std::min(nLines, 4);
     int P_x = ((280 * (x * x * x) - 1470 * (x * x) + 2630 * (x)-1320) / 3);
-
     return (nLines > 0) ? P_x * (level + 1) : 0;
-}
-
-int Game::tryClearFullLines()
-{
-    int clearedLines = boardController->findAndClearFullLines();
-
-    if (clearedLines > 0)
-    {
-        gameData.addLinesClearedOnThisLevel(clearedLines);
-        gameData.addTotalLinesCleared(clearedLines);
-        server.broadcastSound(SoundType::BreakLine);
-    }
-    return clearedLines;
 }
 
 void Game::broadcastBoardIfChanges() const
 {
     bool send = false;
 
-    for (const auto &pair : currentTetromino)
+    for (const auto tetromino : tetrominoManager->getCurrentTetrominos())
     {
-        if (pair.second->shouldBroadcastState())
+        if (tetromino->shouldBroadcastState())
         {
             send = true;
             break;
@@ -186,16 +143,18 @@ void Game::loop()
     gameState = RUNNNING;
 
     for (Player *pl : players)
-        spawnNextTetromino(pl);
+        trySpawnTetromino(pl);
 
     while (gameState != ENDING)
     {
-        processIncommingInputs();
+        processPlayersActions();
 
-        if (gravity.hasGravityIntervalElapsed())
-            processGravity();
+        physics.applyGravity(boardController, tetrominoController, tetrominoManager);
 
+        checkForPlacedTetrominos();
+        
         broadcastBoardIfChanges();
+
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
@@ -203,145 +162,45 @@ void Game::loop()
     broadcastEndGameStatus();
 }
 
-void Game::updateGame(std::shared_ptr<Tetromino> tetromino, TetrisAction action)
+void Game::updateGame(Player *player, std::shared_ptr<Tetromino> tetromino, TetrisAction action)
 {
+    if (tetromino == nullptr)
+        throw std::runtime_error("Tetromino must not be null");
 
-    boardController->clearFallingTetromino(tetromino);
-
-    CollisionType colision;
-
+    CollisionType col;
     if (action == TetrisAction::HARD_DROP)
-    {
-        do
-        {
-            colision = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
+        col = physics.applyHardDrop(tetromino, boardController, tetrominoController, tetrominoManager);
+    else
+        col = physics.applyAction(tetromino, action, boardController, tetrominoController, tetrominoManager);
 
-            if (colision == CollisionType::NONE)
-                tetromino->evolveStates(true, TetrisAction::GRAVITY);
-
-        } while (colision == CollisionType::NONE);
-
-        boardController->setCellState(tetromino, CellState::FALLING);
-        onTetrominoColide(tetromino, colision);
+    if (col == CollisionType::FALLING_OTHER || col == CollisionType::NONE)
         return;
-    }
-
-    colision = boardController->checkCollision(tetromino, action);
-
-    // Invalid move, revert the tetromino state
-    if (colision != CollisionType::NONE)
-    {
-        server.broadcastSound(SoundType::DenyErrorSound);
-    }
-    else // Valid Move
-    {
-        server.broadcastSound(SoundType::FabricImpactSound);
-        tetromino->evolveStates(true, action);
-    }
-
-    boardController->setCellState(tetromino, CellState::FALLING);
 }
 
-int Game::countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetrominos)
+void Game::checkForPlacedTetrominos()
 {
-    int count = 0;
 
-    for (const std::shared_ptr<Tetromino> tetromino : tetrominos)
+    // This is dumb. Use the map itself it is easier
+    for (auto t : tetrominoManager->getCurrentTetrominos())
+        if (tetrominoController->isLockedInPlace(t))
+            trySpawnTetromino(tetrominoManager->getPlayerByTetromino(t));
+
+    int clearedLines = boardController->findAndClearFullLines();
+
+    if (clearedLines > 0)
     {
-        CollisionType col = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
-
-        if (col == CollisionType::FALLEN_FIXED || col == CollisionType::GROUND)
-            if (!tetromino->lockedInPlace)
-                count++;
+        gameData.addLinesClearedOnThisLevel(clearedLines);
+        gameData.addTotalLinesCleared(clearedLines);
+        server.broadcastSound(SoundType::BreakLine);
     }
 
-    return count;
-}
-
-void Game::processGravity()
-{
-    CollisionType colision;
-
-    std::vector<std::shared_ptr<Tetromino>> tetrominosToApplyGravity;
-
-    for (const auto &pair : currentTetromino)
-    {
-        tetrominosToApplyGravity.emplace_back(pair.second);
-        pair.second->canMove = false;
-        pair.second->lockedInPlace = false;
-    }
-
-    while (countNewLockedTetrominos(tetrominosToApplyGravity) > 0)
-    {
-        for (const std::shared_ptr<Tetromino> tetromino : tetrominosToApplyGravity)
-        {
-            if (tetromino->lockedInPlace)
-                continue;
-
-            colision = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
-
-            if (colision == CollisionType::GROUND || colision == CollisionType::FALLEN_FIXED)
-            {
-                tetromino->canMove = false;
-
-                boardController->setCellState(tetromino, CellState::FALLING);
-                onTetrominoColide(tetromino, colision);
-            }
-            else if (colision == CollisionType::FALLING_OTHER || colision == CollisionType::NONE)
-            {
-                tetromino->canMove = true;
-            }
-        }
-    }
-
-    for (const std::shared_ptr<Tetromino> tetromino : tetrominosToApplyGravity)
-    {
-        CollisionType col = boardController->checkCollision(tetromino, TetrisAction::GRAVITY);
-
-        if (col == CollisionType::FALLING_OTHER || col == CollisionType::NONE)
-        {
-            boardController->clearFallingTetromino(tetromino);
-            tetromino->evolveStates(true, TetrisAction::GRAVITY);
-            boardController->setCellState(tetromino, CellState::FALLING);
-        }
-    }
-}
-
-void Game::onTetrominoColide(std::shared_ptr<Tetromino> tetromino, CollisionType col)
-{
-    if (col == CollisionType::FALLING_OTHER)
-        return;
-
-    tetromino->lockedInPlace = true;
-    server.broadcastSound(SoundType::DjembeSlap);
-    boardController->setCellState(tetromino, CellState::FALLEN);
-
-    // msut run after cell states are set to fallen
-
-    int justClearedLines = tryClearFullLines();
-    gameData.addScore(calculatePoints(justClearedLines, gameData.getLevel()));
-
+    gameData.addScore(calculatePoints(clearedLines, gameData.getLevel()));
     server.sendPacket(Packet(PacketType::GAME_SCORE, gameData, nullptr));
 
     if (gameData.shouldLevelUp())
     {
-        gravity.increaseGravityDifficulty();
+        physics.increaseGravityDifficulty();
         boardController->clearFallenTetrominos();
-        logger->console_log("Level Up: (" + std::to_string(gameData.getLevel()) + ")");
         server.broadcastSound(SoundType::LevelUp);
     }
-
-    // TODO: Better organize the logic here
-
-    Player *foundKey = nullptr;
-    for (const auto &pair : currentTetromino)
-    {
-        if (pair.second == tetromino)
-        {
-            foundKey = pair.first;
-            break;
-        }
-    }
-
-    spawnNextTetromino(foundKey);
 }
