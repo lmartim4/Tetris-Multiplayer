@@ -47,6 +47,7 @@ set(CLIENT_SOURCES
     src/client/TetrisClient.cpp
     src/client/ClientManager.cpp
     src/client/AudioManager.cpp
+    src/client/CellRenderer.cpp
     src/client/screens/Button.cpp
     src/client/screens/BoardScreen.cpp
     src/client/screens/EndGameScreen.cpp

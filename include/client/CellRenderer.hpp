@@ -1,62 +1,114 @@
+// CellRenderer.hpp
 #pragma once
 
-#include <memory>
 #include <SFML/Graphics.hpp>
+#include <memory>
 #include <functional>
 #include "Cell.hpp"
+#include <iostream> // Para std::cerr
 
-class CellRenderer : public sf::RectangleShape
+/**
+ * Define os modos de renderização de cada célula.
+ */
+enum class CellRenderMode
+{
+    None,               // Sem gradiente, cor única
+    DiagonalGradient,   // Diagonal escuro->claro
+    VerticalGradient,   // Vertical escuro->claro
+    HorizontalGradient, // Horizontal escuro->claro
+    CentralGradient     // Gradiente circular claro->escuro
+};
+
+class CellRenderer : public sf::Drawable, public sf::Transformable
 {
 private:
-    std::function<void()> onClickCallback;
     std::shared_ptr<Cell> cell;
+    std::function<void()> onClickCallback;
+
+    // Vertex array principal (preenchimento para modos não-shader)
+    sf::VertexArray fillVertices;
+
+    // Outline (borda grossa)
+    sf::RectangleShape outlineShape;
+
+    // RectangleShape para CentralGradient com shader
+    sf::RectangleShape shaderShape;
+    sf::Shader shader;
+
+    // Tamanho “interno” da célula (sem considerar outline)
+    sf::Vector2f size;
+
+    // Modo de render escolhido pelo construtor
+    CellRenderMode renderMode;
+
+    // Textura branca para shader
+    static sf::Texture whiteTexture;
+    static bool whiteTextureInitialized;
+
+    //------------------------------------------------------
+    // Inicialização da Textura Branca
+    //------------------------------------------------------
+    static bool initializeWhiteTexture();
+
+    //------------------------------------------------------
+    // Reconstrói a geometria do fill e do outline
+    //------------------------------------------------------
+    void updateGeometry();
+
+    //------------------------------------------------------
+    // Monta a parte interna (fillVertices) para modos não-shader
+    //------------------------------------------------------
+    void rebuildFill();
+
+    //------------------------------------------------------
+    // Monta o outline usando RectangleShape
+    //------------------------------------------------------
+    void rebuildOutline();
+
+    //------------------------------------------------------
+    // Configura o shape para CentralGradient
+    //------------------------------------------------------
+    void rebuildShaderShape();
+
+    //------------------------------------------------------
+    // Desenho final
+    //------------------------------------------------------
+    virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
 public:
-    CellRenderer(sf::Vector2f size, sf::Vector2f position, sf::Color color, std::shared_ptr<Cell> c) : cell(c)
-    {
-        setSize(size);
-        setPosition(position);
-        setFillColor(color);
-        setOutlineThickness(1.0f);
-        setOutlineColor(sf::Color::Black);
-    }
+    //------------------------------------------------------
+    // Inicialização estática da textura branca
+    //------------------------------------------------------
+    static bool initStatic();
 
-    void refreshPosition(sf::Vector2f size, sf::Vector2f position)
-    {
-        setSize(size);
-        setPosition(position);
-    }
+    //------------------------------------------------------
+    // Construtor
+    //------------------------------------------------------
+    CellRenderer(sf::Vector2f size,
+                         sf::Vector2f position,
+                         CellRenderMode mode,
+                         std::shared_ptr<Cell> c);
 
-    void setOnClick(const std::function<void()> &callback) { onClickCallback = callback; }
+    //------------------------------------------------------
+    // Ajuste de posição/tamanho (se a célula for redimensionada)
+    //------------------------------------------------------
+    void refreshPosition(sf::Vector2f newSize, sf::Vector2f newPosition);
 
-    void handleEvent(const sf::Event &event)
-    {
-        if (event.type == sf::Event::MouseButtonPressed)
-            if (getGlobalBounds().contains(static_cast<float>(event.mouseButton.x), static_cast<float>(event.mouseButton.y)))
-                if (onClickCallback)
-                    onClickCallback();
-    }
+    //------------------------------------------------------
+    // Outline (se quiser trocar em tempo de execução)
+    //------------------------------------------------------
+    void setOutlineThickness(float thickness);
+    void setOutlineColor(const sf::Color &color);
 
-    void updateData() { setColor(cell->getColor()); }
+    //------------------------------------------------------
+    // Callback de clique (opcional)
+    //------------------------------------------------------
+    void setOnClick(const std::function<void()> &callback);
 
-    void setColor(const CellColor tc) { setFillColor(getColorFromType(tc)); }
+    void handleEvent(const sf::Event &event, const sf::RenderWindow &window);
 
-    static sf::Color getColorFromType(CellColor type)
-    {
-        switch (type)
-        {
-        case CellColor::Empty:
-            return sf::Color(50, 50, 50);
-        case CellColor::Red:
-            return sf::Color::Red;
-        case CellColor::Green:
-            return sf::Color::Green;
-        case CellColor::Blue:
-            return sf::Color::Blue;
-        case CellColor::Yellow:
-            return sf::Color::Yellow;
-        default:
-            return sf::Color::Magenta;
-        }
-    }
+    //------------------------------------------------------
+    // updateData() — define as cores de acordo com CellColor
+    //------------------------------------------------------
+    void updateData();
 };

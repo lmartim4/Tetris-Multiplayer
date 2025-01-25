@@ -9,7 +9,7 @@ class Gravity
 {
 private:
     static constexpr int kMinGravityTimeMs = 400;      // Minimum gravity time (hard cap)
-    static constexpr int kInitialGravityTimeMs = 10000; // Starting gravity time
+    static constexpr int kInitialGravityTimeMs = 700; // Starting gravity time
     static constexpr double kDifficultyRate = 0.2;     // Rate at which difficulty increases (adjustable)
 
     int gravityTimeMs = kInitialGravityTimeMs; // Current gravity time in milliseconds
