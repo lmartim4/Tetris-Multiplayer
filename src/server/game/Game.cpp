@@ -70,6 +70,13 @@ void Game::endGameLoop()
 
 #pragma region util_logic
 
+int Game::calculatePoints(int nLines, int level)
+{
+    int x = std::min(nLines, 4);
+    int P_x = ((280 * (x * x * x) - 1470 * (x * x) + 2630 * (x)-1320) / 3);
+    return (nLines > 0) ? P_x * (level + 1) : 0;
+}
+
 void Game::trySpawnTetromino(Player *player)
 {
     if (tetrominoManager->spawnNextTetromino(player, boardController, tetrominoController))
@@ -86,13 +93,6 @@ void Game::processPlayersActions()
     for (Player *pl : players)
         while (pl->popAction(action))
             processAction(pl, tetrominoManager->getCurrentTetromino(pl), action);
-}
-
-int Game::calculatePoints(int nLines, int level)
-{
-    int x = std::min(nLines, 4);
-    int P_x = ((280 * (x * x * x) - 1470 * (x * x) + 2630 * (x)-1320) / 3);
-    return (nLines > 0) ? P_x * (level + 1) : 0;
 }
 
 void Game::broadcastBoardIfChanges() const
@@ -177,11 +177,11 @@ void Game::loop()
 
 void Game::checkForPlacedTetrominos()
 {
+    int clearedLines = boardController->findAndClearFullLines();
+
     for (auto t : tetrominoManager->getCurrentTetrominos())
         if (tetrominoController->isLockedInPlace(t))
             trySpawnTetromino(tetrominoManager->getPlayerByTetromino(t));
-
-    int clearedLines = boardController->findAndClearFullLines();
 
     if (clearedLines > 0)
     {

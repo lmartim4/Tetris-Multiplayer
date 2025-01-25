@@ -185,7 +185,7 @@ void NetworkManager::sendOutgoingPackets()
             }
         }
         
-        enet_packet_destroy(enetPacket);
+        //enet_packet_destroy(enetPacket);
     }
 }
 

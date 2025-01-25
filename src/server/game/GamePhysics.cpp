@@ -31,7 +31,6 @@ CollisionType GamePhysics::applyAction(std::shared_ptr<Tetromino> tetromino,
     if (colision != CollisionType::NONE)
     {
         // server.broadcastSound(SoundType::DenyErrorSound);
-        std::cout << "Action blocked\n";
     }
     else
     {
