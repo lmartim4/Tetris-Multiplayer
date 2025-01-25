@@ -184,6 +184,8 @@ void NetworkManager::sendOutgoingPackets()
                 enet_peer_send(&host->peers[i], 0, enetPacket);
             }
         }
+        
+        enet_packet_destroy(enetPacket);
     }
 }
 

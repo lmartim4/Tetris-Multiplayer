@@ -16,7 +16,7 @@
 #include <thread>
 #include <map>
 
-#define GAME_DEBUG
+//#define GAME_DEBUG
 
 enum GameState
 {
@@ -41,29 +41,28 @@ private:
     std::atomic<GameState> gameState = INITIALIZING;
 
     GamePhysics physics;
-
     GameStatus gameData;
 
     std::shared_ptr<TetrominoManager> tetrominoManager;
     std::shared_ptr<TetrominoController> tetrominoController;
     std::shared_ptr<BoardController> boardController;
-
     std::shared_ptr<TetrisBoard> board;
+    
     std::vector<Player *> players;
 
     void processPlayersActions();
 
     void loop();
-    void updateGame(Player *player, std::shared_ptr<Tetromino> tetromino, TetrisAction action);
 
-    void checkForPlacedTetrominos();
-
-    int calculatePoints(int nLines, int level);
+    void processAction(Player *player, std::shared_ptr<Tetromino> tetromino, TetrisAction action);
 
     void trySpawnTetromino(Player *player);
 
     void broadcastBoardIfChanges() const;
     void broadcastEndGameStatus() const;
+
+    int calculatePoints(int nLines, int level);
+    void checkForPlacedTetrominos();
 
     std::thread gameThread;
 

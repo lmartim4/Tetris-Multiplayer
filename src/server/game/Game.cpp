@@ -85,7 +85,7 @@ void Game::processPlayersActions()
     TetrisAction action;
     for (Player *pl : players)
         while (pl->popAction(action))
-            updateGame(pl, tetrominoManager->getCurrentTetromino(pl), action);
+            processAction(pl, tetrominoManager->getCurrentTetromino(pl), action);
 }
 
 int Game::calculatePoints(int nLines, int level)
@@ -138,6 +138,22 @@ void Game::broadcastEndGameStatus() const
 
 #pragma endregion
 
+void Game::processAction(Player *player, std::shared_ptr<Tetromino> tetromino, TetrisAction action)
+{
+    if (tetromino == nullptr)
+        throw std::runtime_error("Tetromino must not be null");
+
+    CollisionType col;
+
+    if (action == TetrisAction::HARD_DROP)
+        col = physics.applyHardDrop(tetromino, boardController, tetrominoController, tetrominoManager);
+    else
+        col = physics.applyAction(tetromino, action, boardController, tetrominoController, tetrominoManager);
+
+    if (col == CollisionType::FALLING_OTHER || col == CollisionType::NONE)
+        return;
+}
+
 void Game::loop()
 {
     gameState = RUNNNING;
@@ -148,13 +164,10 @@ void Game::loop()
     while (gameState != ENDING)
     {
         processPlayersActions();
-
         physics.applyGravity(boardController, tetrominoController, tetrominoManager);
 
         checkForPlacedTetrominos();
-        
         broadcastBoardIfChanges();
-
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
@@ -162,25 +175,8 @@ void Game::loop()
     broadcastEndGameStatus();
 }
 
-void Game::updateGame(Player *player, std::shared_ptr<Tetromino> tetromino, TetrisAction action)
-{
-    if (tetromino == nullptr)
-        throw std::runtime_error("Tetromino must not be null");
-
-    CollisionType col;
-    if (action == TetrisAction::HARD_DROP)
-        col = physics.applyHardDrop(tetromino, boardController, tetrominoController, tetrominoManager);
-    else
-        col = physics.applyAction(tetromino, action, boardController, tetrominoController, tetrominoManager);
-
-    if (col == CollisionType::FALLING_OTHER || col == CollisionType::NONE)
-        return;
-}
-
 void Game::checkForPlacedTetrominos()
 {
-
-    // This is dumb. Use the map itself it is easier
     for (auto t : tetrominoManager->getCurrentTetrominos())
         if (tetrominoController->isLockedInPlace(t))
             trySpawnTetromino(tetrominoManager->getPlayerByTetromino(t));

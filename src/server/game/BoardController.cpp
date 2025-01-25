@@ -31,11 +31,11 @@ void BoardController::printMatrix(const std::vector<std::vector<int>> &matrix, c
 CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action, std::shared_ptr<TetrominoController> tetrominoController) const
 {
 
-    const std::vector<std::vector<int>> before = currentTetromino->getShape()->getShape();
-    printMatrix(before, "Before");
+    /*const std::vector<std::vector<int>> before = currentTetromino->getShape()->getShape();
+    printMatrix(before, "Before");*/
     tetrominoController->transform(currentTetromino, action, true);
     const std::vector<std::vector<int>> shape = currentTetromino->getShape()->getShape();
-    printMatrix(shape, "After");
+    // printMatrix(shape, "After");
 
     std::vector<std::vector<std::shared_ptr<Cell>>> &grid = board->getGrid();
 
@@ -43,8 +43,6 @@ CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> current
     CollisionType worstCollision = CollisionType::NONE;
 
     int gridX, gridY;
-
-    int tests = 0;
 
     for (size_t x = 0; x < shape.size(); x++)
     {
@@ -57,8 +55,6 @@ CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> current
             // gridX might be out of a vector value but gridY is always protected
             gridX = currentTetromino->getCoordinate().getX() + x;
             gridY = board->getNormalizedY(currentTetromino->getCoordinate().getY() + y);
-
-            tests++;
 
             if (gridX < 0 || gridX >= board->getHeight())
             {
@@ -82,8 +78,6 @@ CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> current
     }
 
     tetrominoController->transform(currentTetromino, action, false);
-
-    // std::cout << "Detected worst collision as " << worstCollision << " tested " << tests << " board points" << std::endl;
     return worstCollision;
 }
 
