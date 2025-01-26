@@ -139,11 +139,20 @@ int BoardController::findAndClearFullLines()
             // Copy readRow -> writeRow if they differ
             if (readRow != writeRow)
             {
-                for (int y = 0; y < width; ++y)
+                for (int x = 0; x < width; ++x)
                 {
-                    // Copy color & state
-                    grid[writeRow][y]->setState(grid[readRow][y]->getState());
-                    grid[writeRow][y]->setColor(grid[readRow][y]->getColor());
+                    // Copy the properties of FALLEN cells; empty cells stay empty
+                    CellState readState = grid[readRow][x]->getState();
+                    if (readState == CellState::FALLEN)
+                    {
+                        grid[writeRow][x]->setState(CellState::FALLEN);
+                        grid[writeRow][x]->setColor(grid[readRow][x]->getColor());
+                    }
+                    else
+                    {
+                        if (readState != CellState::FALLING)
+                            grid[writeRow][x]->setEmpty();
+                    }
                 }
             }
             writeRow--;
@@ -157,7 +166,8 @@ int BoardController::findAndClearFullLines()
     // Fill the remaining rows above writeRow with empty
     for (int row = writeRow; row >= 0; --row)
         for (int y = 0; y < width; ++y)
-            grid[row][y]->setEmpty();
+            if (grid[row][y]->getState() != CellState::FALLING)
+                grid[row][y]->setEmpty();
 
     return numLinesCleared;
 }
