@@ -7,7 +7,7 @@ BoardScreen::BoardScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager
     statusDisplay = std::make_shared<GameStatusRenderer>(defaultFont);
     board = std::make_shared<TetrisBoard>(2, 2);
     mainBoard = std::make_shared<BoardRenderer>(clientManager, board);
-    
+
     miniBoard->refreshPosition(window);
     statusDisplay->updateTextPositions(window);
 }
@@ -34,9 +34,11 @@ void BoardScreen::render(sf::RenderWindow &window)
 
     window.setView(defaultView);
 
-    renderGameStatus(window);
-    renderMainBoard(window);
-    renderMiniBoard(window);
+    std::lock_guard<std::mutex> lock(renderMutex);
+
+    window.draw(*miniBoard);
+    window.draw(*mainBoard);
+    window.draw(*statusDisplay);
 }
 
 void BoardScreen::update(float deltaTime)
@@ -61,22 +63,4 @@ void BoardScreen::handleKeyPress(sf::Event event)
 
     if (event.type == sf::Event::KeyPressed)
         clientManager->onPressKey(event.key);
-}
-
-void BoardScreen::renderMiniBoard(sf::RenderTarget &target)
-{
-    std::lock_guard<std::mutex> lock(renderMutex);
-    window.draw(*miniBoard);
-}
-
-void BoardScreen::renderMainBoard(sf::RenderTarget &target)
-{
-    std::lock_guard<std::mutex> lock(renderMutex);
-    window.draw(*mainBoard);
-}
-
-void BoardScreen::renderGameStatus(sf::RenderTarget &target)
-{
-    std::lock_guard<std::mutex> lock(renderMutex);
-    target.draw(*statusDisplay);
 }

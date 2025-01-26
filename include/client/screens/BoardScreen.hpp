@@ -16,18 +16,15 @@
 class BoardScreen : public Screen
 {
 private:
-    std::shared_ptr<TetrisBoard> board;
+    std::shared_ptr<ClientManager> clientManager;
 
+    std::shared_ptr<TetrisBoard> board;
+    
     std::shared_ptr<MiniBoardRenderer> miniBoard;
     std::shared_ptr<BoardRenderer> mainBoard;
-    std::shared_ptr<ClientManager> clientManager;
     std::shared_ptr<GameStatusRenderer> statusDisplay;
 
     std::mutex renderMutex;
-
-    void renderMiniBoard (sf::RenderTarget &target);
-    void renderMainBoard (sf::RenderTarget &target);
-    void renderGameStatus(sf::RenderTarget &target);
 
 public:
     BoardScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager);
