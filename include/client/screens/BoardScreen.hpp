@@ -9,28 +9,25 @@
 #include "CellRenderer.hpp"
 #include "TetrisBoard.hpp"
 #include "ClientManager.hpp"
-#include "MiniBoard.hpp"
+#include "MiniBoardRenderer.hpp"
 #include "BoardRenderer.hpp"
+#include "GameStatusRenderer.hpp"
 
 class BoardScreen : public Screen
 {
 private:
     std::shared_ptr<TetrisBoard> board;
-    MiniBoard nextTetrominoBoard;
+
+    std::shared_ptr<MiniBoardRenderer> miniBoard;
     std::shared_ptr<BoardRenderer> mainBoard;
-
     std::shared_ptr<ClientManager> clientManager;
-    std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid;
-
-    Button score, lines, level;
+    std::shared_ptr<GameStatusRenderer> statusDisplay;
 
     std::mutex renderMutex;
 
-    void updateTextPositions();
-
-    void renderMiniBoard(sf::RenderWindow &window);
-    void renderMainBoard(sf::RenderWindow &window);
-    void renderGameStatus(sf::RenderWindow &window);
+    void renderMiniBoard (sf::RenderTarget &target);
+    void renderMainBoard (sf::RenderTarget &target);
+    void renderGameStatus(sf::RenderTarget &target);
 
 public:
     BoardScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager);

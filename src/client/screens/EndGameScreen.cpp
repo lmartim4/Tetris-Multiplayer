@@ -6,11 +6,12 @@ float base_x = 250;
 float base_y = 380;
 float gap = 180;
 
-EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
+EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenM, std::shared_ptr<ClientManager> clientManager)
     : Screen(window),
-      clientManager(clientManager), screenManager(screenManager),
+      screenManager(screenM),
       quitButton(defaultFont, "Quit", sf::Color::White, {base_x, base_y}, 24),
-      playAgainButton(defaultFont, "Play Again", sf::Color::White, {base_x + gap, base_y}, 24)
+      playAgainButton(defaultFont, "Play Again", sf::Color::White, {base_x + gap, base_y}, 24),
+      client(clientManager)
 {
     title.setFont(defaultFont);
     title.setString("Game End");
@@ -42,13 +43,13 @@ EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenMana
     finalLevel.setFillColor(sf::Color::White);
     finalLevel.setPosition(baseX, baseY + spacing * 3);
 
-    quitButton.setOnClick([&]()
+    quitButton.setOnClick([this]()
                           {
                               screenManager.setActiveScreen("main-menu");
-                              clientManager->disconnect(); });
+                              client->disconnect(); });
 
-    playAgainButton.setOnClick([&]()
-                               { clientManager->request_game_start(); });
+    playAgainButton.setOnClick([this]()
+                               { client->request_game_start(); });
 }
 
 EndGameScreen::~EndGameScreen()
@@ -66,7 +67,7 @@ void EndGameScreen::update(float deltaTime)
 
     nlohmann::json endGameData;
 
-    if (clientManager->hasEndGameData(endGameData))
+    if (client->hasEndGameData(endGameData))
     {
         data.deserialize(endGameData);
 

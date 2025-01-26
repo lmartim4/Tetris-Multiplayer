@@ -17,12 +17,12 @@ constexpr float y_offset_screen = 120;
 
 class MenuScreen : public Screen
 {
+    ScreenManager &manager;
+    std::shared_ptr<ClientManager> clientMan;
+
     Button titleText;
     Button connectText;
     Button quitText;
-    
-    ScreenManager &manager;
-    std::shared_ptr<ClientManager> clientMan;
 
 public:
     MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager);

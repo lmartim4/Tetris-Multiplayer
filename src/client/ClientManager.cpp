@@ -9,9 +9,7 @@
 void ClientManager::onPeerConnect(ENetPeer *peer)
 {
     isConnected = true;
-    std::cout << std::endl;
-    logger->console_log("");
-    std::cout << "Connection successful to " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
+    logger->console_log("Connection successful to " + uint32_to_ipv4(peer->address.host) + ":" + std::to_string(peer->address.port));
     sendPacket(Packet(PacketType::JOIN_REQUEST, serverPeer));
 }
 
@@ -24,7 +22,6 @@ void ClientManager::onPeerDisconnect(ENetPeer *peer)
 
 void ClientManager::on_receive_score(const Packet &packet)
 {
-    // std::cout << packet.getPayloadAsJson() << std::endl;
     score.deserialize(packet.getPayloadAsJson());
 }
 
@@ -49,10 +46,10 @@ void ClientManager::TaskStartHeartbeat()
 void ClientManager::TaskHeartbeat()
 {
     HeartBeatRunningFlag = true;
-    int heartbeat_frequencie = 1; // Hertz
+    int heartbeat_frequency = 1; // Hertz
     while (HeartBeatRunningFlag)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / heartbeat_frequencie));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / heartbeat_frequency));
         sendPacket(Packet(PacketType::HEARTBEAT, serverPeer)); // Set destination as the server serverPeer
     }
 }
@@ -141,7 +138,6 @@ void ClientManager::on_receive_game_screen(const Packet &packet)
     try
     {
         nlohmann::json boardData = packet.getPayloadAsJson();
-
         // POSSIBLE CRASH ALERT
         boardBuffer.clear();
         boardBuffer.push(boardData);
@@ -165,7 +161,6 @@ void ClientManager::on_receive_play_sound(const Packet &packet)
 
 void ClientManager::on_receive_next_tetromino(const Packet &packet)
 {
-    std::cout << packet.getPayloadAsJson() << std::endl;
     Tetromino receivedTetromino;
     receivedTetromino.deserialize(packet.getPayloadAsJson());
     setNextTetromino(receivedTetromino);
@@ -174,7 +169,7 @@ void ClientManager::on_receive_next_tetromino(const Packet &packet)
 void ClientManager::on_receive_player_id(const Packet &packet)
 {
     me.deserialize(packet.getPayloadAsJson());
-    std::cout << "I have PlayerID = " << me.id << "\n";
+    logger->console_log("Client has been assigned with id = " + std::to_string(me.id));
 }
 
 bool ClientManager::hasBoard(nlohmann::json &board)

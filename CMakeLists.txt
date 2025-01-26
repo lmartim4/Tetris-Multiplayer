@@ -11,10 +11,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Add include directories for each module
 set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/common)
 set(SERVER_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/server ${CMAKE_SOURCE_DIR}/include/server/game)
-set(CLIENT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/client)
-set(CLIENT_INCLUDE_SCREENS_DIR ${CMAKE_SOURCE_DIR}/include/client/screens)
+set(CLIENT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/client ${CMAKE_SOURCE_DIR}/include/client/renders ${CMAKE_SOURCE_DIR}/include/client/screens)
 
-include_directories(${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR} ${CLIENT_INCLUDE_SCREENS_DIR})
+include_directories(${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR})
 
 # Find SFML package (required)
 find_package(SFML 2.5 COMPONENTS system window graphics network audio REQUIRED)
@@ -46,9 +45,10 @@ set(CLIENT_SOURCES
     src/client/TetrisClient.cpp
     src/client/ClientManager.cpp
     src/client/AudioManager.cpp
-    src/client/CellRenderer.cpp
-    src/client/screens/MiniBoard.cpp
-    src/client/screens/BoardRenderer.cpp
+    src/client/renders/CellRenderer.cpp
+    src/client/renders/GameStatusRenderer.cpp
+    src/client/renders/MiniBoardRenderer.cpp
+    src/client/renders/BoardRenderer.cpp
     src/client/screens/Button.cpp
     src/client/screens/BoardScreen.cpp
     src/client/screens/EndGameScreen.cpp

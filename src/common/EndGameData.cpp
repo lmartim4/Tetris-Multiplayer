@@ -17,7 +17,6 @@ nlohmann::json EndGameData::serialize() const
 
 void EndGameData::deserialize(const nlohmann::json &data)
 {
-    std::cout << data << std::endl;
     totalPoints = data.at("totalPoints").get<int>();
     gameTime = data.at("gameTime").get<int>();
     linesRemoved = data.at("linesRemoved").get<int>();

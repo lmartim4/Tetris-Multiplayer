@@ -19,16 +19,13 @@ private:
 
     mutable std::mutex boardMutex;
 
+    void initializeShapes(sf::RenderTarget &target);
     float computeCellSize(sf::RenderTarget &target) const;
 
-    // Override the draw function from sf::Drawable
     void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
-    // Helper function to initialize cell shapes
-    void initializeShapes(sf::RenderTarget &target);
-
 public:
-    // Constructor takes a shared pointer to TetrisBoard and cell size
+    
     BoardRenderer(std::shared_ptr<ClientManager> client, std::shared_ptr<TetrisBoard> tetrisBoard);
     ~BoardRenderer() = default;
 

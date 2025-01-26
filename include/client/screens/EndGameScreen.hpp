@@ -12,7 +12,7 @@ class EndGameScreen : public Screen
 {
 private:
     ScreenManager &screenManager;
-    std::shared_ptr<ClientManager> clientManager;
+    std::shared_ptr<ClientManager> client;
 
     EndGameData data;
 
