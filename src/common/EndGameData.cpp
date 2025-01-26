@@ -3,36 +3,24 @@
 // Serialize the EndGameData object into a JSON object
 nlohmann::json EndGameData::serialize() const
 {
-    nlohmann::json jsonData;
+    nlohmann::json players_json;
 
-    jsonData["totalPoints"] = totalPoints;
-    jsonData["gameTime"] = gameTime;
-    jsonData["linesRemoved"] = linesRemoved;
-    jsonData["finalLevel"] = finalLevel;
-
-    // Serialize the players vector
     for (const auto &player : players)
-    {
-        jsonData["players"].push_back(player.serialize());
-    }
+        players_json.push_back(player.serialize());
 
-    return jsonData;
+    return {
+        {"totalPoints", totalPoints},
+        {"gameTime", gameTime},
+        {"linesRemoved", linesRemoved},
+        {"players", players_json}};
 }
 
-// Deserialize a JSON object into the EndGameData object
 void EndGameData::deserialize(const nlohmann::json &data)
 {
-    if (data.contains("totalPoints"))
-        totalPoints = data["totalPoints"].get<int>();
-
-    if (data.contains("gameTime"))
-        gameTime = data["gameTime"].get<int>();
-
-    if (data.contains("linesRemoved"))
-        linesRemoved = data["linesRemoved"].get<int>();
-
-    if (data.contains("finalLevel"))
-        finalLevel = data["finalLevel"].get<int>();
+    std::cout << data << std::endl;
+    totalPoints = data.at("totalPoints").get<int>();
+    gameTime = data.at("gameTime").get<int>();
+    linesRemoved = data.at("linesRemoved").get<int>();
 
     if (data.contains("players"))
     {

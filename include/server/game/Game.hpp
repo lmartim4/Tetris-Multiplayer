@@ -9,6 +9,7 @@
 #include "TetrominoManager.hpp"
 #include "Logger.hpp"
 #include "ServerManager.hpp"
+#include "Clock.hpp"
 
 #include <vector>
 #include <memory>
@@ -16,7 +17,7 @@
 #include <thread>
 #include <map>
 
-//#define GAME_DEBUG
+// #define GAME_DEBUG
 
 enum GameState
 {
@@ -34,6 +35,8 @@ private:
     static int instanceCount;
     const int this_instance;
 
+    Clock gameTime;
+
     Logger *logger;
 
     ServerManager &server;
@@ -47,7 +50,7 @@ private:
     std::shared_ptr<TetrominoController> tetrominoController;
     std::shared_ptr<BoardController> boardController;
     std::shared_ptr<TetrisBoard> board;
-    
+
     std::vector<Player *> players;
 
     void processPlayersActions();

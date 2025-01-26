@@ -12,22 +12,15 @@ EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenMana
       quitButton(defaultFont, "Quit", sf::Color::White, {base_x, base_y}, 24),
       playAgainButton(defaultFont, "Play Again", sf::Color::White, {base_x + gap, base_y}, 24)
 {
-    // ----------------------------------------------------------------------
-    // Title (static)
-    // ----------------------------------------------------------------------
     title.setFont(defaultFont);
     title.setString("Game End");
     title.setCharacterSize(40);
     title.setFillColor(sf::Color::White);
     title.setPosition(270.f, 10.f);
 
-    // ----------------------------------------------------------------------
-    // Pre-set some default positions for labels. We'll fill their text later
-    // once data is retrieved from the clientManager
-    // ----------------------------------------------------------------------
-    float baseX = 100.f;  // Left margin
-    float baseY = 140.f;  // Starting y position for first stat
-    float spacing = 45.f; // Vertical gap between lines
+    float baseX = 100.f;
+    float baseY = 140.f;
+    float spacing = 45.f;
 
     totalPoints.setFont(defaultFont);
     totalPoints.setCharacterSize(24);
@@ -49,12 +42,6 @@ EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenMana
     finalLevel.setFillColor(sf::Color::White);
     finalLevel.setPosition(baseX, baseY + spacing * 3);
 
-    // We do NOT fill them here with real data from `data`,
-    // because we want to fetch it once in update().
-
-    // ----------------------------------------------------------------------
-    // Configure button callbacks
-    // ----------------------------------------------------------------------
     quitButton.setOnClick([&]()
                           {
                               screenManager.setActiveScreen("main-menu");
@@ -70,11 +57,8 @@ EndGameScreen::~EndGameScreen()
 
 void EndGameScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
-    // Let the buttons detect clicks
     quitButton.handleEvent(event, manager.getWindow());
     playAgainButton.handleEvent(event, manager.getWindow());
-
-    // Possibly do something like manager.popScreen();
 }
 
 void EndGameScreen::update(float deltaTime)
@@ -89,13 +73,11 @@ void EndGameScreen::update(float deltaTime)
         {
             data.deserialize(endGameData);
 
-            // We got the data, now update our text fields:
             totalPoints.setString("Total Points: " + std::to_string(data.totalPoints));
-            gameTime.setString("Game Time: " + std::to_string(data.gameTime) + " min");
-            linesRemoved.setString("Lines removed: " + std::to_string(data.linesRemoved));
+            gameTime.setString("Game Time: " + std::to_string(data.gameTime) + " seconds");
+            linesRemoved.setString("Lines cleared: " + std::to_string(data.linesRemoved));
             finalLevel.setString("Final Level: " + std::to_string(data.finalLevel));
 
-            // Also populate the "multiple player scores" column
             float scoreboardX = 400.f;    // Right column X
             float scoreboardBaseY = 80.f; // Starting y for the scoreboard
             float scoreboardGap = 40.f;   // Vertical gap for each player line
@@ -108,17 +90,13 @@ void EndGameScreen::update(float deltaTime)
                 scoreText.setCharacterSize(24);
                 scoreText.setFillColor(sf::Color::Green);
 
-                // Example: "j1 - PlayerName pts"
-                scoreText.setString("j" + std::to_string(i + 1) +
-                                    " - " + data.players[i].playerName + " pts");
+                scoreText.setString("Player " + std::to_string(i + 1) + " - " + std::to_string(data.players[i].score) + " points");
 
                 float currentY = scoreboardBaseY + i * scoreboardGap;
                 scoreText.setPosition(scoreboardX, currentY);
 
                 playerScores.push_back(scoreText);
             }
-
-            // Set the flag so we never do this again
             hasFetchedData = true;
         }
     }
@@ -126,22 +104,16 @@ void EndGameScreen::update(float deltaTime)
 
 void EndGameScreen::render(sf::RenderWindow &window)
 {
-    // Draw title
     window.draw(title);
 
-    // Draw the four stats
     window.draw(totalPoints);
     window.draw(gameTime);
     window.draw(linesRemoved);
     window.draw(finalLevel);
 
-    // Draw each player's score
     for (auto &scoreText : playerScores)
-    {
         window.draw(scoreText);
-    }
 
-    // Draw buttons
     quitButton.render(window);
     playAgainButton.render(window);
 }

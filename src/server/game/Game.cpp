@@ -44,6 +44,7 @@ void Game::addPlayer(Player *player)
 
 void Game::startGame()
 {
+    gameTime.start();
     static int instanceCount = 0;
 
     if (gameState != WAITING_PLAYERS)
@@ -131,8 +132,8 @@ void Game::broadcastEndGameStatus() const
     endGame.linesRemoved = gameData.getTotalLinesCleared();
     endGame.totalPoints = gameData.getScore();
     endGame.finalLevel = gameData.getLevel();
-    endGame.gameTime = -1;
-
+    endGame.gameTime = gameTime.elapsedMicroseconds() / (1000 * 1000);
+    
     for (Player *pl : players)
         endGame.players.emplace_back(pl->getData());
 
