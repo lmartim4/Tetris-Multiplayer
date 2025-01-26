@@ -272,3 +272,8 @@ void CellRenderer::updateData()
         shader.setUniform("u_edgeColor", sf::Glsl::Vec4(light));
     }
 }
+
+std::shared_ptr<Cell> CellRenderer::getCell()
+{
+    return cell;
+}

@@ -39,7 +39,6 @@ BoardScreen::BoardScreen(sf::RenderWindow &window, ClientManager &clientManager)
 
 void BoardScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
-    // Be carefull with mutex inside refreshAllCellRenders()
     if (event.type == sf::Event::Resized)
     {
         refreshAllCellRenders();
@@ -189,6 +188,14 @@ void BoardScreen::renderMainBoard(sf::RenderWindow &window)
         for (std::shared_ptr<CellRenderer> renderCell : row)
         {
             renderCell->updateData();
+            if (renderCell->getCell()->getOwnerID() == clientManager.getMyID() && renderCell->getCell()->getState() == CellState::FALLING)
+            {
+                renderCell->setOutlineColor(sf::Color::Green);
+            }
+            else
+            {
+                renderCell->setOutlineColor(sf::Color::Black);
+            }
             window.draw(*renderCell);
         }
 }

@@ -76,11 +76,15 @@ public:
 
     void onPressKey(sf::Event::KeyEvent e);
 
-    // Function to safely get the next tetromino
+    int getMyID()
+    {
+        return me.id;
+    }
+
     std::optional<Tetromino> getNextTetromino()
     {
         std::lock_guard<std::mutex> lock(nextTetrominoMutex);
-        return next_tetromino; // Returns a copy of the current value
+        return next_tetromino;
     }
     void setNextTetromino(const Tetromino &newTetromino)
     {

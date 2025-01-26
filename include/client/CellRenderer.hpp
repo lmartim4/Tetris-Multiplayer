@@ -118,4 +118,6 @@ public:
     // updateData() — define as cores de acordo com CellColor
     //------------------------------------------------------
     void updateData();
+
+    std::shared_ptr<Cell> getCell();
 };
