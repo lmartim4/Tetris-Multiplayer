@@ -6,6 +6,7 @@ void BoardRenderer::draw(sf::RenderTarget &target, sf::RenderStates states) cons
 
     if (grid.size() == 0)
         return;
+        
     for (std::vector<std::shared_ptr<CellRenderer>> row : grid)
         for (std::shared_ptr<CellRenderer> renderCell : row)
         {
@@ -38,9 +39,9 @@ void BoardRenderer::initializeShapes(sf::RenderTarget &target)
             auto cell = std::make_shared<CellRenderer>(
                 sf::Vector2f(CELL_SIZE, CELL_SIZE),
                 sf::Vector2f(y * CELL_SIZE, x * CELL_SIZE),
-                CellRenderMode::CentralGradient,
+                CellRenderMode::VerticalGradient,
                 board->getGrid()[x][y]);
-
+            
             row.push_back(cell);
         }
         grid.push_back(row);

@@ -163,6 +163,8 @@ void ClientManager::on_receive_next_tetromino(const Packet &packet)
 {
     Tetromino receivedTetromino;
     receivedTetromino.deserialize(packet.getPayloadAsJson());
+    
+    setNextTetromino(receivedTetromino);
 }
 
 void ClientManager::on_receive_player_id(const Packet &packet)

@@ -43,6 +43,8 @@ void BoardScreen::render(sf::RenderWindow &window)
 
 void BoardScreen::update(float deltaTime)
 {
+    std::lock_guard<std::mutex> lock(renderMutex);
+
     nlohmann::json lastBoard;
 
     if (clientManager->hasBoard(lastBoard))
@@ -51,9 +53,8 @@ void BoardScreen::update(float deltaTime)
     statusDisplay->updateGameStatus(clientManager->getGameData());
 
     std::optional<Tetromino> t = clientManager->getNextTetromino();
-
     if (t.has_value())
-        miniBoard->setTetromino(t.value(), CellRenderMode::CentralGradient);
+        miniBoard->setTetromino(t.value(), CellRenderMode::VerticalGradient);
 }
 
 void BoardScreen::handleKeyPress(sf::Event event)

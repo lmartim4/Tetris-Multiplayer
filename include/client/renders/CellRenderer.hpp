@@ -15,8 +15,7 @@ enum class CellRenderMode
     None,               // Sem gradiente, cor única
     DiagonalGradient,   // Diagonal escuro->claro
     VerticalGradient,   // Vertical escuro->claro
-    HorizontalGradient, // Horizontal escuro->claro
-    CentralGradient     // Gradiente circular claro->escuro
+    HorizontalGradient // Horizontal escuro->claro
 };
 
 class CellRenderer : public sf::Drawable, public sf::Transformable
@@ -33,24 +32,11 @@ private:
     // Outline (borda grossa)
     sf::RectangleShape outlineShape;
 
-    // RectangleShape para CentralGradient com shader
-    sf::RectangleShape shaderShape;
-    sf::Shader shader;
-
     // Tamanho “interno” da célula (sem considerar outline)
     sf::Vector2f size;
 
     // Modo de render escolhido pelo construtor
     CellRenderMode renderMode;
-
-    // Textura branca para shader
-    static sf::Texture whiteTexture;
-    static bool whiteTextureInitialized;
-
-    //------------------------------------------------------
-    // Inicialização da Textura Branca
-    //------------------------------------------------------
-    static bool initializeWhiteTexture();
 
     //------------------------------------------------------
     // Reconstrói a geometria do fill e do outline
@@ -68,21 +54,11 @@ private:
     void rebuildOutline();
 
     //------------------------------------------------------
-    // Configura o shape para CentralGradient
-    //------------------------------------------------------
-    void rebuildShaderShape();
-
-    //------------------------------------------------------
     // Desenho final
     //------------------------------------------------------
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
 public:
-    //------------------------------------------------------
-    // Inicialização estática da textura branca
-    //------------------------------------------------------
-    static bool initStatic();
-
     //------------------------------------------------------
     // Construtor
     //------------------------------------------------------

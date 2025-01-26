@@ -3,25 +3,6 @@
 
 int CellRenderer::cells_count = 0;
 
-// Definições estáticas
-sf::Texture CellRenderer::whiteTexture;
-bool CellRenderer::whiteTextureInitialized = CellRenderer::initStatic();
-
-// Implementação da inicialização da textura branca
-bool CellRenderer::initializeWhiteTexture()
-{
-    if (!whiteTexture.create(1, 1))
-    {
-        std::cerr << "Erro ao criar a textura branca." << std::endl;
-        return false;
-    }
-
-    // Define o pixel branco
-    unsigned char whitePixel[4] = {255, 255, 255, 255};
-    whiteTexture.update(whitePixel);
-    return true;
-}
-
 // Implementação dos métodos da classe
 CellRenderer::CellRenderer(sf::Vector2f size,
                            sf::Vector2f position,
@@ -32,29 +13,9 @@ CellRenderer::CellRenderer(sf::Vector2f size,
       renderMode(mode)
 {
     cells_count++;
-    // std::cout << "CellRender Count = " << cells_count << "\n";
+    std::cout << "CellRender Count = " << cells_count << "\n";
 
-    // Assegura que a textura branca está inicializada
-    if (!whiteTextureInitialized)
-    {
-        std::cerr << "Falha na inicialização da textura branca." << std::endl;
-    }
-
-    // Carrega o shader para o gradiente central
-    if (!shader.loadFromFile("../assets/shaders/central_gradient.frag", sf::Shader::Fragment))
-    {
-        std::cerr << "Erro ao carregar o shader central_gradient.frag" << std::endl;
-    }
-
-    // Configura o fillVertices e outlineShape
-    if (renderMode != CellRenderMode::CentralGradient)
-    {
-        rebuildFill();
-    }
-    else
-    {
-        rebuildShaderShape();
-    }
+    rebuildFill();
 
     rebuildOutline();
 
@@ -65,12 +26,7 @@ CellRenderer::CellRenderer(sf::Vector2f size,
 CellRenderer::~CellRenderer()
 {
     cells_count--;
-    // std::cout << "Deleting a CellRenderer (Count = " << cells_count << ")\n";
-}
-
-bool CellRenderer::initStatic()
-{
-    return initializeWhiteTexture();
+    std::cout << "Deleting a CellRenderer (Count = " << cells_count << ")\n";
 }
 
 void CellRenderer::updateGeometry()
@@ -78,16 +34,7 @@ void CellRenderer::updateGeometry()
     // Atualiza o outline
     rebuildOutline();
 
-    if (renderMode != CellRenderMode::CentralGradient)
-    {
-        // Atualiza o fillVertices para modos baseados em cor
-        rebuildFill();
-    }
-    else
-    {
-        // Atualiza o shaderShape para CentralGradient
-        rebuildShaderShape();
-    }
+    rebuildFill();
 }
 
 void CellRenderer::rebuildFill()
@@ -112,35 +59,13 @@ void CellRenderer::rebuildOutline()
     outlineShape.setOutlineColor(sf::Color::Black);
 }
 
-void CellRenderer::rebuildShaderShape()
-{
-    shaderShape.setSize(size);
-    shaderShape.setPosition(0.f, 0.f);
-    shaderShape.setFillColor(sf::Color::White); // Cor base, será sobrescrita pelo shader
-    shaderShape.setOutlineThickness(0.f);       // Usaremos outlineShape para a borda
-
-    // Assegura que a textura está atribuída para passar coordenadas de textura
-    shaderShape.setTexture(&whiteTexture);
-    shaderShape.setTextureRect(sf::IntRect(0, 0, static_cast<int>(size.x), static_cast<int>(size.y)));
-}
-
 void CellRenderer::draw(sf::RenderTarget &target, sf::RenderStates states) const
 {
     // Aplica a transformação do próprio objeto
     states.transform *= getTransform();
 
-    if (renderMode == CellRenderMode::CentralGradient)
-    {
-        // Configura o shader
-        sf::RenderStates shaderStates = states;
-        shaderStates.shader = &shader;
-        target.draw(shaderShape, shaderStates);
-    }
-    else
-    {
-        // Desenha o fillVertices com cores interpoladas
-        target.draw(fillVertices, states);
-    }
+    // Desenha o fillVertices com cores interpoladas
+    target.draw(fillVertices, states);
 
     // Desenha o outline
     target.draw(outlineShape, states);
@@ -151,14 +76,7 @@ void CellRenderer::refreshPosition(sf::Vector2f newSize, sf::Vector2f newPositio
     size = newSize;
     setPosition(newPosition);
 
-    if (renderMode != CellRenderMode::CentralGradient)
-    {
-        rebuildFill();
-    }
-    else
-    {
-        rebuildShaderShape();
-    }
+    rebuildFill();
 
     rebuildOutline();
 }
@@ -263,13 +181,6 @@ void CellRenderer::updateData()
         fillVertices[1].color = light; // Top-Right
         fillVertices[2].color = light; // Bottom-Right
         fillVertices[3].color = dark;  // Bottom-Left
-    }
-    else if (renderMode == CellRenderMode::CentralGradient)
-    {
-        // CentralGradient: atualiza uniforms do shader
-        shader.setUniform("u_resolution", sf::Glsl::Vec2(size));
-        shader.setUniform("u_centerColor", sf::Glsl::Vec4(dark));
-        shader.setUniform("u_edgeColor", sf::Glsl::Vec4(light));
     }
 }
 
