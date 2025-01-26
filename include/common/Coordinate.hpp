@@ -9,7 +9,7 @@ private:
 
 public:
     Coordinate() {};
-    Coordinate(int xVal, int yVal) : x(xVal), y(yVal) {}
+    explicit Coordinate(int xVal, int yVal) : x(xVal), y(yVal) {}
 
     int getX() { return x; }
     int getY() { return y; }

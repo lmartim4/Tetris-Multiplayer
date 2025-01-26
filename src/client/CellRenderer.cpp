@@ -1,6 +1,8 @@
 // CellRenderer.cpp
 #include "CellRenderer.hpp"
 
+int CellRenderer::cells_count = 0;
+
 // Definições estáticas
 sf::Texture CellRenderer::whiteTexture;
 bool CellRenderer::whiteTextureInitialized = CellRenderer::initStatic();
@@ -22,13 +24,15 @@ bool CellRenderer::initializeWhiteTexture()
 
 // Implementação dos métodos da classe
 CellRenderer::CellRenderer(sf::Vector2f size,
-                                           sf::Vector2f position,
-                                           CellRenderMode mode,
-                                           std::shared_ptr<Cell> c)
+                           sf::Vector2f position,
+                           CellRenderMode mode,
+                           std::shared_ptr<Cell> c)
     : cell(c),
       size(size),
       renderMode(mode)
 {
+    std::cout << "CellRender Count = " << ++cells_count << "\n";
+
     // Assegura que a textura branca está inicializada
     if (!whiteTextureInitialized)
     {
@@ -55,6 +59,11 @@ CellRenderer::CellRenderer(sf::Vector2f size,
 
     // Ajusta a posição global via Transformable
     setPosition(position);
+}
+
+CellRenderer::~CellRenderer()
+{
+    std::cout << "Deleting a CellRenderer (Count = " << --cells_count << ")\n";
 }
 
 bool CellRenderer::initStatic()
@@ -95,9 +104,9 @@ void CellRenderer::rebuildFill()
 void CellRenderer::rebuildOutline()
 {
     outlineShape.setSize(size);
-    outlineShape.setPosition(0.f, 0.f); // posição local
+    outlineShape.setPosition(0.f, 0.f);                // posição local
     outlineShape.setFillColor(sf::Color::Transparent); // Apenas a borda
-    outlineShape.setOutlineThickness(10.f); // Espessura da borda
+    outlineShape.setOutlineThickness(10.f);            // Espessura da borda
     outlineShape.setOutlineColor(sf::Color::Black);
 }
 
@@ -106,7 +115,7 @@ void CellRenderer::rebuildShaderShape()
     shaderShape.setSize(size);
     shaderShape.setPosition(0.f, 0.f);
     shaderShape.setFillColor(sf::Color::White); // Cor base, será sobrescrita pelo shader
-    shaderShape.setOutlineThickness(0.f); // Usaremos outlineShape para a borda
+    shaderShape.setOutlineThickness(0.f);       // Usaremos outlineShape para a borda
 
     // Assegura que a textura está atribuída para passar coordenadas de textura
     shaderShape.setTexture(&whiteTexture);

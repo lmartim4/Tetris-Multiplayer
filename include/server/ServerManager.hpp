@@ -20,6 +20,7 @@ private:
     void broadcastPlayerList();
     void createPlayerAndLink(ENetPeer *peer);
     PlayerList players;
+
 protected:
     void onPeerConnect(ENetPeer *peer) override;
     void onPeerDisconnect(ENetPeer *peer) override;
@@ -31,6 +32,29 @@ public:
     void broadcastSound(SoundType soundType);
 
     void broadcast_starting_game();
+
+    ENetPeer *getEnetPeerByPlayer(Player *player)
+    {
+        if (!player)
+        {
+            throw std::invalid_argument("Player pointer cannot be null.");
+        }
+
+        for (ENetPeer *peer : getPeers())
+        {
+            if (peer->data)
+            {
+                Player *linkedPlayer = static_cast<Player *>(peer->data);
+                if (linkedPlayer == player)
+                {
+                    return peer;
+                }
+            }
+        }
+
+        // If no matching ENetPeer is found
+        return nullptr;
+    }
 
     static Player *getPlayerFromPacket(const Packet &packet)
     {

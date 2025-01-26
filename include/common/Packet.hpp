@@ -31,6 +31,7 @@ enum class PacketType
     GAME_SCORE,
     ENG_GAME_SCREEN,
     PLAY_SOUND,
+    NEXT_TETROMINO_DATA,
 
     // Network/connection-related
     HEARTBEAT,  // A heartbeat packet to keep the connection alive

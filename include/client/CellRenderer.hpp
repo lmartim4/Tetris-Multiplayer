@@ -22,6 +22,8 @@ enum class CellRenderMode
 class CellRenderer : public sf::Drawable, public sf::Transformable
 {
 private:
+    static int cells_count;
+
     std::shared_ptr<Cell> cell;
     std::function<void()> onClickCallback;
 
@@ -85,9 +87,14 @@ public:
     // Construtor
     //------------------------------------------------------
     CellRenderer(sf::Vector2f size,
-                         sf::Vector2f position,
-                         CellRenderMode mode,
-                         std::shared_ptr<Cell> c);
+                 sf::Vector2f position,
+                 CellRenderMode mode,
+                 std::shared_ptr<Cell> c);
+
+    //------------------------------------------------------
+    // Destructor
+    //------------------------------------------------------
+    ~CellRenderer();
 
     //------------------------------------------------------
     // Ajuste de posição/tamanho (se a célula for redimensionada)

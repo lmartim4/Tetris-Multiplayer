@@ -1,4 +1,3 @@
-#include "game/Tetromino.hpp"
 #include "Tetromino.hpp"
 
 const std::vector<CellColor> Tetromino::tetromino_colors = {

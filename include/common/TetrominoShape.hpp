@@ -11,7 +11,7 @@ private:
 public:
     TetrominoShape() = default;
 
-    explicit TetrominoShape(const std::vector<std::vector<int>> &shape) : shape(shape) {}
+    TetrominoShape(const std::vector<std::vector<int>> &shape) : shape(shape) {}
 
     const std::vector<std::vector<int>> &getShape() const { return shape; }
     void setShape(const std::vector<std::vector<int>> &newShape) { shape = newShape; }

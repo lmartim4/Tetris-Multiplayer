@@ -25,6 +25,14 @@ public:
         return nullptr;
     }
 
+    std::shared_ptr<Tetromino> getNextTetromino(Player *player) const
+    {
+        auto it = nextTetromino.find(player);
+        if (it != nextTetromino.end())
+            return it->second;
+        return nullptr;
+    }
+
     std::vector<std::shared_ptr<Tetromino>> getCurrentTetrominos() const
     {
         std::vector<std::shared_ptr<Tetromino>> tetrominos;
@@ -40,7 +48,7 @@ public:
         for (const auto &pair : currentTetromino)
             if (pair.second == tetromino)
                 return pair.first;
-                
+
         return nullptr;
     }
 

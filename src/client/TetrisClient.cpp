@@ -5,7 +5,7 @@
 #include "ClientManager.hpp"
 
 #include "AudioManager.hpp"
-#include "screens/ScreenManager.hpp"
+#include "ScreenManager.hpp"
 #include "screens/WaitingConnectionScreen.hpp"
 #include "screens/GameScreen.hpp"
 #include "screens/MenuScreen.hpp"
@@ -13,7 +13,7 @@
 #include "screens/BoardScreen.hpp"
 #include "screens/EndGameScreen.hpp"
 
-sf::RenderWindow window(sf::VideoMode(800, 480), "Multi-Threaded Screens");
+sf::RenderWindow window(sf::VideoMode(900, 600), "Multi-Threaded Screens");
 
 ScreenManager screenManager(window);
 AudioManager audioManager;
@@ -24,6 +24,7 @@ void heartbeat_listener(const Packet &packet) { client.on_receive_heartbeat(); }
 void onGameScore(const Packet &packet) { client.on_receive_score(packet); }
 void onPlaySoundPacket(const Packet &packet) { client.on_receive_play_sound(packet); }
 void onPlayerListPacket(const Packet &packet) { client.on_receive_player_list(packet); }
+
 void onGameScreenPacket(const Packet &packet)
 {
     screenManager.setActiveScreen("game");
@@ -34,6 +35,11 @@ void onGameEndPacket(const Packet &packet)
 {
     screenManager.setActiveScreen("end-game");
     client.on_receive_end_screen(packet);
+}
+
+void onNextTetromino(const Packet &packet)
+{
+    client.on_receive_next_tetromino(packet);
 }
 
 void onGameStartPacket(const Packet &packet) { screenManager.setActiveScreen("game"); }
@@ -49,6 +55,7 @@ int main()
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);
     client.registerListener(PacketType::STARTING_GAME, onGameStartPacket);
     client.registerListener(PacketType::ENG_GAME_SCREEN, onGameEndPacket);
+    client.registerListener(PacketType::NEXT_TETROMINO_DATA, onNextTetromino);
 
     screenManager.addScreen("main-menu", std::make_unique<MenuScreen>(window, screenManager, client));
     screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(window, client));
@@ -64,7 +71,9 @@ int main()
         sf::Event event;
 
         window.clear(sf::Color::Black);
+
         screenManager.render(window);
+
         window.display();
 
         while (window.pollEvent(event))
@@ -74,8 +83,6 @@ int main()
 
             screenManager.handleEvent(event);
         }
-
-        // std::cout << " x " << window.getSize().x << " || y = " << window.getSize().y << std::endl;
     }
 
     client.disconnect();

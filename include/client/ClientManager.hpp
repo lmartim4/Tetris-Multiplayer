@@ -7,6 +7,7 @@
 #include "PlayerData.hpp"
 #include "EndGameData.hpp"
 #include "PlayerList.hpp"
+#include "Tetromino.hpp"
 #include <ThreadSafeQueue.hpp>
 #include <thread>
 #include <atomic>
@@ -22,6 +23,9 @@ private:
 
     GameStatus score;
     PlayerList players; // Players in the match
+
+    std::mutex nextTetrominoMutex;
+    std::optional<Tetromino> next_tetromino;
 
     ThreadSafeQueue<nlohmann::json> boardBuffer;       // Buffer for received boards (always just the last one)
     ThreadSafeQueue<nlohmann::json> endGameDataBuffer; // Buffer for received end game information (always just the last one)
@@ -50,6 +54,7 @@ public:
     void on_receive_game_screen(const Packet &packet);
     void on_receive_end_screen(const Packet &packet);
     void on_receive_play_sound(const Packet &packet);
+    void on_receive_next_tetromino(const Packet &packet);
 
     void TaskStartHeartbeat();
     void TaskHeartbeat();
@@ -67,4 +72,16 @@ public:
     void request_game_start();
 
     void onPressKey(sf::Event::KeyEvent e);
+
+    // Function to safely get the next tetromino
+    std::optional<Tetromino> getNextTetromino()
+    {
+        std::lock_guard<std::mutex> lock(nextTetrominoMutex);
+        return next_tetromino; // Returns a copy of the current value
+    }
+    void setNextTetromino(const Tetromino &newTetromino)
+    {
+        std::lock_guard<std::mutex> lock(nextTetrominoMutex);
+        next_tetromino = newTetromino;
+    }
 };

@@ -9,11 +9,14 @@
 #include "CellRenderer.hpp"
 #include "TetrisBoard.hpp"
 #include "ClientManager.hpp"
+#include "MiniBoard.hpp"
 
 class BoardScreen : public Screen
 {
 private:
     TetrisBoard board;
+    MiniBoard nextTetrominoBoard;
+
     ClientManager &clientManager;
     std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid;
 
@@ -26,6 +29,10 @@ private:
     void createRenders();
     void refreshAllCellRenders();
     void updateTextPositions();
+
+    void renderMiniBoard(sf::RenderWindow &window);
+    void renderMainBoard(sf::RenderWindow &window);
+    void renderGameStatus(sf::RenderWindow &window);
 
 public:
     BoardScreen(sf::RenderWindow &window, ClientManager &clientManager);

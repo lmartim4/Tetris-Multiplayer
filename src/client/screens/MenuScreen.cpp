@@ -7,11 +7,12 @@ MenuScreen::MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, C
       quitText(defaultFont, "Quit", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 200}, 25),
       manager(screenManager), clientMan(clientManager)
 {
+    setBackground("game_bg", "../assets/images/coringa.png");
+
     connectText.setOnClick([this]()
                            {
                                 manager.setActiveScreen("waiting-connection");
-                                clientMan.connect();
-                            });
+                                clientMan.connect(); });
 
     quitText.setOnClick([this]()
                         { manager.quit(); });
@@ -30,6 +31,8 @@ void MenuScreen::update(float deltaTime)
 
 void MenuScreen::render(sf::RenderWindow &window)
 {
+    renderBackground();
+    
     titleText.render(window);
     connectText.render(window);
     quitText.render(window);

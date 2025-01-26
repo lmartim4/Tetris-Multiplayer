@@ -80,7 +80,10 @@ int Game::calculatePoints(int nLines, int level)
 void Game::trySpawnTetromino(Player *player)
 {
     if (tetrominoManager->spawnNextTetromino(player, boardController, tetrominoController))
+    {
+        server.sendPacket(Packet(PacketType::NEXT_TETROMINO_DATA, *tetrominoManager->getNextTetromino(player), server.getEnetPeerByPlayer(player)));
         return;
+    }
 
     gameState = GameState::ENDING;
     logger->console_log("Ending Game");

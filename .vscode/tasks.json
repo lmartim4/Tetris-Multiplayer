@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "make",
             "args": [
-                "server_debug_build"
+                "server_build_debug"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/build"
@@ -22,7 +22,7 @@
             "type": "shell",
             "command": "make",
             "args": [
-                "client_debug_build"
+                "client_build_debug"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/build"

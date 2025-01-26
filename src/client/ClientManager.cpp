@@ -162,6 +162,14 @@ void ClientManager::on_receive_play_sound(const Packet &packet)
     audio.playSound((SoundType)packet.getData()[0]);
 }
 
+void ClientManager::on_receive_next_tetromino(const Packet &packet)
+{
+    std::cout << packet.getPayloadAsJson() << std::endl;
+    Tetromino receivedTetromino;
+    receivedTetromino.deserialize(packet.getPayloadAsJson());
+    setNextTetromino(receivedTetromino);
+}
+
 bool ClientManager::hasBoard(nlohmann::json &board)
 {
     return boardBuffer.pop(board);
