@@ -22,10 +22,10 @@ class MenuScreen : public Screen
     Button quitText;
     
     ScreenManager &manager;
-    ClientManager &clientMan;
+    std::shared_ptr<ClientManager> clientMan;
 
 public:
-    MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager);
+    MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager);
     void handleEvent(sf::Event event, ScreenManager &manager) override;
     void update(float deltaTime) override;
     void render(sf::RenderWindow &window) override;

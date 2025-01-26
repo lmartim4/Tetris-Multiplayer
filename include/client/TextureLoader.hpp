@@ -30,7 +30,8 @@ public:
         auto texture = std::make_unique<sf::Texture>();
         if (!texture->loadFromFile(filePath))
         {
-            throw std::runtime_error("Failed to load texture: " + filePath);
+            // throw std::runtime_error("Failed to load texture: " + filePath);
+            std::cout << "Failed to load texture" << std::endl;
         }
 
         auto &ref = *texture;

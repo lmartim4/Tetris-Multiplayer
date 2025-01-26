@@ -1,6 +1,6 @@
 #include "MenuScreen.hpp"
 
-MenuScreen::MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager)
+MenuScreen::MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
     : Screen(window),
       titleText(defaultFont, "Main Menu", sf::Color::White, {x_offset_screen + 200, y_offset_screen + 50}, 40),
       connectText(defaultFont, "Connect", sf::Color::White, {x_offset_screen + 330, y_offset_screen + 200}, 25),
@@ -12,7 +12,7 @@ MenuScreen::MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, C
     connectText.setOnClick([this]()
                            {
                                 manager.setActiveScreen("waiting-connection");
-                                clientMan.connect(); });
+                                clientMan->connect(); });
 
     quitText.setOnClick([this]()
                         { manager.quit(); });

@@ -1,6 +1,6 @@
 #include "WaitingConnectionScreen.hpp"
 
-WaitingConnectionScreen::WaitingConnectionScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager)
+WaitingConnectionScreen::WaitingConnectionScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
     : Screen(window),
       titleText(defaultFont, "Waiting for server...", sf::Color::White, {(x_offset_screen + 100.0f), (y_offset_screen + 50.0f)}, 40),
       backText(defaultFont, "Back", sf::Color::White, {(x_offset_screen + 300.0f), (y_offset_screen + 170.0f)}, 25),
@@ -9,7 +9,7 @@ WaitingConnectionScreen::WaitingConnectionScreen(sf::RenderWindow &window, Scree
     backText.setOnClick([this]()
                         {   std::cout << "Getting back to main screen\n";
                                 screenMan.setActiveScreen("main-menu");
-                                clientMan.disconnect(); });
+                                clientMan->disconnect(); });
 }
 
 void WaitingConnectionScreen::handleEvent(sf::Event event, ScreenManager &manager)
@@ -19,7 +19,7 @@ void WaitingConnectionScreen::handleEvent(sf::Event event, ScreenManager &manage
 
 void WaitingConnectionScreen::update(float deltaTime)
 {
-    if (clientMan.IsConnected())
+    if (clientMan->IsConnected())
         screenMan.setActiveScreen("lobby");
 }
 

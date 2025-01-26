@@ -6,7 +6,7 @@ float base_x = 250;
 float base_y = 380;
 float gap = 180;
 
-EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager)
+EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
     : Screen(window),
       clientManager(clientManager), screenManager(screenManager),
       quitButton(defaultFont, "Quit", sf::Color::White, {base_x, base_y}, 24),
@@ -45,10 +45,10 @@ EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenMana
     quitButton.setOnClick([&]()
                           {
                               screenManager.setActiveScreen("main-menu");
-                              clientManager.disconnect(); });
+                              clientManager->disconnect(); });
 
     playAgainButton.setOnClick([&]()
-                               { clientManager.request_game_start(); });
+                               { clientManager->request_game_start(); });
 }
 
 EndGameScreen::~EndGameScreen()
@@ -63,41 +63,36 @@ void EndGameScreen::handleEvent(sf::Event event, ScreenManager &manager)
 
 void EndGameScreen::update(float deltaTime)
 {
-    if (!hasFetchedData)
+
+    nlohmann::json endGameData;
+
+    if (clientManager->hasEndGameData(endGameData))
     {
+        data.deserialize(endGameData);
 
-        nlohmann::json endGameData;
+        totalPoints.setString("Total Points: " + std::to_string(data.totalPoints));
+        gameTime.setString("Game Time: " + std::to_string(data.gameTime) + " seconds");
+        linesRemoved.setString("Lines cleared: " + std::to_string(data.linesRemoved));
+        finalLevel.setString("Final Level: " + std::to_string(data.finalLevel));
 
-        bool success = clientManager.hasEndGameData(endGameData);
-        if (success)
+        float scoreboardX = 400.f;    // Right column X
+        float scoreboardBaseY = 80.f; // Starting y for the scoreboard
+        float scoreboardGap = 40.f;   // Vertical gap for each player line
+
+        playerScores.clear();
+        for (std::size_t i = 0; i < data.players.size(); ++i)
         {
-            data.deserialize(endGameData);
+            sf::Text scoreText;
+            scoreText.setFont(defaultFont);
+            scoreText.setCharacterSize(24);
+            scoreText.setFillColor(sf::Color::Green);
 
-            totalPoints.setString("Total Points: " + std::to_string(data.totalPoints));
-            gameTime.setString("Game Time: " + std::to_string(data.gameTime) + " seconds");
-            linesRemoved.setString("Lines cleared: " + std::to_string(data.linesRemoved));
-            finalLevel.setString("Final Level: " + std::to_string(data.finalLevel));
+            scoreText.setString("Player " + std::to_string(i + 1) + " - " + std::to_string(data.players[i].score) + " points");
 
-            float scoreboardX = 400.f;    // Right column X
-            float scoreboardBaseY = 80.f; // Starting y for the scoreboard
-            float scoreboardGap = 40.f;   // Vertical gap for each player line
+            float currentY = scoreboardBaseY + i * scoreboardGap;
+            scoreText.setPosition(scoreboardX, currentY);
 
-            playerScores.clear();
-            for (std::size_t i = 0; i < data.players.size(); ++i)
-            {
-                sf::Text scoreText;
-                scoreText.setFont(defaultFont);
-                scoreText.setCharacterSize(24);
-                scoreText.setFillColor(sf::Color::Green);
-
-                scoreText.setString("Player " + std::to_string(i + 1) + " - " + std::to_string(data.players[i].score) + " points");
-
-                float currentY = scoreboardBaseY + i * scoreboardGap;
-                scoreText.setPosition(scoreboardX, currentY);
-
-                playerScores.push_back(scoreText);
-            }
-            hasFetchedData = true;
+            playerScores.push_back(scoreText);
         }
     }
 }

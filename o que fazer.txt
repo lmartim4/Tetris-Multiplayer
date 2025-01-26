@@ -1,0 +1,7 @@
+Melhorar o cliente
+    deixar melhor o mini board render
+    melhorar render das peças
+    melhorar back gorund
+    melhorar musicas
+
+    efeitos especias?

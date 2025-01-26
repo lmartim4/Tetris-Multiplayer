@@ -1,13 +1,13 @@
 #include "LobbyScreen.hpp"
 
-LobbyScreen::LobbyScreen(sf::RenderWindow &window, ClientManager &clientManager)
+LobbyScreen::LobbyScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager)
     : Screen(window),
       clientMan(clientManager),
       mainText(defaultFont, "Tetris Lobby", sf::Color::Blue, {230, 20}, 50),
       startGameText(defaultFont, "Start Game", sf::Color::Green, {230, 380}, 40)
 {
-    startGameText.setOnClick([&clientManager]()
-                             { clientManager.request_game_start(); });
+    startGameText.setOnClick([clientManager]()
+                             { clientManager->request_game_start(); });
 }
 
 void LobbyScreen::handleEvent(sf::Event event, ScreenManager &manager)
@@ -30,7 +30,7 @@ void LobbyScreen::render(sf::RenderWindow &window)
 
     int index = 0;
     int maxColumns = 5; // Max number of circles per row
-    int numPlayers = clientMan.getPlayerList().getPlayers().size();
+    int numPlayers = clientMan->getPlayerList().getPlayers().size();
 
     // Calculate the number of rows needed
     int rows = (numPlayers + maxColumns - 1) / maxColumns;
@@ -46,7 +46,7 @@ void LobbyScreen::render(sf::RenderWindow &window)
 
     clickableTexts.clear();
 
-    for (auto &pd : clientMan.getPlayerList().getPlayers())
+    for (auto &pd : clientMan->getPlayerList().getPlayers())
     {
         sf::CircleShape circle(circleRadius);
 

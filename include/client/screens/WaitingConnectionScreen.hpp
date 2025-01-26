@@ -17,11 +17,11 @@ class WaitingConnectionScreen : public Screen
     Button titleText;
     Button backText;
     ScreenManager &screenMan;
-    ClientManager &clientMan;
+    std::shared_ptr<ClientManager> clientMan;
     static constexpr float x_offset_screen = 100.0f;
     static constexpr float y_offset_screen = 120.0f;
 public:
-    WaitingConnectionScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager);
+    WaitingConnectionScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager);
     void handleEvent(sf::Event event, ScreenManager &manager) override;
     void update(float deltaTime) override;
     void render(sf::RenderWindow &window) override;

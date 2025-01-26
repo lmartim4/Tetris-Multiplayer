@@ -13,13 +13,13 @@ class LobbyScreen : public Screen
 {
     Button mainText;
     Button startGameText;
-    ClientManager &clientMan;
+    std::shared_ptr<ClientManager> clientMan;
     const float circleRadius = 30.0f;
     const float padding = 100.0f;
     std::vector<Button> clickableTexts;
 
 public:
-    LobbyScreen(sf::RenderWindow &window, ClientManager &clientManager);
+    LobbyScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager);
     void handleEvent(sf::Event event, ScreenManager &manager) override;
     void update(float deltaTime) override;
     void render(sf::RenderWindow &window) override;

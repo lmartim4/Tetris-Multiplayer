@@ -12,7 +12,7 @@ class EndGameScreen : public Screen
 {
 private:
     ScreenManager &screenManager;
-    ClientManager &clientManager;
+    std::shared_ptr<ClientManager> clientManager;
 
     EndGameData data;
 
@@ -33,7 +33,7 @@ private:
     bool hasFetchedData = false;
 
 public:
-    EndGameScreen(sf::RenderWindow &window, ScreenManager &screenManager, ClientManager &clientManager);
+    EndGameScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager);
     ~EndGameScreen();
 
     void handleEvent(sf::Event event, ScreenManager &manager) override;

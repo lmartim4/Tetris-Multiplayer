@@ -48,6 +48,7 @@ set(CLIENT_SOURCES
     src/client/AudioManager.cpp
     src/client/CellRenderer.cpp
     src/client/screens/MiniBoard.cpp
+    src/client/screens/BoardRenderer.cpp
     src/client/screens/Button.cpp
     src/client/screens/BoardScreen.cpp
     src/client/screens/EndGameScreen.cpp

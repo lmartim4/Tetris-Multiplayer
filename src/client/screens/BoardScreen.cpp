@@ -1,53 +1,29 @@
 #include "BoardScreen.hpp"
 
-void BoardScreen::createRenders()
-{
-    std::lock_guard<std::mutex> lock(renderMutex);
-
-    renderGrid.clear();
-
-    float CELL_SIZE = computeCellSize();
-
-    for (int x = 0; x < board.getHeight(); ++x)
-    {
-        std::vector<std::shared_ptr<CellRenderer>> row;
-        for (int y = 0; y < board.getWidth(); ++y)
-        {
-            auto cell = std::make_shared<CellRenderer>(
-                sf::Vector2f(CELL_SIZE, CELL_SIZE),
-                sf::Vector2f(y * CELL_SIZE, x * CELL_SIZE),
-                CellRenderMode::CentralGradient,
-                board.getGrid()[x][y]);
-
-            row.push_back(cell);
-        }
-        renderGrid.push_back(row);
-    }
-}
-
-BoardScreen::BoardScreen(sf::RenderWindow &window, ClientManager &clientManager)
-    : Screen(window), clientManager(clientManager), board(2, 2), nextTetrominoBoard(sf::Vector2f(100.f, 100.f), 50.f),
+BoardScreen::BoardScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager)
+    : Screen(window), clientManager(clientManager), nextTetrominoBoard(sf::Vector2f(100.f, 100.f), 50.f),
       score(defaultFont, "Score: 0", sf::Color::White, sf::Vector2f(400, 400), 24),
       lines(defaultFont, "Lines: 0", sf::Color::White, sf::Vector2f(400, 350), 24),
       level(defaultFont, "Level: 0", sf::Color::White, sf::Vector2f(400, 250), 24)
 {
+    board = std::make_shared<TetrisBoard>(2, 2);
+    mainBoard = std::make_shared<BoardRenderer>(clientManager, board);
 
-    createRenders();
     updateTextPositions();
     nextTetrominoBoard.refreshPosition(window);
 }
 
 void BoardScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
+    std::lock_guard<std::mutex> lock(renderMutex);
+    
     if (event.type == sf::Event::Resized)
     {
-        refreshAllCellRenders();
+        mainBoard->onWindowResize(window);
         updateTextPositions();
     }
 
-    std::lock_guard<std::mutex> lock(renderMutex);
-
-    handleKeyPress(event);
+        handleKeyPress(event);
 
     for (auto &row : renderGrid)
         for (auto &cell : row)
@@ -68,28 +44,14 @@ void BoardScreen::render(sf::RenderWindow &window)
     renderMiniBoard(window);
 }
 
-void BoardScreen::updateBoardFromJson(const nlohmann::json &boardData)
-{
-    board.deserialize(boardData);
-    GameStatus data = clientManager.getGameData();
-
-    level.setString("Level: " + std::to_string(data.getLevel()));
-    lines.setString("Lines: " + std::to_string(data.getTotalLinesCleared()));
-    score.setString("Score: " + std::to_string(data.getScore()));
-
-    board.printDebug();
-
-    if (board.getHeight() != renderGrid.size() || (board.getWidth() != renderGrid[0].size()))
-        createRenders();
-}
-
 void BoardScreen::update(float deltaTime)
 {
     nlohmann::json lastBoard;
-    if (clientManager.hasBoard(lastBoard))
-        updateBoardFromJson(lastBoard);
 
-    std::optional<Tetromino> t = clientManager.getNextTetromino();
+    if (clientManager->hasBoard(lastBoard))
+        mainBoard->updateBoardFromJson(lastBoard, window);
+
+    std::optional<Tetromino> t = clientManager->getNextTetromino();
 
     if (t.has_value())
         nextTetrominoBoard.setTetromino(t.value(), CellRenderMode::CentralGradient);
@@ -103,38 +65,7 @@ void BoardScreen::handleKeyPress(sf::Event event)
     }
 
     if (event.type == sf::Event::KeyPressed)
-        clientManager.onPressKey(event.key);
-}
-
-float BoardScreen::computeCellSize() const
-{
-    int boardWidth = board.getWidth();
-    int boardHeight = board.getHeight();
-
-    if (boardWidth <= 0 || boardHeight <= 0)
-        return 20;
-
-    float maxBoardWidth = window.getSize().x * 0.8;
-    float maxBoardHeight = window.getSize().y;
-
-    float cellSizeByWidth = maxBoardWidth / boardWidth;
-    float cellSizeByHeight = maxBoardHeight / boardHeight;
-
-    float computedCellSize = std::min(cellSizeByWidth, cellSizeByHeight);
-
-    return computedCellSize;
-}
-
-void BoardScreen::refreshAllCellRenders()
-{
-    std::lock_guard<std::mutex> lock(renderMutex);
-
-    float CELL_SIZE = computeCellSize();
-
-    for (int x = 0; x < board.getHeight(); x++)
-        for (int y = 0; y < board.getWidth(); y++)
-            renderGrid[x][y]->refreshPosition(sf::Vector2f(CELL_SIZE, CELL_SIZE),
-                                              sf::Vector2f(y * CELL_SIZE, x * CELL_SIZE));
+        clientManager->onPressKey(event.key);
 }
 
 void BoardScreen::updateTextPositions()
@@ -158,20 +89,6 @@ void BoardScreen::updateTextPositions()
     lines.setPosition(regionLeft, marginBottom);
     level.setPosition(regionLeft, marginBottom + 50.f);
     score.setPosition(regionLeft, marginBottom + 100.f);
-
-    // This positions them at 'regionLeft' (with 20px margin from 80% point),
-    // leaving 20px from the window’s right border.
-
-    // -----------------------------------
-    // If instead you wanted them "anchored" on the right edge,
-    // you'd subtract each text's width from 'regionRight'. For example:
-    /*
-        float textWidth = lines.getLocalBounds().width;
-        float textX     = regionRight - textWidth; // anchor on the right
-        lines.setPosition(textX, marginBottom);
-
-        // Repeat for level, score, etc.
-    */
 }
 
 void BoardScreen::renderMiniBoard(sf::RenderWindow &window)
@@ -183,21 +100,7 @@ void BoardScreen::renderMiniBoard(sf::RenderWindow &window)
 void BoardScreen::renderMainBoard(sf::RenderWindow &window)
 {
     std::lock_guard<std::mutex> lock(renderMutex);
-
-    for (std::vector<std::shared_ptr<CellRenderer>> row : renderGrid)
-        for (std::shared_ptr<CellRenderer> renderCell : row)
-        {
-            renderCell->updateData();
-            if (renderCell->getCell()->getOwnerID() == clientManager.getMyID() && renderCell->getCell()->getState() == CellState::FALLING)
-            {
-                renderCell->setOutlineColor(sf::Color::Green);
-            }
-            else
-            {
-                renderCell->setOutlineColor(sf::Color::Black);
-            }
-            window.draw(*renderCell);
-        }
+    window.draw(*mainBoard);
 }
 
 void BoardScreen::renderGameStatus(sf::RenderWindow &window)
