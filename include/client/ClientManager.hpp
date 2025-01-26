@@ -27,6 +27,8 @@ private:
     PlayerList players; // Players in the match
 
     std::mutex nextTetrominoMutex;
+    std::mutex getIDMutex;
+
     std::optional<Tetromino> next_tetromino;
 
     ThreadSafeQueue<nlohmann::json> boardBuffer;       // Buffer for received boards (always just the last one)
@@ -78,6 +80,7 @@ public:
 
     int getMyID()
     {
+        std::lock_guard<std::mutex> lock(getIDMutex);
         return me.id;
     }
 

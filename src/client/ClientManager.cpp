@@ -163,11 +163,12 @@ void ClientManager::on_receive_next_tetromino(const Packet &packet)
 {
     Tetromino receivedTetromino;
     receivedTetromino.deserialize(packet.getPayloadAsJson());
-    setNextTetromino(receivedTetromino);
 }
 
 void ClientManager::on_receive_player_id(const Packet &packet)
 {
+
+    std::lock_guard<std::mutex> lock(getIDMutex);
     me.deserialize(packet.getPayloadAsJson());
     logger->console_log("Client has been assigned with id = " + std::to_string(me.id));
 }
