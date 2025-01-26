@@ -43,6 +43,7 @@ void onNextTetromino(const Packet &packet)
 }
 
 void onGameStartPacket(const Packet &packet) { screenManager.setActiveScreen("game"); }
+void onPlayerReceiveID(const Packet &packet) { client.on_receive_player_id(packet); }
 
 int main()
 {
@@ -50,6 +51,7 @@ int main()
 
     client.registerListener(PacketType::HEARTBEAT, heartbeat_listener);
     client.registerListener(PacketType::PLAYER_LIST, onPlayerListPacket);
+    client.registerListener(PacketType::JOIN_ACCEPTED, onPlayerReceiveID);
     client.registerListener(PacketType::GAME_SCORE, onGameScore);
     client.registerListener(PacketType::PLAY_SOUND, onPlaySoundPacket);
     client.registerListener(PacketType::GAME_SCREEN, onGameScreenPacket);

@@ -12,6 +12,7 @@ void ClientManager::onPeerConnect(ENetPeer *peer)
     std::cout << std::endl;
     logger->console_log("");
     std::cout << "Connection successful to " << uint32_to_ipv4(peer->address.host) << ":" << peer->address.port << std::endl;
+    sendPacket(Packet(PacketType::JOIN_REQUEST, serverPeer));
 }
 
 void ClientManager::onPeerDisconnect(ENetPeer *peer)
@@ -168,6 +169,12 @@ void ClientManager::on_receive_next_tetromino(const Packet &packet)
     Tetromino receivedTetromino;
     receivedTetromino.deserialize(packet.getPayloadAsJson());
     setNextTetromino(receivedTetromino);
+}
+
+void ClientManager::on_receive_player_id(const Packet &packet)
+{
+    me.deserialize(packet.getPayloadAsJson());
+    std::cout << "I have PlayerID = " << me.id << "\n";
 }
 
 bool ClientManager::hasBoard(nlohmann::json &board)

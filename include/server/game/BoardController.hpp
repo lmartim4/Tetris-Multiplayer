@@ -27,6 +27,6 @@ public:
     void clearFallenTetrominos();
 
     CollisionType checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action, std::shared_ptr<TetrominoController> tetrominoController) const;
-    void setCellState(const std::shared_ptr<Tetromino> currentTetromino, CellState state);
+    void setCellState(int ownerID, const std::shared_ptr<Tetromino> currentTetromino, CellState state);
     int findAndClearFullLines();
 };

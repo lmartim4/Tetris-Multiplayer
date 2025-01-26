@@ -25,13 +25,15 @@ private:
     CellState state;
     CellColor color;
     Coordinate coordinate;
-    
+
     int pieceId = 0;
+    int ownerID = -1;
 
 public:
     Cell(Coordinate coord);
     ~Cell() override {}
 
+    int getOwnerID() const;
     int getPieceId() const;
     void setPieceId(int id);
 
@@ -40,6 +42,7 @@ public:
 
     void setColor(CellColor c);
     void setState(CellState s);
+    void setOwnerID(int o);
 
     void setEmpty();
 

@@ -33,10 +33,14 @@ void StartGameListener(const Packet &packet)
 
 void JoinRequestListener(const Packet &packet)
 {
+    /*
     if (server.getHost()->connectedPeers < 4)
         server.sendPacket(Packet(PacketType::JOIN_ACCEPTED, packet.getPeer()));
     else
         server.sendPacket(Packet(PacketType::JOIN_DENIED, packet.getPeer()));
+        */
+
+    server.sendPacket(Packet(PacketType::JOIN_ACCEPTED, server.getPlayerFromPacket(packet)->getData(), packet.getPeer()));
 }
 
 int main(int argc, const char *argv[])

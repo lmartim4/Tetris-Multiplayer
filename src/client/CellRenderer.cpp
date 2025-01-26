@@ -31,7 +31,8 @@ CellRenderer::CellRenderer(sf::Vector2f size,
       size(size),
       renderMode(mode)
 {
-    std::cout << "CellRender Count = " << ++cells_count << "\n";
+    cells_count++;
+    // std::cout << "CellRender Count = " << cells_count << "\n";
 
     // Assegura que a textura branca está inicializada
     if (!whiteTextureInitialized)
@@ -63,7 +64,8 @@ CellRenderer::CellRenderer(sf::Vector2f size,
 
 CellRenderer::~CellRenderer()
 {
-    std::cout << "Deleting a CellRenderer (Count = " << --cells_count << ")\n";
+    cells_count--;
+    // std::cout << "Deleting a CellRenderer (Count = " << cells_count << ")\n";
 }
 
 bool CellRenderer::initStatic()

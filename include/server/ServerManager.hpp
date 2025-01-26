@@ -19,6 +19,7 @@ private:
     int getNextAvailableid();
     void broadcastPlayerList();
     void createPlayerAndLink(ENetPeer *peer);
+
     PlayerList players;
 
 protected:
@@ -45,14 +46,12 @@ public:
             if (peer->data)
             {
                 Player *linkedPlayer = static_cast<Player *>(peer->data);
+
                 if (linkedPlayer == player)
-                {
                     return peer;
-                }
             }
         }
-
-        // If no matching ENetPeer is found
+        
         return nullptr;
     }
 

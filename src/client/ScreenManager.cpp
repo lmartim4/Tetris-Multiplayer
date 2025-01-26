@@ -24,7 +24,7 @@ void ScreenManager::setActiveScreen(const std::string &name)
 {
     {
         std::lock_guard<std::mutex> lock(mtx);
-        
+
         sf::View defaultView(sf::FloatRect(
             0.f,
             0.f,

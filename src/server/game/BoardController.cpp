@@ -80,8 +80,7 @@ CollisionType BoardController::checkCollision(std::shared_ptr<Tetromino> current
     tetrominoController->transform(currentTetromino, action, false);
     return worstCollision;
 }
-
-void BoardController::setCellState(const std::shared_ptr<Tetromino> currentTetromino, CellState state)
+void BoardController::setCellState(int ownerID, const std::shared_ptr<Tetromino> currentTetromino, CellState state)
 {
 
     std::shared_ptr<TetrominoShape> tshape = currentTetromino->getShape();
@@ -104,6 +103,7 @@ void BoardController::setCellState(const std::shared_ptr<Tetromino> currentTetro
             int gridX = baseX + static_cast<int>(x);
             int gridY = board->getNormalizedY(baseY + static_cast<int>(y));
 
+            grid[gridX][gridY]->setOwnerID(ownerID);
             grid[gridX][gridY]->setState(state);
             grid[gridX][gridY]->setColor(currentTetromino->getColor());
             grid[gridX][gridY]->setPieceId(myId);

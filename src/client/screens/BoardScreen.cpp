@@ -78,7 +78,7 @@ void BoardScreen::updateBoardFromJson(const nlohmann::json &boardData)
     lines.setString("Lines: " + std::to_string(data.getTotalLinesCleared()));
     score.setString("Score: " + std::to_string(data.getScore()));
 
-    // board.printDebug();
+    board.printDebug();
 
     if (board.getHeight() != renderGrid.size() || (board.getWidth() != renderGrid[0].size()))
         createRenders();

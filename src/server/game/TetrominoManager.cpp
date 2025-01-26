@@ -31,7 +31,7 @@ bool TetrominoManager::spawnNextTetromino(Player *player,
     if (col == CollisionType::NONE)
     {
         tetrominoController->transform(spawningTetromino, TetrisAction::RIGHT, true);
-        boardController->setCellState(spawningTetromino, CellState::FALLING);
+        boardController->setCellState(player->getid(), spawningTetromino, CellState::FALLING);
     }
 
     nextTetromino.erase(player);

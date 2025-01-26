@@ -34,8 +34,9 @@ void TetrisBoard::printDebug() const
     for (int x = 0; x < height; x++)
     {
         for (int y = 0; y < width; y++)
-            std::cout << (grid[x][y]->getState() == FALLING ? (" " + std::to_string(grid[x][y]->getPieceId() % 10) + " ") : (grid[x][y]->getState() == EMPTY) ? " * "
-                                                                                                                                                              : " $ ");
+            std::cout << (grid[x][y]->getState() == FALLING ? (" " + std::to_string(grid[x][y]->getOwnerID()) + " ") : (grid[x][y]->getState() == EMPTY) ? " * "
+                                                                                                                                                         : " $ ");
+        // std::cout << (grid[x][y]->getState() == FALLING ? (" " + std::to_string(grid[x][y]->getPieceId() % 10) + " ") : (grid[x][y]->getState() == EMPTY) ? " * "  : " $ ");
         std::cout << std::endl;
     }
 
@@ -66,16 +67,7 @@ nlohmann::json TetrisBoard::serialize() const
         for (int y = 0; y < width; ++y)
         {
             const auto &cell = grid.at(x).at(y);
-
-            CellColor color = cell->getColor();
-            CellState state = cell->getState();
-
-            nlohmann::json cellObj;
-
-            cellObj["c"] = color;
-            cellObj["s"] = state;
-
-            rowJson.push_back(cellObj);
+            rowJson.push_back(cell->serialize());
         }
         cells.push_back(rowJson);
     }
@@ -127,23 +119,14 @@ void TetrisBoard::deserialize(const nlohmann::json &data)
     {
         const auto &rowJson = cellsArray[row];
         if (!rowJson.is_array())
-        {
-            // skip or handle error
             continue;
-        }
 
         for (size_t col = 0; col < rowJson.size() && col < (size_t)width; ++col)
         {
             const auto &cellObj = rowJson[col];
-            // We expect two keys: "c" (color) and "s" (state)
-            if (cellObj.is_object() && cellObj.contains("c") && cellObj.contains("s"))
-            {
-                CellColor colorVal = cellObj["c"];
-                CellState stateVal = cellObj["s"];
-
-                grid[row][col]->setColor(colorVal);
-                grid[row][col]->setState(stateVal);
-            }
+            
+            //Easy Desseralize
+            grid[row][col]->deserialize(cellObj);
         }
     }
 }

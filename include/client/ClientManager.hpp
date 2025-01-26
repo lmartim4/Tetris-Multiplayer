@@ -21,6 +21,8 @@ private:
     ENetPeer *serverPeer;
     std::atomic<bool> isConnected = false; // Client Connected to Server
 
+    PlayerData me;
+
     GameStatus score;
     PlayerList players; // Players in the match
 
@@ -55,6 +57,7 @@ public:
     void on_receive_end_screen(const Packet &packet);
     void on_receive_play_sound(const Packet &packet);
     void on_receive_next_tetromino(const Packet &packet);
+    void on_receive_player_id(const Packet &packet);
 
     void TaskStartHeartbeat();
     void TaskHeartbeat();

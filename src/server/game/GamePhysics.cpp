@@ -38,7 +38,7 @@ CollisionType GamePhysics::applyAction(std::shared_ptr<Tetromino> tetromino,
         tetrominoController->transform(tetromino, action, true);
     }
 
-    boardController->setCellState(tetromino, CellState::FALLING);
+    boardController->setCellState(tetrominoManager->getPlayerByTetromino(tetromino)->getid(), tetromino, CellState::FALLING);
 
     if (colision != CollisionType::NONE)
         onTetrominoColide(tetromino, colision, action, boardController, tetrominoController, tetrominoManager);
@@ -61,8 +61,8 @@ CollisionType GamePhysics::applyHardDrop(std::shared_ptr<Tetromino> tetromino,
             tetrominoController->transform(tetromino, TetrisAction::GRAVITY, true);
 
     } while (colision == CollisionType::NONE);
-
-    boardController->setCellState(tetromino, CellState::FALLING);
+    boardController->setCellState(
+        tetrominoManager->getPlayerByTetromino(tetromino)->getid(), tetromino, CellState::FALLING);
     onTetrominoColide(tetromino, colision, TetrisAction::HARD_DROP, boardController, tetrominoController, tetrominoManager);
     return colision;
 }
@@ -80,7 +80,7 @@ void GamePhysics::onTetrominoColide(std::shared_ptr<Tetromino> tetromino,
     if (!(action == TetrisAction::GRAVITY || action == TetrisAction::DROP_FASTER || action == TetrisAction::HARD_DROP))
         return;
 
-    boardController->setCellState(tetromino, CellState::FALLEN);
+    boardController->setCellState(-1, tetromino, CellState::FALLEN);
     tetrominoController->setLockedInPlace(tetromino, true);
 }
 
@@ -114,7 +114,7 @@ void GamePhysics::applyGravity(std::shared_ptr<BoardController> boardController,
             if (colision == CollisionType::GROUND || colision == CollisionType::FALLEN_FIXED)
             {
                 tetrominoController->setCanMove(tetromino, false);
-                boardController->setCellState(tetromino, CellState::FALLING);
+                boardController->setCellState(tetrominoManager->getPlayerByTetromino(tetromino)->getid(), tetromino, CellState::FALLING);
                 onTetrominoColide(tetromino, colision, TetrisAction::GRAVITY, boardController, tetrominoController, tetrominoManager);
             }
             else if (colision == CollisionType::FALLING_OTHER || colision == CollisionType::NONE)
@@ -132,7 +132,7 @@ void GamePhysics::applyGravity(std::shared_ptr<BoardController> boardController,
         {
             boardController->clearFallingTetromino(tetromino);
             tetrominoController->transform(tetromino, TetrisAction::GRAVITY, true);
-            boardController->setCellState(tetromino, CellState::FALLING);
+            boardController->setCellState(tetrominoManager->getPlayerByTetromino(tetromino)->getid(), tetromino, CellState::FALLING);
         }
         // if (colision != CollisionType::NONE)  onTetrominoColide(tetromino, colision, TetrisAction::GRAVITY, boardController, tetrominoController, tetrominoManager);
     }
