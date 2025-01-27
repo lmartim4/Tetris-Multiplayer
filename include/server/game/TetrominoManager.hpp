@@ -11,11 +11,11 @@ class TetrominoManager
 private:
     std::unordered_map<Player *, std::shared_ptr<Tetromino>> currentTetromino;
     std::unordered_map<Player *, std::shared_ptr<Tetromino>> nextTetromino;
-
+    
 public:
     bool spawnNextTetromino(Player *player,
                             std::shared_ptr<BoardController> boardManager,
-                            std::shared_ptr<TetrominoController> tetrominoController);
+                            std::shared_ptr<TetrominoController> tetrominoController, int maxTries);
 
     std::shared_ptr<Tetromino> getCurrentTetromino(Player *player) const
     {
@@ -38,7 +38,12 @@ public:
         std::vector<std::shared_ptr<Tetromino>> tetrominos;
 
         for (const auto &pair : currentTetromino)
-            tetrominos.push_back(pair.second);
+        {
+            if (auto tetromino = pair.second)
+            {
+                tetrominos.push_back(tetromino);
+            }
+        }
 
         return tetrominos;
     }
@@ -46,12 +51,19 @@ public:
     Player *getPlayerByTetromino(std::shared_ptr<Tetromino> tetromino) const
     {
         for (const auto &pair : currentTetromino)
-            if (pair.second == tetromino)
-                return pair.first;
+        {
+            if (auto currentTetromino = pair.second)
+            {
+                if (currentTetromino == tetromino)
+                {
+                    return pair.first;
+                }
+            }
+        }
 
         return nullptr;
     }
 
     TetrominoManager() = default;
-    ~TetrominoManager() = default;
+    ~TetrominoManager() { std::cout << "Deleting TetrominoManager\n"; };
 };

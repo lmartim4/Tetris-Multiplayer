@@ -31,6 +31,13 @@ void onGameScreenPacket(const Packet &packet)
     client->on_receive_game_screen(packet);
 }
 
+void onServerClosePacket(const Packet &packet)
+{
+    screenManager.setActiveScreen("main-menu");
+    client->disconnect();
+    std::cout << "Server closed";
+}
+
 void onGameEndPacket(const Packet &packet)
 {
     screenManager.setActiveScreen("end-game");

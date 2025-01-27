@@ -2,39 +2,53 @@
 
 bool TetrominoManager::spawnNextTetromino(Player *player,
                                           std::shared_ptr<BoardController> boardController,
-                                          std::shared_ptr<TetrominoController> tetrominoController)
+                                          std::shared_ptr<TetrominoController> tetrominoController,
+                                          int maxTries)
 {
+    // Ensure the player has a "next tetromino" to spawn
     if (nextTetromino.find(player) == nextTetromino.end())
-        nextTetromino.emplace(player, TetrominoFactory::createTetromino());
+    {
+        nextTetromino[player] = TetrominoFactory::createTetromino();
+    }
 
-    std::shared_ptr<Tetromino> spawningTetromino = nextTetromino.find(player)->second;
+    // Convert the weak_ptr to shared_ptr
+    std::shared_ptr<Tetromino> spawningTetromino = nextTetromino[player];
+    if (!spawningTetromino)
+    {
+        throw std::logic_error("Failed to lock the next tetromino. It might have been deleted.");
+    }
 
-    currentTetromino.erase(player);
-    currentTetromino.emplace(player, spawningTetromino);
+    // Move the tetromino from "next" to "current"
+    currentTetromino[player] = spawningTetromino;
 
-    int maxTries = boardController->getBoard()->getWidth();
+    CollisionType collisionStatus;
 
-    CollisionType col;
-
+    // Try placing the tetromino up to `maxTries` times
     do
     {
         tetrominoController->transform(spawningTetromino, TetrisAction::RIGHT, true);
-        col = boardController->checkCollision(spawningTetromino, TetrisAction::RIGHT, tetrominoController);
+        collisionStatus = boardController->checkCollision(spawningTetromino, TetrisAction::RIGHT, tetrominoController);
 
-        if (maxTries == 0)
+        if (maxTries <= 0)
         {
+            currentTetromino.clear();
+            nextTetromino.clear();
             return false;
         }
 
-    } while (col != CollisionType::NONE && maxTries-- > 0);
+        --maxTries;
 
-    if (col == CollisionType::NONE)
+    } while (collisionStatus != CollisionType::NONE);
+
+    // Place the tetromino on the board if no collision occurs
+    if (collisionStatus == CollisionType::NONE)
     {
         tetrominoController->transform(spawningTetromino, TetrisAction::RIGHT, true);
         boardController->setCellState(player->getid(), spawningTetromino, CellState::FALLING);
     }
 
-    nextTetromino.erase(player);
-    nextTetromino.emplace(player, TetrominoFactory::createTetromino());
+    // Generate the next tetromino for the player
+    nextTetromino[player] = TetrominoFactory::createTetromino();
+
     return true;
 }

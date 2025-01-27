@@ -4,8 +4,8 @@
 #include "GameManager.hpp"
 #include "TetrisAction.hpp"
 
+std::atomic<bool> serverRunning{true};
 ServerManager server(12345);
-
 GameManager gm(server);
 
 void onReceiveArrow(const Packet &packet)
@@ -43,8 +43,25 @@ void JoinRequestListener(const Packet &packet)
     server.sendPacket(Packet(PacketType::JOIN_ACCEPTED, server.getPlayerFromPacket(packet)->getData(), packet.getPeer()));
 }
 
+void commandHandler()
+{
+    std::string command;
+    while (serverRunning)
+    {
+        std::getline(std::cin, command);
+        if (command == "exit")
+        {
+            std::cout << "Shutting down server...\n";
+            serverRunning = false; // Signal the server to stop
+            break;
+        }
+    }
+}
+
 int main(int argc, const char *argv[])
 {
+    std::thread commandThread(commandHandler);
+
     if (server.isRunning())
         std::cout << "Waiting connections...\n";
     else
@@ -63,8 +80,19 @@ int main(int argc, const char *argv[])
     server.registerListener(PacketType::DROP_FASTER, onReceiveArrow);
     server.registerListener(PacketType::HARD_DROP, onReceiveArrow);
 
-    while (server.isRunning())
+    // Main server loop
+    while (serverRunning && server.isRunning())
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    
+    gm.endGame();
 
+    if (server.isRunning())
+        server.stop();
+    
+
+    if (commandThread.joinable())
+        commandThread.join();
+
+    std::cout << "Server stopped. Exiting program.\n";
     return 0;
 }

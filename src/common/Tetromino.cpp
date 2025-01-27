@@ -1,5 +1,7 @@
 #include "Tetromino.hpp"
 
+int Tetromino::instanceCount = 0;
+
 const std::vector<CellColor> Tetromino::tetromino_colors = {
     CellColor::Red,
     CellColor::Blue,

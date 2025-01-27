@@ -29,8 +29,6 @@ private:
     std::mutex nextTetrominoMutex;
     std::mutex getIDMutex;
 
-    std::optional<Tetromino> next_tetromino;
-
     ThreadSafeQueue<nlohmann::json> boardBuffer;       // Buffer for received boards (always just the last one)
     ThreadSafeQueue<nlohmann::json> endGameDataBuffer; // Buffer for received end game information (always just the last one)
 
@@ -74,6 +72,9 @@ public:
 
     bool hasBoard(nlohmann::json &board);
     bool hasEndGameData(nlohmann::json &board);
+
+    ThreadSafeQueue<std::shared_ptr<Tetromino>> next_tetrominos;
+
     void request_game_start();
 
     void onPressKey(sf::Event::KeyEvent e);
@@ -84,14 +85,4 @@ public:
         return me.id;
     }
 
-    std::optional<Tetromino> getNextTetromino()
-    {
-        std::lock_guard<std::mutex> lock(nextTetrominoMutex);
-        return next_tetromino;
-    }
-    void setNextTetromino(const Tetromino &newTetromino)
-    {
-        std::lock_guard<std::mutex> lock(nextTetrominoMutex);
-        next_tetromino = newTetromino;
-    }
 };

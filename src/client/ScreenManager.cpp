@@ -53,9 +53,7 @@ void ScreenManager::handleEvent(sf::Event event)
 void ScreenManager::update(float deltaTime)
 {
     if (activeScreen)
-    {
         activeScreen->update(deltaTime);
-    }
 }
 
 void ScreenManager::render(sf::RenderWindow &window)

@@ -31,6 +31,16 @@ void GameManager::StartGameListener(const Packet &p)
     game->startGame();
 }
 
+void GameManager::endGame()
+{
+    if (game != nullptr)
+    {
+        game->endGameLoop(true);
+        delete game;
+    }
+}
+
 GameManager::~GameManager()
 {
+    delete logger;
 }

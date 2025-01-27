@@ -27,8 +27,15 @@ Game::Game(ServerManager &server) : server(server), this_instance(instanceCount+
 
 Game::~Game()
 {
-    endGameLoop();
+    endGameLoop(true);
     logger->console_log("Destroying Game (" + std::to_string(this_instance) + ")...");
+
+    boardController.reset();
+    tetrominoManager.reset();
+    tetrominoController.reset();
+    board.reset();
+
+    delete logger;
 }
 
 void Game::addPlayer(Player *player)
@@ -56,8 +63,15 @@ void Game::startGame()
     gameThread = std::thread(&Game::loop, this);
 }
 
-void Game::endGameLoop()
+void Game::endGameLoop(bool force)
 {
+    if (force)
+        stopLoop = true;
+
+    while (gameState != ENDED)
+    {
+    }
+
     if (gameThread.joinable())
         gameThread.join();
 
@@ -80,7 +94,7 @@ int Game::calculatePoints(int nLines, int level)
 
 void Game::trySpawnTetromino(Player *player)
 {
-    if (tetrominoManager->spawnNextTetromino(player, boardController, tetrominoController))
+    if (tetrominoManager->spawnNextTetromino(player, boardController, tetrominoController, board->getWidth()))
     {
         server.sendPacket(Packet(PacketType::NEXT_TETROMINO_DATA, *tetrominoManager->getNextTetromino(player), server.getEnetPeerByPlayer(player)));
         return;
@@ -133,7 +147,7 @@ void Game::broadcastEndGameStatus() const
     endGame.totalPoints = gameData.getScore();
     endGame.finalLevel = gameData.getLevel();
     endGame.gameTime = gameTime.elapsedMicroseconds() / (1000 * 1000);
-    
+
     for (Player *pl : players)
         endGame.players.emplace_back(pl->getData());
 
@@ -165,7 +179,7 @@ void Game::loop()
     for (Player *pl : players)
         trySpawnTetromino(pl);
 
-    while (gameState != ENDING)
+    while (gameState != ENDING && !stopLoop)
     {
         processPlayersActions();
         physics.applyGravity(boardController, tetrominoController, tetrominoManager);

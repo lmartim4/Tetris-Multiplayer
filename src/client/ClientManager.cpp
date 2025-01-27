@@ -161,10 +161,9 @@ void ClientManager::on_receive_play_sound(const Packet &packet)
 
 void ClientManager::on_receive_next_tetromino(const Packet &packet)
 {
-    Tetromino receivedTetromino;
-    receivedTetromino.deserialize(packet.getPayloadAsJson());
-    
-    setNextTetromino(receivedTetromino);
+    std::shared_ptr<Tetromino> receivedTetromino = std::make_shared<Tetromino>();
+    receivedTetromino->deserialize(packet.getPayloadAsJson());
+    next_tetrominos.push(receivedTetromino);
 }
 
 void ClientManager::on_receive_player_id(const Packet &packet)

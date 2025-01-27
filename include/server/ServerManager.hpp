@@ -30,6 +30,11 @@ public:
     ServerManager(uint16_t port = 12345);
     ~ServerManager() {};
 
+    void stop()
+    {
+        TaskStopNetwork();
+    }
+
     void broadcastSound(SoundType soundType);
 
     void broadcast_starting_game();

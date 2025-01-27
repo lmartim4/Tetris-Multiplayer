@@ -46,11 +46,6 @@ void TetrisBoard::printDebug() const
               << std::endl;
 }
 
-TetrisBoard::~TetrisBoard()
-{
-    logger->console_log("Deleting Tetris-Board");
-}
-
 nlohmann::json TetrisBoard::serialize() const
 {
     nlohmann::json boardJson;

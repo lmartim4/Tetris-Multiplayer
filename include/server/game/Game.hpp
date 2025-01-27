@@ -35,6 +35,8 @@ private:
     static int instanceCount;
     const int this_instance;
 
+    std::atomic<bool> stopLoop{false};
+
     Clock gameTime;
 
     Logger *logger;
@@ -77,5 +79,5 @@ public:
 
     void addPlayer(Player *player);
     void startGame();
-    void endGameLoop();
+    void endGameLoop(bool force);
 };

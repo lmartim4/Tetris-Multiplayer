@@ -23,7 +23,7 @@ public:
     MiniBoardRenderer(sf::Vector2f position, float cellSize);
     
     void updateSize(const sf::Vector2u) override;
-    void setTetromino(const Tetromino &tetromino, CellRenderMode renderMode);
+    void setTetromino(std::shared_ptr<Tetromino> t, CellRenderMode renderMode);
     float getWidth() const;
     float getHeight() const;
 

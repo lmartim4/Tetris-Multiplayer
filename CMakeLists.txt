@@ -33,6 +33,7 @@ set(SERVER_SOURCES
     src/server/ServerManager.cpp
     src/server/game/BoardController.cpp
     src/server/game/TetrominoFactory.cpp
+    src/server/game/TetrominoController.cpp
     src/server/game/TetrominoManager.cpp
     src/server/game/GameManager.cpp
     src/server/game/Game.cpp

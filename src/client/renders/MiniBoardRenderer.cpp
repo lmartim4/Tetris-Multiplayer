@@ -39,15 +39,16 @@ MiniBoardRenderer::MiniBoardRenderer(sf::Vector2f position, float cellSize)
 {
 }
 
-void MiniBoardRenderer::setTetromino(const Tetromino &tetromino, CellRenderMode renderMode)
+void MiniBoardRenderer::setTetromino(std::shared_ptr<Tetromino> t, CellRenderMode renderMode)
 {
     std::lock_guard<std::mutex> lock(renderMutex);
     renderGrid.clear();
 
-    const std::shared_ptr<TetrominoShape> tshape = tetromino.getShape();
+    const std::shared_ptr<TetrominoShape> tshape = t->getShape();
     auto shape = tshape->getShape();
 
     int height = shape.size();
+
     if (height == 0)
     {
         std::cout << "Error: Tetromino shape is empty!\n";
@@ -66,14 +67,14 @@ void MiniBoardRenderer::setTetromino(const Tetromino &tetromino, CellRenderMode 
                 continue;
 
             std::shared_ptr<Cell> cell = std::make_shared<Cell>(Coordinate(x, y));
-            cell->setColor(tetromino.getColor());
+            cell->setColor(t->getColor());
 
             auto cellRenderer = std::make_shared<CellRenderer>(
                 sf::Vector2f(cellSize - 10.f, cellSize - 10.f),
                 sf::Vector2f(position.x + y * cellSize, position.y + x * cellSize),
                 renderMode,
                 cell);
-
+            
             row.push_back(cellRenderer);
         }
 

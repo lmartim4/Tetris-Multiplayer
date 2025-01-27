@@ -20,7 +20,12 @@ private:
 
 public:
     TetrisBoard(int h, int w);
-    ~TetrisBoard();
+
+    ~TetrisBoard()
+    {
+        delete logger;
+        std::cout << "Deleting TetrominoManager\n";
+    };
 
     void printDebug() const;
 

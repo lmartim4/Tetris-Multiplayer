@@ -15,13 +15,12 @@ enum CollisionType
 class BoardController
 {
 private:
-    std::shared_ptr<TetrisBoard> board;
+    std::weak_ptr<TetrisBoard> board;
     void printMatrix(const std::vector<std::vector<int>> &matrix, const std::string &label) const;
 
 public:
     BoardController(std::shared_ptr<TetrisBoard> board);
-
-    std::shared_ptr<TetrisBoard> getBoard();
+    ~BoardController() { std::cout << "Deleting board controller\n"; }
 
     void clearFallingTetromino(const std::shared_ptr<Tetromino> currentTetromino);
     void clearFallenTetrominos();

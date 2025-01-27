@@ -13,6 +13,8 @@ class TetrominoController;
 class Tetromino : public ISerializable
 {
 private:
+    static int instanceCount;
+
     Coordinate coordinate;
     int pieceId;
     bool changed = false;
@@ -34,10 +36,24 @@ public:
 
     Coordinate getCoordinate() const { return coordinate; }
 
-    Tetromino() = default;
+    Tetromino()
+    {
+        ++instanceCount; // Increment counter when a new object is created
+        std::cout << "Tetromino created. Instances: " << instanceCount << std::endl;
+    }
+
+    // Destructor
+    ~Tetromino()
+    {
+        --instanceCount; // Decrement counter when an object is destroyed
+        std::cout << "Tetromino destroyed. Instances: " << instanceCount << std::endl;
+    }
 
     Tetromino(Coordinate coord, CellColor color, const std::vector<std::vector<int>> &s) : coordinate(coord), color(color)
     {
+        ++instanceCount; // Increment counter when a new object is created
+        std::cout << "Tetromino created. Instances: " << instanceCount << std::endl;
+
         shape = std::make_shared<TetrominoShape>(s);
 
         static int nextId = 1;
@@ -45,8 +61,6 @@ public:
 
         changed = true;
     }
-
-    virtual ~Tetromino() = default;
 
     CellColor getColor() const;
 

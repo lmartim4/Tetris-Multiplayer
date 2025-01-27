@@ -37,6 +37,7 @@ enum class PacketType
     HEARTBEAT,  // A heartbeat packet to keep the connection alive
     CONNECT,    // A packet sent upon connecting
     DISCONNECT, // A packet sent upon disconnection
+    SERVER_CLOSED,
 
     // Error packet threating
     PARSING_ERROR // Reserved for any custom packet types

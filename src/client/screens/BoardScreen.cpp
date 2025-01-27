@@ -41,10 +41,10 @@ void BoardScreen::update(float deltaTime)
 
     statusDisplay->updateGameStatus(clientManager->getGameData());
 
-    std::optional<Tetromino> t = clientManager->getNextTetromino();
+    std::shared_ptr<Tetromino> t;
 
-    if (t.has_value())
-        miniBoard->setTetromino(t.value(), CellRenderMode::VerticalGradient);
+    while (clientManager->next_tetrominos.pop(t))
+        miniBoard->setTetromino(t, CellRenderMode::VerticalGradient);
 }
 
 void BoardScreen::handleKeyPress(sf::Event event)

@@ -91,8 +91,6 @@ private:
 
     std::mutex outgoingMutex;
     std::mutex incomingMutex;
-    std::condition_variable outgoingCondition;
-    std::condition_variable incomingCondition;
 
     // Processes events received from ENet, such as peer connections, disconnections, and packet receptions.
     void processENetEvent(ENetEvent &event);

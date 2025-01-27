@@ -95,9 +95,6 @@ void NetworkManager::TaskStopNetwork()
     sending = false;
     receiving = false;
 
-    outgoingCondition.notify_all();
-    incomingCondition.notify_all();
-
     if (networkThread.joinable())
         networkThread.join();
 
@@ -184,8 +181,8 @@ void NetworkManager::sendOutgoingPackets()
                 enet_peer_send(&host->peers[i], 0, enetPacket);
             }
         }
-        
-        //enet_packet_destroy(enetPacket);
+
+        // enet_packet_destroy(enetPacket);
     }
 }
 
