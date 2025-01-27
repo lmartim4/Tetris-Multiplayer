@@ -1,4 +1,4 @@
-#include "BoardRenderer.hpp"
+#include "renders/BoardRenderer.hpp"
 
 void BoardRenderer::draw(sf::RenderTarget &target, sf::RenderStates states) const
 {
