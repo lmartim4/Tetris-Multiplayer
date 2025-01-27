@@ -19,7 +19,7 @@ private:
     std::shared_ptr<ClientManager> clientManager;
 
     std::shared_ptr<TetrisBoard> board;
-    
+
     std::shared_ptr<MiniBoardRenderer> miniBoard;
     std::shared_ptr<BoardRenderer> mainBoard;
     std::shared_ptr<GameStatusRenderer> statusDisplay;
@@ -29,6 +29,7 @@ private:
 public:
     BoardScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager);
 
+    void updateSize(const sf::Vector2u a) override;
     void handleEvent(sf::Event event, ScreenManager &manager) override;
     void render(sf::RenderWindow &window) override;
     void update(float deltaTime) override;

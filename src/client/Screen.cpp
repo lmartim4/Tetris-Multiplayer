@@ -2,7 +2,7 @@
 
 Screen::Screen(sf::RenderWindow &window) : window(window)
 {
-    if (!defaultFont.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"))
+    if (!defaultFont.loadFromFile("../assets/fonts/tetris-2-bombliss-credits-font.ttf"))
     {
         std::cerr << "Error loading font!" << std::endl;
     }

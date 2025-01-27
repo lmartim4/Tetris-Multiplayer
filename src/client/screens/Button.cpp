@@ -24,3 +24,12 @@ void Button::handleEvent(const sf::Event &event, sf::RenderWindow &window)
 }
 
 void Button::render(sf::RenderWindow &window) { window.draw(*this); }
+
+sf::FloatRect Button::getBounds() const
+{
+    sf::FloatRect textBounds = getGlobalBounds(); // Get text bounds
+    sf::Vector2f position = getPosition();
+
+    // Return bounds relative to position
+    return sf::FloatRect(position.x, position.y, textBounds.width, textBounds.height);
+}

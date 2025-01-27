@@ -16,8 +16,10 @@ class GameScreen : public Screen
 
 public:
     GameScreen(sf::RenderWindow &window);
-    
+
     void handleEvent(sf::Event event, ScreenManager &manager) override;
     void update(float deltaTime) override;
     void render(sf::RenderWindow &window) override;
+
+    void updateSize(const sf::Vector2u a) override;
 };

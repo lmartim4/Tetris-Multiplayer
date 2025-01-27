@@ -10,42 +10,50 @@
 #include <map>
 #include "ScreenManager.hpp"
 #include "TextureLoader.hpp"
+#include "Background.hpp"
+#include "Resizeable.hpp"
 
-class Screen
+class Screen : public Resizeable
 {
 private:
-    sf::Texture *backgroundTexture = nullptr;
-    sf::Sprite backgroundSprite;
+    std::unique_ptr<Background> background;
 
 public:
     Screen(sf::RenderWindow &window);
     virtual ~Screen() {}
 
+    sf::Font &getDefaultFont() { return defaultFont; }
+
     void stop();
 
     virtual void handleEvent(sf::Event event, class ScreenManager &manager) = 0;
     virtual void update(float deltaTime) = 0;
-
     virtual void render(sf::RenderWindow &window) = 0;
-
-    sf::Font &getDefaultFont() { return defaultFont; }
 
 protected:
     std::atomic<bool> running{true};
     sf::Font defaultFont;
     sf::RenderWindow &window;
 
-    void setBackground(const std::string &textureName, const std::string &filePath)
+    void setBackground(const std::string &atlasName, const std::string &tileName, const sf::IntRect &tileRect)
     {
-        backgroundTexture = &TextureLoader::getInstance().getTexture(textureName, filePath);
-        backgroundSprite.setTexture(*backgroundTexture);
+        background = std::make_unique<Background>(window, atlasName, tileName, tileRect);
     }
 
+    // Must render if wanted
     void renderBackground()
     {
-        if (backgroundTexture)
-        {
-            window.draw(backgroundSprite);
-        }
+        if (background)
+            background->render(window);
+    }
+
+public:
+    void updateSize(const sf::Vector2u a) override
+    {
+        sf::FloatRect visibleArea(0, 0, a.x, a.y);
+        window.setView(sf::View(visibleArea));
+
+        if (background)
+            background->resize(window.getSize());
     }
 };

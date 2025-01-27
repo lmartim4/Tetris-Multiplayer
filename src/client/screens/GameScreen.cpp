@@ -21,3 +21,7 @@ void GameScreen::render(sf::RenderWindow &window)
 {
     window.draw(gameText);
 }
+
+void GameScreen::updateSize(const sf::Vector2u a)
+{
+}

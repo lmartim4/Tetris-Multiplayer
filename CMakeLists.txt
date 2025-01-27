@@ -8,12 +8,10 @@ project(TetrisProject VERSION 1.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Add include directories for each module
+# Define include directories for each module
 set(COMMON_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/common)
 set(SERVER_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/server ${CMAKE_SOURCE_DIR}/include/server/game)
 set(CLIENT_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include/client ${CMAKE_SOURCE_DIR}/include/client/renders ${CMAKE_SOURCE_DIR}/include/client/screens)
-
-include_directories(${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR})
 
 # Find SFML package (required)
 find_package(SFML 2.5 COMPONENTS system window graphics network audio REQUIRED)
@@ -23,7 +21,8 @@ find_library(ENET_LIB enet REQUIRED)
 find_path(ENET_INCLUDE_DIR enet/enet.h REQUIRED)
 
 # Add include directories for ENet
-include_directories(${ENET_INCLUDE_DIR})
+# It's better to set this as a target include directory rather than globally
+# We'll handle it in the targets below
 
 # Find threads (pthread)
 find_package(Threads REQUIRED)
@@ -80,15 +79,34 @@ endif()
 
 # Server executable
 add_executable(server ${SERVER_SOURCES} ${COMMON_SOURCES})
-target_include_directories(server PRIVATE ${COMMON_INCLUDE_DIR} ${SERVER_INCLUDE_DIR})
-target_link_libraries(server sfml-system ${ENET_LIB} Threads::Threads)
+target_include_directories(server PRIVATE 
+    ${COMMON_INCLUDE_DIR} 
+    ${SERVER_INCLUDE_DIR}
+    ${ENET_INCLUDE_DIR}
+)
+target_link_libraries(server 
+    sfml-system 
+    ${ENET_LIB} 
+    Threads::Threads
+)
 
 # Client executable
 add_executable(client ${CLIENT_SOURCES} ${COMMON_SOURCES})
-target_include_directories(client PRIVATE ${COMMON_INCLUDE_DIR} ${CLIENT_INCLUDE_DIR})
-target_link_libraries(client sfml-system sfml-window sfml-graphics sfml-audio ${ENET_LIB} Threads::Threads)
+target_include_directories(client PRIVATE 
+    ${COMMON_INCLUDE_DIR} 
+    ${CLIENT_INCLUDE_DIR}
+    ${ENET_INCLUDE_DIR}
+)
+target_link_libraries(client 
+    sfml-system 
+    sfml-window 
+    sfml-graphics 
+    sfml-audio 
+    ${ENET_LIB} 
+    Threads::Threads
+)
 
-# Custom build rules for server and client
+# Custom build targets remain unchanged
 add_custom_target(server_build_release
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target server --config Release
     COMMENT "Building the server (Release)"

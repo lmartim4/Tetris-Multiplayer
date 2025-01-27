@@ -13,25 +13,22 @@ CellRenderer::CellRenderer(sf::Vector2f size,
       renderMode(mode)
 {
     cells_count++;
-    std::cout << "CellRender Count = " << cells_count << "\n";
+    // std::cout << "CellRender Count = " << cells_count << "\n";
 
     rebuildFill();
 
     rebuildOutline();
-
-    // Ajusta a posição global via Transformable
     setPosition(position);
 }
 
 CellRenderer::~CellRenderer()
 {
     cells_count--;
-    std::cout << "Deleting a CellRenderer (Count = " << cells_count << ")\n";
+    // std::cout << "Deleting a CellRenderer (Count = " << cells_count << ")\n";
 }
 
 void CellRenderer::updateGeometry()
 {
-    // Atualiza o outline
     rebuildOutline();
 
     rebuildFill();
@@ -55,7 +52,7 @@ void CellRenderer::rebuildOutline()
     outlineShape.setSize(size);
     outlineShape.setPosition(0.f, 0.f);                // posição local
     outlineShape.setFillColor(sf::Color::Transparent); // Apenas a borda
-    outlineShape.setOutlineThickness(10.f);            // Espessura da borda
+    outlineShape.setOutlineThickness(3.f);             // Espessura da borda
     outlineShape.setOutlineColor(sf::Color::Black);
 }
 
@@ -73,11 +70,12 @@ void CellRenderer::draw(sf::RenderTarget &target, sf::RenderStates states) const
 
 void CellRenderer::refreshPosition(sf::Vector2f newSize, sf::Vector2f newPosition)
 {
+    if (newSize == newPosition)
+        return;
+
     size = newSize;
     setPosition(newPosition);
-
     rebuildFill();
-
     rebuildOutline();
 }
 

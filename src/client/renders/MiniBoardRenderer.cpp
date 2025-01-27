@@ -12,6 +12,28 @@ void MiniBoardRenderer::draw(sf::RenderTarget &target, sf::RenderStates states) 
         }
 }
 
+void MiniBoardRenderer::updateSize(const sf::Vector2u size)
+{
+    position.x = size.x - 4 * cellSize - 100.f;
+    position.y = 100.f;
+
+    if (renderGrid.size() == 0)
+        return;
+
+    position.x = size.x - renderGrid[0].size() * cellSize - 100.f; // 10px margin from the right
+    position.y = 100.f;                                            // 10px margin from the top
+
+    for (int x = 0; x < renderGrid.size(); ++x)
+    {
+        for (int y = 0; y < renderGrid[x].size(); ++y)
+        {
+            renderGrid[x][y]->refreshPosition(
+                sf::Vector2f(cellSize - 10.f, cellSize - 10.f),
+                sf::Vector2f(position.x + y * cellSize, position.y + x * cellSize));
+        }
+    }
+}
+
 MiniBoardRenderer::MiniBoardRenderer(sf::Vector2f position, float cellSize)
     : position(position), cellSize(cellSize)
 {
@@ -37,6 +59,7 @@ void MiniBoardRenderer::setTetromino(const Tetromino &tetromino, CellRenderMode 
     for (int x = 0; x < height; ++x)
     {
         std::vector<std::shared_ptr<CellRenderer>> row;
+
         for (int y = 0; y < width; ++y)
         {
             if (shape[x][y] == 0)
@@ -46,7 +69,7 @@ void MiniBoardRenderer::setTetromino(const Tetromino &tetromino, CellRenderMode 
             cell->setColor(tetromino.getColor());
 
             auto cellRenderer = std::make_shared<CellRenderer>(
-                sf::Vector2f(cellSize, cellSize),
+                sf::Vector2f(cellSize - 10.f, cellSize - 10.f),
                 sf::Vector2f(position.x + y * cellSize, position.y + x * cellSize),
                 renderMode,
                 cell);
@@ -60,30 +83,6 @@ void MiniBoardRenderer::setTetromino(const Tetromino &tetromino, CellRenderMode 
     if (renderGrid.empty())
     {
         std::cout << "Error: Render grid is empty after processing tetromino!\n";
-    }
-}
-
-void MiniBoardRenderer::refreshPosition(sf::RenderTarget &target)
-{
-    std::lock_guard<std::mutex> lock(renderMutex); // Lock the mutex
-
-    position.x = target.getSize().x - 4 * cellSize - 100.f;
-    position.y = 100.f;
-
-    if (renderGrid.size() == 0)
-        return;
-
-    position.x = target.getSize().x - renderGrid[0].size() * cellSize - 100.f; // 10px margin from the right
-    position.y = 100.f;                                                        // 10px margin from the top
-
-    for (int x = 0; x < renderGrid.size(); ++x)
-    {
-        for (int y = 0; y < renderGrid[x].size(); ++y)
-        {
-            renderGrid[x][y]->refreshPosition(
-                sf::Vector2f(cellSize, cellSize),
-                sf::Vector2f(position.x + y * cellSize, position.y + x * cellSize));
-        }
     }
 }
 

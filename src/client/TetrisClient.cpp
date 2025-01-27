@@ -47,6 +47,7 @@ void onPlayerReceiveID(const Packet &packet) { client->on_receive_player_id(pack
 
 int main()
 {
+    window.setFramerateLimit(60);
     audioManager.loadAllSounds();
     client = std::make_shared<ClientManager>(audioManager);
     client->registerListener(PacketType::HEARTBEAT, heartbeat_listener);
@@ -70,6 +71,7 @@ int main()
 
     while (window.isOpen())
     {
+
         sf::Event event;
 
         window.clear(sf::Color::Black);

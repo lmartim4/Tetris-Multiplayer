@@ -14,11 +14,11 @@ void GameStatusRenderer::updateGameStatus(GameStatus data)
     score.setString("Score: " + std::to_string(data.getScore()));
 }
 
-void GameStatusRenderer::updateTextPositions(sf::RenderTarget &window)
+void GameStatusRenderer::updateSize(const sf::Vector2u a)
 {
     // Window dimensions (in pixels, since we set the defaultView).
-    float w = static_cast<float>(window.getSize().x);
-    float h = static_cast<float>(window.getSize().y);
+    float w = static_cast<float>(a.x);
+    float h = static_cast<float>(a.y);
 
     // Margins
     float marginLeft = 20.f;  // distance from the left of the right region

@@ -9,8 +9,9 @@
 #include "TetrisBoard.hpp"
 #include "CellRenderer.hpp"
 #include "ClientManager.hpp"
+#include "Resizeable.hpp"
 
-class BoardRenderer : public sf::Drawable
+class BoardRenderer : public sf::Drawable, public Resizeable
 {
 private:
     std::shared_ptr<ClientManager> client;
@@ -19,16 +20,14 @@ private:
 
     mutable std::mutex boardMutex;
 
-    void initializeShapes(sf::RenderTarget &target);
-    float computeCellSize(sf::RenderTarget &target) const;
+    void initializeShapes(const sf::Vector2u a);
+    float computeCellSize(const sf::Vector2u a) const;
 
     void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
 public:
-    
-    BoardRenderer(std::shared_ptr<ClientManager> client, std::shared_ptr<TetrisBoard> tetrisBoard);
+    BoardRenderer(std::shared_ptr<ClientManager> client, std::shared_ptr<TetrisBoard> tetrisBoard, const sf::Vector2u initialSize);
     ~BoardRenderer() = default;
-
-    void onWindowResize(sf::RenderTarget &target);
     void updateBoardFromJson(const nlohmann::json &boardData, sf::RenderTarget &target);
+    void updateSize(const sf::Vector2u a) override;
 };

@@ -113,3 +113,7 @@ void EndGameScreen::render(sf::RenderWindow &window)
     quitButton.render(window);
     playAgainButton.render(window);
 }
+
+void EndGameScreen::updateSize(const sf::Vector2u a)
+{
+}

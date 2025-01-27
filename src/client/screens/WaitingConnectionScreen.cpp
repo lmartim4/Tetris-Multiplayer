@@ -28,3 +28,7 @@ void WaitingConnectionScreen::render(sf::RenderWindow &window)
     titleText.render(window);
     backText.render(window);
 }
+
+void WaitingConnectionScreen::updateSize(const sf::Vector2u a)
+{
+}
