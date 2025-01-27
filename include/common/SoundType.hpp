@@ -24,7 +24,7 @@ enum class SoundType : int
     FabricImpactSound,
 
     /* Always leave it as the last one */
-    Count
+    STOP
 };
 
 inline std::string toFilePath(SoundType type)

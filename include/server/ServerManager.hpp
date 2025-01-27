@@ -4,6 +4,7 @@
 #include <thread>
 #include <map>
 
+#include "SoundSender.hpp"
 #include "NetworkManager.hpp"
 
 #include "Player.hpp"
@@ -13,7 +14,7 @@
 #include <json.hpp>
 #include <random>
 
-class ServerManager : public NetworkManager
+class ServerManager : public NetworkManager, public SoundSender
 {
 private:
     int getNextAvailableid();
@@ -28,67 +29,22 @@ protected:
 
 public:
     ServerManager(uint16_t port = 12345);
-    ~ServerManager() {};
+    ~ServerManager();
 
     void stop()
     {
         TaskStopNetwork();
     }
-
-    void broadcastSound(SoundType soundType);
+    
+    void broadcastSound(SoundType soundType) override;
+    void playSoundToPlayer(const Player *player, SoundType soundType) override;
+    void broadcastBackgroundSound(SoundType sound) override;
 
     void broadcast_starting_game();
 
-    ENetPeer *getEnetPeerByPlayer(Player *player)
-    {
-        if (!player)
-        {
-            throw std::invalid_argument("Player pointer cannot be null.");
-        }
+    ENetPeer *getEnetPeerByPlayer(const Player *player);
 
-        for (ENetPeer *peer : getPeers())
-        {
-            if (peer->data)
-            {
-                Player *linkedPlayer = static_cast<Player *>(peer->data);
+    static Player *getPlayerFromPacket(const Packet &packet);
 
-                if (linkedPlayer == player)
-                    return peer;
-            }
-        }
-        
-        return nullptr;
-    }
-
-    static Player *getPlayerFromPacket(const Packet &packet)
-    {
-        if (!packet.getPeer())
-        {
-            throw std::runtime_error("Error: Packet has no associated ENetPeer.");
-        }
-        if (!packet.getPeer()->data)
-        {
-            throw std::runtime_error("Error: ENetPeer has no associated Player.");
-        }
-
-        return static_cast<Player *>(packet.getPeer()->data);
-    }
-
-    std::vector<Player *> getPlayers()
-    {
-        std::vector<Player *> players;
-
-        for (ENetPeer *entry : getPeers())
-        {
-            if (!entry->data)
-            {
-                std::cout << "~No player~" << std::endl;
-                continue;
-            }
-            Player *player = (Player *)entry->data;
-
-            players.emplace_back(player);
-        }
-        return players;
-    }
+    std::vector<Player *> getPlayers();
 };

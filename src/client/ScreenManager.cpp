@@ -85,7 +85,5 @@ void ScreenManager::stopThread()
 {
     threadRunning = false;
     if (screenThread.joinable())
-    {
         screenThread.join();
-    }
 }

@@ -4,13 +4,14 @@
 #include "BoardController.hpp"
 #include "TetrominoController.hpp"
 #include "TetrominoManager.hpp"
+#include "SoundSender.hpp"
 
 class Gravity
 {
 private:
-    static constexpr int kMinGravityTimeMs = 400;      // Minimum gravity time (hard cap)
+    static constexpr int kMinGravityTimeMs = 400;     // Minimum gravity time (hard cap)
     static constexpr int kInitialGravityTimeMs = 700; // Starting gravity time
-    static constexpr double kDifficultyRate = 0.2;     // Rate at which difficulty increases (adjustable)
+    static constexpr double kDifficultyRate = 0.2;    // Rate at which difficulty increases (adjustable)
 
     int gravityTimeMs = kInitialGravityTimeMs; // Current gravity time in milliseconds
     int level = 0;                             // Tracks the current level of difficulty
@@ -59,8 +60,10 @@ private:
     int countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetrominos,
                                  std::shared_ptr<BoardController> boardController,
                                  std::shared_ptr<TetrominoController> tetrominoController);
-
+    SoundSender &sound;
+    
 public:
+    GamePhysics(SoundSender &sound);
     void applyGravity(std::shared_ptr<BoardController> boardManager, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager);
 
     CollisionType applyHardDrop(std::shared_ptr<Tetromino> tetromino, std::shared_ptr<BoardController> boardManager, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager);

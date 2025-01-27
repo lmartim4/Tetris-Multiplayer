@@ -9,7 +9,7 @@ int Game::instanceCount = 0;
 
 #pragma region startup_logic
 
-Game::Game(ServerManager &server) : server(server), this_instance(instanceCount++)
+Game::Game(ServerManager &server) : server(server), this_instance(instanceCount++), physics(server)
 {
     gameState = WAITING_PLAYERS;
 
@@ -21,13 +21,12 @@ Game::Game(ServerManager &server) : server(server), this_instance(instanceCount+
     boardController = std::make_shared<BoardController>(board);
 
     board->clearBoard();
-
     logger->console_log("Initializing Game (" + std::to_string(this_instance) + ")...");
 }
 
 Game::~Game()
 {
-    endGameLoop(true);
+    endGameLoop(false);
     logger->console_log("Destroying Game (" + std::to_string(this_instance) + ")...");
 
     boardController.reset();
@@ -97,6 +96,8 @@ void Game::trySpawnTetromino(Player *player)
     if (tetrominoManager->spawnNextTetromino(player, boardController, tetrominoController, board->getWidth()))
     {
         server.sendPacket(Packet(PacketType::NEXT_TETROMINO_DATA, *tetrominoManager->getNextTetromino(player), server.getEnetPeerByPlayer(player)));
+        server.playSoundToPlayer(player, SoundType::Seeds);
+
         return;
     }
 
@@ -152,6 +153,7 @@ void Game::broadcastEndGameStatus() const
         endGame.players.emplace_back(pl->getData());
 
     server.sendPacket((Packet(PacketType::ENG_GAME_SCREEN, endGame, nullptr)));
+    server.broadcastBackgroundSound(SoundType::STOP); // Looping
 }
 
 #pragma endregion
@@ -201,6 +203,8 @@ void Game::checkForPlacedTetrominos()
         if (tetrominoController->isLockedInPlace(t))
             trySpawnTetromino(tetrominoManager->getPlayerByTetromino(t));
 
+    checkMusicLimits();
+
     if (clearedLines > 0)
     {
         gameData.addLinesClearedOnThisLevel(clearedLines);
@@ -216,5 +220,55 @@ void Game::checkForPlacedTetrominos()
         physics.increaseGravityDifficulty();
         boardController->clearFallenTetrominos();
         server.broadcastSound(SoundType::LevelUp);
+    }
+}
+
+void Game::checkMusicLimits()
+{
+    double completed = (board->getHighestCell() * 100.0f) / (board->getHeight() * 1.0f);
+    std::cout << "Completed: " << std::to_string(completed) << std::endl;
+
+    // Define thresholds
+    const double thresholds[] = {25.f, 50.f, 75.f, 100.f};
+    static int lastThresholdIndex = -1; // Keeps track of the last range index
+
+    // Find the current threshold index
+    int currentThresholdIndex = -1;
+    for (int i = 0; i < 4; ++i)
+    {
+        if (completed < thresholds[i])
+        {
+            currentThresholdIndex = i;
+            break;
+        }
+    }
+
+    // If the player crosses a threshold, update the sound
+    if (currentThresholdIndex != lastThresholdIndex)
+    {
+        lastThresholdIndex = currentThresholdIndex;
+
+        // Play the new sound based on the threshold
+        switch (currentThresholdIndex)
+        {
+        case 0:                                              // Below 0.25
+            server.broadcastBackgroundSound(SoundType::Lv2); // Looping
+            logger->console_log("Playing low-pressure sound.");
+            break;
+        case 1:                                              // 0.25 - 0.5
+            server.broadcastBackgroundSound(SoundType::Lv3); // Looping
+            logger->console_log("Playing medium-pressure sound.");
+            break;
+        case 2:                                              // 0.5 - 0.75
+            server.broadcastBackgroundSound(SoundType::Lv4); // Looping
+            logger->console_log("Playing high-pressure sound.");
+            break;
+        case 3:                                                // 0.75 - 1.0
+            server.broadcastBackgroundSound(SoundType::Lv256); // Looping
+            logger->console_log("Playing critical-pressure sound.");
+            break;
+        default:
+            break;
+        }
     }
 }

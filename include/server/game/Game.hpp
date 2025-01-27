@@ -63,6 +63,8 @@ private:
 
     void trySpawnTetromino(Player *player);
 
+    void checkMusicLimits();
+
     void broadcastBoardIfChanges() const;
     void broadcastEndGameStatus() const;
 

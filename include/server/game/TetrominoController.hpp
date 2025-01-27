@@ -10,6 +10,7 @@ private:
 public:
     TetrominoController() = default;
     ~TetrominoController() { std::cout << "Deleting TetrominoController\n"; };
+    
     void setCanMove(std::shared_ptr<Tetromino> &tetromino, bool b);
     void setLockedInPlace(std::shared_ptr<Tetromino> &tetromino, bool b);
     bool canMove(const std::shared_ptr<Tetromino> &tetromino);

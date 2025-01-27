@@ -22,13 +22,22 @@ std::shared_ptr<ClientManager> client;
 
 void heartbeat_listener(const Packet &packet) { client->on_receive_heartbeat(); }
 void onGameScore(const Packet &packet) { client->on_receive_score(packet); }
-void onPlaySoundPacket(const Packet &packet) { client->on_receive_play_sound(packet); }
+void onPlaySoundPacket(const Packet &packet)
+{
+    audioManager.playSound((SoundType)packet.getData()[0], false);
+}
+
 void onPlayerListPacket(const Packet &packet) { client->on_receive_player_list(packet); }
 
 void onGameScreenPacket(const Packet &packet)
 {
     screenManager.setActiveScreen("game");
     client->on_receive_game_screen(packet);
+}
+
+void onReceiveBackgroundSound(const Packet &packet)
+{
+    audioManager.playSound((SoundType)packet.getData()[0], true);
 }
 
 void onServerClosePacket(const Packet &packet)
@@ -56,7 +65,7 @@ int main()
 {
     window.setFramerateLimit(60);
     audioManager.loadAllSounds();
-    client = std::make_shared<ClientManager>(audioManager);
+    client = std::make_shared<ClientManager>();
     client->registerListener(PacketType::HEARTBEAT, heartbeat_listener);
     client->registerListener(PacketType::PLAYER_LIST, onPlayerListPacket);
     client->registerListener(PacketType::JOIN_ACCEPTED, onPlayerReceiveID);
@@ -66,6 +75,7 @@ int main()
     client->registerListener(PacketType::STARTING_GAME, onGameStartPacket);
     client->registerListener(PacketType::ENG_GAME_SCREEN, onGameEndPacket);
     client->registerListener(PacketType::NEXT_TETROMINO_DATA, onNextTetromino);
+    client->registerListener(PacketType::SET_BACKGROUND_SOUND, onReceiveBackgroundSound);
 
     screenManager.addScreen("main-menu", std::make_unique<MenuScreen>(window, screenManager, client));
     screenManager.addScreen("lobby", std::make_unique<LobbyScreen>(window, client));

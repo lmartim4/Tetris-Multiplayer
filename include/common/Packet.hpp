@@ -31,6 +31,7 @@ enum class PacketType
     GAME_SCORE,
     ENG_GAME_SCREEN,
     PLAY_SOUND,
+    SET_BACKGROUND_SOUND,
     NEXT_TETROMINO_DATA,
 
     // Network/connection-related

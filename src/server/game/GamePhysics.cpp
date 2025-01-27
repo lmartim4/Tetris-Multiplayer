@@ -1,5 +1,9 @@
 #include "GamePhysics.hpp"
 
+GamePhysics::GamePhysics(SoundSender &sound) : sound(sound)
+{
+}
+
 int GamePhysics::countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetrominos,
                                           std::shared_ptr<BoardController> boardController,
                                           std::shared_ptr<TetrominoController> tetrominoController)
@@ -82,6 +86,7 @@ void GamePhysics::onTetrominoColide(std::shared_ptr<Tetromino> tetromino,
 
     boardController->setCellState(-1, tetromino, CellState::FALLEN);
     tetrominoController->setLockedInPlace(tetromino, true);
+    sound.broadcastSound(SoundType::DjembeBass);
 }
 
 void GamePhysics::applyGravity(std::shared_ptr<BoardController> boardController,
@@ -134,6 +139,7 @@ void GamePhysics::applyGravity(std::shared_ptr<BoardController> boardController,
             tetrominoController->transform(tetromino, TetrisAction::GRAVITY, true);
             boardController->setCellState(tetrominoManager->getPlayerByTetromino(tetromino)->getid(), tetromino, CellState::FALLING);
         }
-        // if (colision != CollisionType::NONE)  onTetrominoColide(tetromino, colision, TetrisAction::GRAVITY, boardController, tetrominoController, tetrominoManager);
     }
+
+    sound.broadcastSound(SoundType::FabricImpactSound);
 }

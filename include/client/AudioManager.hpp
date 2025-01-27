@@ -9,13 +9,17 @@
 class AudioManager
 {
 public:
-    AudioManager(){}
+    AudioManager() {}
     ~AudioManager() = default;
 
-    void playSound(SoundType type);
+    void playSound(SoundType type, bool loop);
     void loadAllSounds();
 
+    SoundType m_currentBackgroundSound;
+
 private:
+    void stopBackgroundMusic();
+
     Logger *logger = new Logger("Audio Manager");
     bool tryLoadSound(SoundType type, const std::string &filepath);
     std::map<SoundType, sf::SoundBuffer> m_soundBuffers;

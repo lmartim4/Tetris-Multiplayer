@@ -119,8 +119,8 @@ void TetrisBoard::deserialize(const nlohmann::json &data)
         for (size_t col = 0; col < rowJson.size() && col < (size_t)width; ++col)
         {
             const auto &cellObj = rowJson[col];
-            
-            //Easy Desseralize
+
+            // Easy Desseralize
             grid[row][col]->deserialize(cellObj);
         }
     }
@@ -148,4 +148,14 @@ int TetrisBoard::getNormalizedY(int y) const
         y += width;
 
     return y;
+}
+
+int TetrisBoard::getHighestCell() const
+{
+    for (int x = 0; x < height; x++)
+        for (int y = 0; y < width; y++)
+            if (grid[x][y]->getState() == CellState::FALLEN)
+                return (getHeight() - x) - 1;
+
+    return 0;
 }

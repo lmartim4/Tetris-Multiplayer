@@ -4,7 +4,6 @@
 #include <chrono>
 #include <SFML/Graphics.hpp>
 #include "PlayerData.hpp"
-#include "SoundType.hpp"
 
 void ClientManager::onPeerConnect(ENetPeer *peer)
 {
@@ -123,6 +122,8 @@ void ClientManager::connect(const std::string &serverAddress, uint16_t port)
 
 void ClientManager::disconnect()
 {
+    isConnected = false;
+
     if (serverPeer)
     {
         enet_peer_disconnect_now(serverPeer, 0);
@@ -153,12 +154,6 @@ void ClientManager::on_receive_end_screen(const Packet &packet)
     endGameDataBuffer.push(packet.getPayloadAsJson());
 }
 
-void ClientManager::on_receive_play_sound(const Packet &packet)
-{
-
-    audio.playSound((SoundType)packet.getData()[0]);
-}
-
 void ClientManager::on_receive_next_tetromino(const Packet &packet)
 {
     std::shared_ptr<Tetromino> receivedTetromino = std::make_shared<Tetromino>();
@@ -172,6 +167,10 @@ void ClientManager::on_receive_player_id(const Packet &packet)
     std::lock_guard<std::mutex> lock(getIDMutex);
     me.deserialize(packet.getPayloadAsJson());
     logger->console_log("Client has been assigned with id = " + std::to_string(me.id));
+}
+
+void ClientManager::on_receive_background_sound(const Packet &packet)
+{
 }
 
 bool ClientManager::hasBoard(nlohmann::json &board)

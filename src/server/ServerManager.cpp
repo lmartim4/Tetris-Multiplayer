@@ -55,6 +55,11 @@ ServerManager::ServerManager(uint16_t port)
     TaskStartNetwork();
 }
 
+ServerManager::~ServerManager()
+{
+    std::cout << "Ending ServerManager\n";
+}
+
 int ServerManager::getNextAvailableid()
 {
     static int currentID = 0;
@@ -65,23 +70,86 @@ void ServerManager::createPlayerAndLink(ENetPeer *peer)
 {
     Player *newPlayer = new Player(getNextAvailableid(), "Player_");
     peer->data = (void *)newPlayer;
-    std::cout << "New client connected. Assigned id: " << newPlayer->getData().id << "\n";
+
+    logger->console_log("New client connected. Assigned id: " + std::to_string(newPlayer->getData().id));
     players.addPlayer((*newPlayer).getData());
 }
 
 void ServerManager::broadcastPlayerList()
 {
-    std::cout << players.serialize() << std::endl;
+    // std::cout << players.serialize() << std::endl;
     sendPacket(Packet(PacketType::PLAYER_LIST, players, nullptr));
 }
 
 void ServerManager::broadcastSound(SoundType soundType)
 {
-    Packet playSoundPacket(PacketType::PLAY_SOUND, (uint8_t)soundType, nullptr);
-    sendPacket(playSoundPacket);
+    sendPacket(Packet(PacketType::PLAY_SOUND, (uint8_t)soundType, nullptr));
+}
+
+void ServerManager::playSoundToPlayer(const Player *player, SoundType soundType)
+{
+    sendPacket(Packet(PacketType::PLAY_SOUND, (uint8_t)soundType, getEnetPeerByPlayer(player)));
+}
+
+void ServerManager::broadcastBackgroundSound(SoundType sound)
+{
+    sendPacket(Packet(PacketType::SET_BACKGROUND_SOUND, (uint8_t)sound, nullptr));
 }
 
 void ServerManager::broadcast_starting_game()
 {
     sendPacket(Packet(PacketType::STARTING_GAME, nullptr));
+}
+
+ENetPeer *ServerManager::getEnetPeerByPlayer(const Player *player)
+{
+    if (!player)
+    {
+        throw std::invalid_argument("Player pointer cannot be null.");
+    }
+
+    for (ENetPeer *peer : getPeers())
+    {
+        if (peer->data)
+        {
+            Player *linkedPlayer = static_cast<Player *>(peer->data);
+
+            if (linkedPlayer == player)
+                return peer;
+        }
+    }
+
+    return nullptr;
+}
+
+Player *ServerManager::getPlayerFromPacket(const Packet &packet)
+{
+    if (!packet.getPeer())
+    {
+        throw std::runtime_error("Error: Packet has no associated ENetPeer.");
+    }
+    if (!packet.getPeer()->data)
+    {
+        throw std::runtime_error("Error: ENetPeer has no associated Player.");
+    }
+
+    return static_cast<Player *>(packet.getPeer()->data);
+}
+
+std::vector<Player *> ServerManager::getPlayers()
+{
+    std::vector<Player *> players;
+
+    for (ENetPeer *entry : getPeers())
+    {
+        if (!entry->data)
+        {
+            std::cout << "~No player~" << std::endl;
+            continue;
+        }
+        Player *player = (Player *)entry->data;
+
+        players.emplace_back(player);
+    }
+    return players;
 }

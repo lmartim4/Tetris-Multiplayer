@@ -35,7 +35,8 @@ void GameManager::endGame()
 {
     if (game != nullptr)
     {
-        game->endGameLoop(true);
+        if (game->getState() != ENDED)
+            game->endGameLoop(true);
         delete game;
     }
 }

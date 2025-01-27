@@ -49,6 +49,8 @@ public:
 
     int getNormalizedY(int y) const;
 
+    int getHighestCell() const;
+
     nlohmann::json serialize() const override;
     void deserialize(const nlohmann::json &data) override;
 };
