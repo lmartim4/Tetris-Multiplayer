@@ -15,7 +15,7 @@ private:
 public:
     Player(int id, const std::string &name)
     {
-        std::cout << "Creating a Player\n";
+        // std::cout << "Creating a Player\n";
         data.id = id;
         data.playerName = name;
         data.score = 0;
