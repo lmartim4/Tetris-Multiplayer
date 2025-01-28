@@ -40,6 +40,7 @@ CollisionType GamePhysics::applyAction(std::shared_ptr<Tetromino> tetromino,
     {
         // server.broadcastSound(SoundType::FabricImpactSound);
         tetrominoController->transform(tetromino, action, true);
+        sound.broadcastSound(SoundType::FabricImpactSound);
     }
 
     boardController->setCellState(tetrominoManager->getPlayerByTetromino(tetromino)->getid(), tetromino, CellState::FALLING);

@@ -96,8 +96,6 @@ void Game::trySpawnTetromino(Player *player)
     if (tetrominoManager->spawnNextTetromino(player, boardController, tetrominoController, board->getWidth()))
     {
         server.sendPacket(Packet(PacketType::NEXT_TETROMINO_DATA, *tetrominoManager->getNextTetromino(player), server.getEnetPeerByPlayer(player)));
-        server.playSoundToPlayer(player, SoundType::Seeds);
-
         return;
     }
 
@@ -227,7 +225,7 @@ void Game::checkMusicLimits()
 {
     double completed = (board->getHighestCell() * 100.0f) / (board->getHeight() * 1.0f);
 
-    const double thresholds[] = {25.f, 50.f, 75.f, 100.f};
+    const double thresholds[] = {25.f, 60.f, 70.f, 90.f};
     static int lastThresholdIndex = -1;
 
     int currentThresholdIndex = -1;
@@ -247,13 +245,13 @@ void Game::checkMusicLimits()
         switch (currentThresholdIndex)
         {
         case 0:
-            server.broadcastBackgroundSound(SoundType::Lv1);
-            break;
-        case 1:
             server.broadcastBackgroundSound(SoundType::Lv2);
             break;
-        case 2:
+        case 1:
             server.broadcastBackgroundSound(SoundType::Lv3);
+            break;
+        case 2:
+            server.broadcastBackgroundSound(SoundType::Lv4);
             break;
         case 3:
             server.broadcastBackgroundSound(SoundType::Lv256);
