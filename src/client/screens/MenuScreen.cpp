@@ -4,10 +4,7 @@ MenuScreen::MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, s
     : Screen(window), manager(screenManager), clientMan(clientManager)
 {
     initializeButtons();
-
-    TextureLoader::getInstance().registerAtlas("game_atlas", "../assets/images/image.png");
-    sf::IntRect tileRect(0, 0, 540, 339);
-    setBackground("game_atlas", "background_tile", tileRect);
+    setBackground("menu-principal", "../assets/images/folha.jpg");
 
     connectText->setOnClick([this]()
                             {
@@ -25,7 +22,7 @@ void MenuScreen::initializeButtons()
 
     sf::Color main_menu_color = {81, 255, 23};
     sf::Color button_color = {255, 213, 0};
-    
+
     titleText = std::make_shared<Button>(
         defaultFont,
         "Main Menu",

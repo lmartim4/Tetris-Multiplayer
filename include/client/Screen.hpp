@@ -35,9 +35,18 @@ protected:
     sf::Font defaultFont;
     sf::RenderWindow &window;
 
-    void setBackground(const std::string &atlasName, const std::string &tileName, const sf::IntRect &tileRect)
+    void setBackground(const std::string &atlasName, const std::string &tileName)
     {
-        background = std::make_unique<Background>(window, atlasName, tileName, tileRect);
+        background = std::make_unique<Background>(window, atlasName, tileName);
+    }
+
+    void resizeBackgound(const sf::Vector2u a)
+    {
+        sf::FloatRect visibleArea(0, 0, a.x, a.y);
+        window.setView(sf::View(visibleArea));
+
+        if (background)
+            background->resize(window.getSize());
     }
 
     // Must render if wanted
@@ -48,12 +57,5 @@ protected:
     }
 
 public:
-    void updateSize(const sf::Vector2u a) override
-    {
-        sf::FloatRect visibleArea(0, 0, a.x, a.y);
-        window.setView(sf::View(visibleArea));
-
-        if (background)
-            background->resize(window.getSize());
-    }
+    virtual void updateSize(const sf::Vector2u a) = 0;
 };

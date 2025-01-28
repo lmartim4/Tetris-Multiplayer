@@ -13,6 +13,9 @@ EndGameScreen::EndGameScreen(sf::RenderWindow &window, ScreenManager &screenM, s
       playAgainButton(defaultFont, "Play Again", sf::Color::White, {base_x + gap, base_y}, 24),
       client(clientManager)
 {
+
+    setBackground("end_game", "../assets/images/estrada.png");
+
     title.setFont(defaultFont);
     title.setString("Game End");
     title.setCharacterSize(40);
@@ -85,9 +88,10 @@ void EndGameScreen::update(float deltaTime)
         {
             sf::Text scoreText;
             scoreText.setFont(defaultFont);
-            scoreText.setCharacterSize(24);
-            scoreText.setFillColor(sf::Color::Green);
-
+            scoreText.setCharacterSize(38);
+            scoreText.setFillColor(sf::Color{38, 89, 255});
+            scoreText.setOutlineColor(sf::Color::Black);
+            scoreText.setOutlineThickness(2.f);
             scoreText.setString("Player " + std::to_string(i + 1) + " - " + std::to_string(data.players[i].score) + " points");
 
             float currentY = scoreboardBaseY + i * scoreboardGap;
@@ -100,6 +104,7 @@ void EndGameScreen::update(float deltaTime)
 
 void EndGameScreen::render(sf::RenderWindow &window)
 {
+    renderBackground();
     window.draw(title);
 
     window.draw(totalPoints);
@@ -116,4 +121,5 @@ void EndGameScreen::render(sf::RenderWindow &window)
 
 void EndGameScreen::updateSize(const sf::Vector2u a)
 {
+    resizeBackgound(a);
 }

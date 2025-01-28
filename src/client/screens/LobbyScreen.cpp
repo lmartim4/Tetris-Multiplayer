@@ -6,6 +6,7 @@ LobbyScreen::LobbyScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager
 {
     initializeButtons();
 
+    setBackground("versalhes", "../assets/images/versalles.jpg");
     startGameText->setOnClick([clientManager]()
                               { clientManager->request_game_start(); });
 }
@@ -26,6 +27,7 @@ void LobbyScreen::update(float deltaTime) {}
 
 void LobbyScreen::render(sf::RenderWindow &window)
 {
+    renderBackground();
     // Variables for grid layout
     int index = 0;
     int maxColumns = 5; // Max number of circles per row
@@ -50,8 +52,8 @@ void LobbyScreen::render(sf::RenderWindow &window)
     for (auto &pd : clientMan->getPlayerList().getPlayers())
     {
         sf::CircleShape circle(circleRadius);
-        circle.setFillColor(sf::Color::Cyan);
-        circle.setOutlineThickness(2.0f);
+        circle.setFillColor(sf::Color{0, 125, 0});
+        circle.setOutlineThickness(1.5f);
         circle.setOutlineColor(sf::Color::Black);
 
         // Calculate the position for this circle
@@ -63,17 +65,19 @@ void LobbyScreen::render(sf::RenderWindow &window)
         window.draw(circle);
 
         // Create and position the text (centered horizontally below the circle)
-        Button itext(
+        Button player_text(
             defaultFont,
             pd.playerName + " " + std::to_string(pd.id),
-            sf::Color::Red,
-            {x - circleRadius / 2, y + 2 * circleRadius + 5}, 20); // Adjusted text position
+            sf::Color::White,
+            {x - circleRadius, y + 2 * circleRadius}, 30); // Adjusted text position
+        
+        player_text.setOutlineThickness(2.f);
 
-        window.draw(itext);
-        itext.setOnClick([&]()
+        window.draw(player_text);
+        player_text.setOnClick([&]()
                          { std::cout << " clicked " << pd.id << std::endl; });
 
-        clickableTexts.emplace_back(itext);
+        clickableTexts.emplace_back(player_text);
 
         index++;
     }
@@ -85,8 +89,15 @@ void LobbyScreen::render(sf::RenderWindow &window)
 
 void LobbyScreen::initializeButtons()
 {
-    mainText = std::make_shared<Button>(defaultFont, "Tetris Lobby", sf::Color::Blue, sf::Vector2f{window.getSize().x / 2.f, 70.f}, 60);
-    startGameText = std::make_shared<Button>(defaultFont, "Start Game", sf::Color::Green, sf::Vector2f{window.getSize().x / 2.f, 440.f}, 50);
+    mainText = std::make_shared<Button>(defaultFont, "Tetris Lobby", sf::Color{190, 190, 0}, sf::Vector2f{window.getSize().x / 2.f, 100.f}, 80);
+    startGameText = std::make_shared<Button>(defaultFont, "Start Game", sf::Color{196, 16, 16}, sf::Vector2f{window.getSize().x / 2.f, 470.f}, 70);
+
+    mainText->setOutlineColor(sf::Color::Black);
+    mainText->setOutlineThickness(2.f);
+
+    startGameText->setOutlineColor(sf::Color::Black);
+    startGameText->setOutlineThickness(2.f);
+
     updateSize(window.getSize());
 }
 

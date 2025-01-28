@@ -15,7 +15,9 @@ private:
 
 public:
     void StartGameListener(const Packet &);
+    void restart();
     void endGame();
+    void start();
     GameManager(ServerManager &server);
     ~GameManager();
 };

@@ -34,11 +34,10 @@ CollisionType GamePhysics::applyAction(std::shared_ptr<Tetromino> tetromino,
 
     if (colision != CollisionType::NONE)
     {
-        // server.broadcastSound(SoundType::DenyErrorSound);
+        sound.playSoundToPlayer(tetrominoManager->getPlayerByTetromino(tetromino), SoundType::DenyErrorSound);
     }
     else
     {
-        // server.broadcastSound(SoundType::FabricImpactSound);
         tetrominoController->transform(tetromino, action, true);
         sound.broadcastSound(SoundType::FabricImpactSound);
     }

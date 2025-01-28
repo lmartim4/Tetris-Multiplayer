@@ -15,8 +15,8 @@ public:
         return instance;
     }
 
-   // Load a texture from file or retrieve it if already loaded
-    sf::Texture& getTexture(const std::string& name, const std::string& filePath)
+    // Load a texture from file or retrieve it if already loaded
+    sf::Texture &getTexture(const std::string &name, const std::string &filePath)
     {
         auto it = textures.find(name);
         if (it == textures.end())
@@ -53,12 +53,6 @@ public:
             textures[key] = std::move(tileTexture);
         }
         return textures[key];
-    }
-
-    // Register atlas names with their file paths
-    void registerAtlas(const std::string &atlasName, const std::string &filePath)
-    {
-        atlasFilePaths[atlasName] = filePath;
     }
 
     void clear()

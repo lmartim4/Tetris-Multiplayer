@@ -3,6 +3,8 @@
 BoardScreen::BoardScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager)
     : Screen(window), clientManager(clientManager)
 {
+
+    setBackground("main_game", "../assets/images/tetris.jpg");
     miniBoard = std::make_shared<MiniBoardRenderer>(sf::Vector2f(100.f, 100.f), 50.f);
     statusDisplay = std::make_shared<GameStatusRenderer>(defaultFont);
     board = std::make_shared<TetrisBoard>(3, 3);
@@ -16,6 +18,7 @@ void BoardScreen::handleEvent(sf::Event event, ScreenManager &manager)
 
 void BoardScreen::render(sf::RenderWindow &window)
 {
+    renderBackground();
     sf::View defaultView(sf::FloatRect(
         0.f, 0.f,
         static_cast<float>(window.getSize().x),
@@ -56,8 +59,9 @@ void BoardScreen::handleKeyPress(sf::Event event)
 void BoardScreen::updateSize(const sf::Vector2u a)
 {
     std::lock_guard<std::mutex> lock(renderMutex);
-
+    
     mainBoard->updateSize(a);
     miniBoard->updateSize(a);
     statusDisplay->updateSize(a);
+    resizeBackgound(a);
 }

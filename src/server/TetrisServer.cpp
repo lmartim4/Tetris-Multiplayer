@@ -55,6 +55,18 @@ void commandHandler()
             serverRunning = false; // Signal the server to stop
             break;
         }
+        else if (command == "restart")
+        {
+            gm.restart();
+        }
+        else if (command == "end")
+        {
+            gm.endGame();
+        }
+        else if (command == "start")
+        {
+            gm.start();
+        }
     }
 }
 
@@ -68,7 +80,6 @@ int main(int argc, const char *argv[])
         return -1;
 
     server.registerListener(PacketType::PAUSE, ReceivePauseRequest);
-
     server.registerListener(PacketType::JOIN_REQUEST, JoinRequestListener);
     server.registerListener(PacketType::HEARTBEAT, HeartbeatListener);
     server.registerListener(PacketType::REQUEST_START, StartGameListener);
@@ -83,12 +94,11 @@ int main(int argc, const char *argv[])
     // Main server loop
     while (serverRunning && server.isRunning())
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    
+
     gm.endGame();
 
     if (server.isRunning())
         server.stop();
-    
 
     if (commandThread.joinable())
         commandThread.join();

@@ -31,14 +31,34 @@ void GameManager::StartGameListener(const Packet &p)
     game->startGame();
 }
 
+void GameManager::restart()
+{
+    endGame();
+    start();
+}
+
 void GameManager::endGame()
 {
     if (game != nullptr)
     {
         if (game->getState() != ENDED)
-            game->endGameLoop(true);
+            game->endGameLoop(false);
         delete game;
     }
+}
+
+void GameManager::start()
+{
+    if (game != nullptr)
+        delete game;
+
+    game = new Game(server);
+
+    for (Player *p : server.getPlayers())
+        game->addPlayer(p);
+
+    server.broadcast_starting_game();
+    game->startGame();
 }
 
 GameManager::~GameManager()
