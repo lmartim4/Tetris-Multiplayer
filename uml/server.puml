@@ -1,0 +1,218 @@
+@startuml
+
+class BoardController {
+    + BoardController(std::shared_ptr<TetrisBoard> board)
+    + ~BoardController()
+    + void clearFallingTetromino(const std::shared_ptr<Tetromino> currentTetromino)
+    + void clearFallenTetrominos()
+    + CollisionType checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action, std::shared_ptr<TetrominoController> tetrominoController) const
+    + void setCellState(int ownerID, const std::shared_ptr<Tetromino> currentTetromino, CellState state)
+    + int findAndClearFullLines()
+
+    - std::weak_ptr<TetrisBoard> board
+    - void printMatrix(const std::vector<std::vector<int>> &matrix, const std::string &label) const
+}
+
+BoardController o-- TetrisBoard
+BoardController ..> Tetromino
+BoardController ..> TetrominoController
+
+class Game {
+    + Game(ServerManager &sender)
+    + ~Game()
+    + GameState getState()
+    + void addPlayer(Player *player)
+    + void startGame()
+    + void endGameLoop(bool force)
+
+    - static int instanceCount
+    - const int this_instance
+    - std::atomic<bool> stopLoop
+    - Clock gameTime
+    - Logger *logger
+    - ServerManager &server
+    - std::atomic<GameState> gameState
+    - GamePhysics physics
+    - GameStatus gameData
+    - std::shared_ptr<TetrominoManager> tetrominoManager
+    - std::shared_ptr<TetrominoController> tetrominoController
+    - std::shared_ptr<BoardController> boardController
+    - std::shared_ptr<TetrisBoard> board
+    - std::vector<Player *> players
+    - void processPlayersActions()
+    - void loop()
+    - void processAction(Player *player, std::shared_ptr<Tetromino> tetromino, TetrisAction action)
+    - void trySpawnTetromino(Player *player)
+    - void checkMusicLimits()
+    - void broadcastBoardIfChanges() const
+    - void broadcastEndGameStatus() const
+    - int calculatePoints(int nLines, int level)
+    - void checkForPlacedTetrominos()
+    - std::thread gameThread
+}
+
+Game o-- ServerManager
+Game o-- Logger
+Game o-- Clock
+Game o-- GamePhysics
+Game o-- TetrisBoard
+Game o-- BoardController
+Game o-- TetrominoManager
+Game o-- TetrominoController
+Game o-- Player
+
+
+class GameManager {
+    + GameManager(ServerManager &server)
+    + ~GameManager()
+    + void StartGameListener(const Packet &)
+    + void restart()
+    + void endGame()
+    + void start()
+
+    - Logger *logger
+    - ServerManager &server
+    - Game *game
+}
+
+GameManager o-- ServerManager
+GameManager o-- Logger
+GameManager o-- Game
+GameManager ..> Packet
+
+class Gravity {
+    + Gravity()
+    + int getGravityTimeMs() const
+    + void increaseGravityDifficulty()
+    + void updateGravityTime()
+    + bool hasGravityIntervalElapsed()
+
+    - static constexpr int kMinGravityTimeMs
+    - static constexpr int kInitialGravityTimeMs
+    - static constexpr double kDifficultyRate
+    - int gravityTimeMs
+    - int level
+    - std::chrono::steady_clock::time_point lastGravityUpdate
+}
+
+class GamePhysics {
+    + GamePhysics(SoundSender &sound)
+    + void applyGravity(std::shared_ptr<BoardController> boardManager, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager)
+    + CollisionType applyHardDrop(std::shared_ptr<Tetromino> tetromino, std::shared_ptr<BoardController> boardManager, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager)
+    + CollisionType applyAction(std::shared_ptr<Tetromino> tetromino, TetrisAction action, std::shared_ptr<BoardController> boardController, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager)
+    + void onTetrominoColide(std::shared_ptr<Tetromino> tetromino, CollisionType col, TetrisAction action, std::shared_ptr<BoardController> boardController, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager)
+    + void increaseGravityDifficulty()
+
+    - Gravity gravity
+    - SoundSender &sound
+    - int countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetrominos, std::shared_ptr<BoardController> boardController, std::shared_ptr<TetrominoController> tetrominoController)
+}
+
+GamePhysics *-- Gravity
+GamePhysics ..> BoardController
+GamePhysics ..> TetrominoController
+GamePhysics ..> TetrominoManager
+GamePhysics ..> Tetromino
+GamePhysics ..> SoundSender
+
+
+class TetrominoController {
+    + TetrominoController()
+    + ~TetrominoController()
+    + void setCanMove(std::shared_ptr<Tetromino> &tetromino, bool b)
+    + void setLockedInPlace(std::shared_ptr<Tetromino> &tetromino, bool b)
+    + bool canMove(const std::shared_ptr<Tetromino> &tetromino)
+    + bool isLockedInPlace(const std::shared_ptr<Tetromino> &tetromino)
+    + void transform(std::shared_ptr<Tetromino> &tetromino, TetrisAction action, bool forward)
+
+    - void rotate(std::shared_ptr<Tetromino> &tetromino, TetrisAction action)
+}
+
+TetrominoController ..> Tetromino
+
+
+class TetrominoFactory {
+    + std::unique_ptr<Tetromino> createTetromino()
+
+    - static const std::unordered_map<char, TetrominoCreator> tetrominoCreators
+    - static const std::vector<char> tetrominoTypes
+}
+
+TetrominoFactory ..> Tetromino
+TetrominoFactory ..> Coordinate
+
+class TetrominoManager {
+    + TetrominoManager()
+    + ~TetrominoManager()
+    + bool spawnNextTetromino(Player *player, std::shared_ptr<BoardController> boardManager, std::shared_ptr<TetrominoController> tetrominoController, int maxTries)
+    + std::shared_ptr<Tetromino> getCurrentTetromino(Player *player) const
+    + std::shared_ptr<Tetromino> getNextTetromino(Player *player) const
+    + std::vector<std::shared_ptr<Tetromino>> getCurrentTetrominos() const
+    + Player *getPlayerByTetromino(std::shared_ptr<Tetromino> tetromino) const
+
+    - std::unordered_map<Player *, std::shared_ptr<Tetromino>> currentTetromino
+    - std::unordered_map<Player *, std::shared_ptr<Tetromino>> nextTetromino
+}
+
+TetrominoManager o-- Player
+TetrominoManager o-- Tetromino
+TetrominoManager ..> BoardController
+TetrominoManager ..> TetrominoController
+
+class Player {
+    + Player(int id, const std::string &name)
+    + ~Player()
+    + const PlayerData getData() const
+    + void addScore(int amount)
+    + void setName(const std::string &newName)
+    + void disconnect()
+    + bool isConnected() const
+    + int getid()
+    + void enqueueAction(const TetrisAction &action)
+    + bool popAction(TetrisAction &action)
+
+    - ThreadSafeQueue<TetrisAction> actions
+    - PlayerData data
+}
+
+Player o-- PlayerData
+Player ..> ThreadSafeQueue
+
+
+class ServerManager {
+    + ServerManager(uint16_t port = 12345)
+    + ~ServerManager()
+    + void stop()
+    + void broadcastSound(SoundType soundType) override
+    + void playSoundToPlayer(const Player *player, SoundType soundType) override
+    + void broadcastBackgroundSound(SoundType sound) override
+    + void broadcast_starting_game()
+    + ENetPeer *getEnetPeerByPlayer(const Player *player)
+    + static Player *getPlayerFromPacket(const Packet &packet)
+    + std::vector<Player *> getPlayers()
+
+    - int getNextAvailableid()
+    - void broadcastPlayerList()
+    - void createPlayerAndLink(ENetPeer *peer)
+    - PlayerList players
+
+    # void onPeerConnect(ENetPeer *peer) override
+    # void onPeerDisconnect(ENetPeer *peer) override
+}
+
+ServerManager --|> NetworkManager
+ServerManager --|> SoundSender
+ServerManager o-- PlayerList
+ServerManager ..> Packet
+ServerManager ..> Player
+
+interface SoundSender {
+    + void playSoundToPlayer(const Player *player, SoundType sound)
+    + void broadcastSound(SoundType sound)
+    + void broadcastBackgroundSound(SoundType sound)
+}
+
+SoundSender ..> Player
+
+
+@enduml

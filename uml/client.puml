@@ -1,0 +1,381 @@
+@startuml
+
+class BoardRenderer {
+    + BoardRenderer(std::shared_ptr<ClientManager> client, std::shared_ptr<TetrisBoard> tetrisBoard, const sf::Vector2u initialSize)
+    + ~BoardRenderer()
+    + void updateBoardFromJson(const nlohmann::json &boardData, sf::RenderTarget &target)
+    + void updateSize(const sf::Vector2u a) override
+
+    - void initializeShapes(const sf::Vector2u a)
+    - float computeCellSize(const sf::Vector2u a) const
+    - void draw(sf::RenderTarget &target, sf::RenderStates states) const override
+
+    - std::shared_ptr<ClientManager> client
+    - std::shared_ptr<TetrisBoard> board
+    - std::vector<std::vector<std::shared_ptr<CellRenderer>>> grid
+    - mutable std::mutex boardMutex
+}
+
+BoardRenderer --|> Resizeable
+BoardRenderer o-- ClientManager
+BoardRenderer o-- TetrisBoard
+BoardRenderer o-- CellRenderer
+
+
+class CellRenderer {
+    + CellRenderer(sf::Vector2f size, sf::Vector2f position, CellRenderMode mode, std::shared_ptr<Cell> c)
+    + ~CellRenderer()
+    + void refreshPosition(sf::Vector2f newSize, sf::Vector2f newPosition)
+    + void setOutlineThickness(float thickness)
+    + void setOutlineColor(const sf::Color &color)
+    + void setOnClick(const std::function<void()> &callback)
+    + void handleEvent(const sf::Event &event, const sf::RenderWindow &window)
+    + void updateData()
+    + std::shared_ptr<Cell> getCell()
+
+    - void updateGeometry()
+    - void rebuildFill()
+    - void rebuildOutline()
+    - void draw(sf::RenderTarget &target, sf::RenderStates states) const override
+
+    - static int cells_count
+    - std::shared_ptr<Cell> cell
+    - std::function<void()> onClickCallback
+    - sf::VertexArray fillVertices
+    - sf::RectangleShape outlineShape
+    - sf::Vector2f size
+    - CellRenderMode renderMode
+}
+
+
+CellRenderer o-- Cell
+
+class GameStatusRenderer {
+    + GameStatusRenderer(sf::Font &defaultFont)
+    + ~GameStatusRenderer()
+    + void updateSize(const sf::Vector2u a) override
+    + void updateGameStatus(GameStatus gs)
+
+    - void draw(sf::RenderTarget &target, sf::RenderStates states) const override
+    - Button score
+    - Button lines
+    - Button level
+}
+
+GameStatusRenderer --|> Resizeable
+GameStatusRenderer ..> GameStatus
+GameStatusRenderer o-- Button
+
+
+class MiniBoardRenderer {
+    + MiniBoardRenderer(sf::Vector2f position, float cellSize)
+    + void updateSize(const sf::Vector2u) override
+    + void setTetromino(std::shared_ptr<Tetromino> t, CellRenderMode renderMode)
+    + float getWidth() const
+    + float getHeight() const
+    + sf::Vector2f getPosition() const
+
+    - void draw(sf::RenderTarget &target, sf::RenderStates states) const override
+    - mutable std::mutex renderMutex
+    - float cellSize
+    - sf::Vector2f position
+    - std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid
+}
+
+MiniBoardRenderer --|> Resizeable
+MiniBoardRenderer o-- CellRenderer
+MiniBoardRenderer ..> Tetromino
+
+class BoardScreen {
+    + BoardScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager)
+    + void updateSize(const sf::Vector2u a) override
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void render(sf::RenderWindow &window) override
+    + void update(float deltaTime) override
+    + void handleKeyPress(sf::Event event)
+
+    - std::shared_ptr<ClientManager> clientManager
+    - std::shared_ptr<TetrisBoard> board
+    - std::shared_ptr<MiniBoardRenderer> miniBoard
+    - std::shared_ptr<BoardRenderer> mainBoard
+    - std::shared_ptr<GameStatusRenderer> statusDisplay
+    - std::mutex renderMutex
+}
+
+BoardScreen --|> Screen
+BoardScreen o-- ClientManager
+BoardScreen o-- TetrisBoard
+BoardScreen o-- MiniBoardRenderer
+BoardScreen o-- BoardRenderer
+BoardScreen o-- GameStatusRenderer
+BoardScreen ..> ScreenManager
+
+class EndGameScreen {
+    + EndGameScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
+    + ~EndGameScreen()
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void updateSize(const sf::Vector2u a) override
+
+    - ScreenManager &screenManager
+    - std::shared_ptr<ClientManager> client
+    - EndGameData data
+    - sf::Text title
+    - sf::Text totalPoints
+    - sf::Text gameTime
+    - sf::Text linesRemoved
+    - sf::Text finalLevel
+    - std::vector<sf::Text> playerScores
+    - Button quitButton
+    - Button playAgainButton
+    - bool hasFetchedData
+}
+
+EndGameScreen --|> Screen
+EndGameScreen o-- ScreenManager
+EndGameScreen o-- ClientManager
+EndGameScreen o-- EndGameData
+EndGameScreen o-- Button
+
+class GameScreen {
+    + GameScreen(sf::RenderWindow &window)
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void updateSize(const sf::Vector2u a) override
+
+    - sf::Text gameText
+}
+
+GameScreen --|> Screen
+GameScreen ..> ScreenManager
+
+
+class LobbyScreen {
+    + LobbyScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager)
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void initializeButtons()
+    + void updateSize(const sf::Vector2u a) override
+
+    - std::shared_ptr<Button> mainText
+    - std::shared_ptr<Button> startGameText
+    - std::shared_ptr<ClientManager> clientMan
+    - const float circleRadius
+    - const float padding
+    - std::vector<Button> clickableTexts
+}
+
+LobbyScreen --|> Screen
+LobbyScreen o-- Button
+LobbyScreen o-- ClientManager
+LobbyScreen ..> ScreenManager
+
+
+class MenuScreen {
+    + MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void updateSize(const sf::Vector2u a) override
+
+    - void initializeButtons()
+    - ScreenManager &manager
+    - std::shared_ptr<ClientManager> clientMan
+    - std::shared_ptr<Button> titleText
+    - std::shared_ptr<Button> connectText
+    - std::shared_ptr<Button> quitText
+}
+
+MenuScreen --|> Screen
+MenuScreen o-- Button
+MenuScreen o-- ClientManager
+MenuScreen o-- ScreenManager
+
+
+class WaitingConnectionScreen {
+    + WaitingConnectionScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void updateSize(const sf::Vector2u a)
+
+    - Button titleText
+    - Button backText
+    - ScreenManager &screenMan
+    - std::shared_ptr<ClientManager> clientMan
+    - static constexpr float x_offset_screen
+    - static constexpr float y_offset_screen
+}
+
+WaitingConnectionScreen --|> Screen
+WaitingConnectionScreen o-- Button
+WaitingConnectionScreen o-- ScreenManager
+WaitingConnectionScreen o-- ClientManager
+
+class AudioManager {
+    + AudioManager()
+    + ~AudioManager()
+    + void playSound(SoundType type, bool loop)
+    + void loadAllSounds()
+
+    - void stopBackgroundMusic()
+    - bool tryLoadSound(SoundType type, const std::string &filepath)
+
+    - SoundType m_currentBackgroundSound
+    - Logger *logger
+    - std::map<SoundType, sf::SoundBuffer> m_soundBuffers
+    - std::map<SoundType, sf::Sound> m_sounds
+}
+
+AudioManager o-- Logger
+class Background {
+    + Background(sf::RenderWindow &window, const std::string &atlasName, const std::string &tileName)
+    + void resize(const sf::Vector2u &newSize)
+    + void render(sf::RenderWindow &window)
+
+    - sf::RectangleShape shape
+    - sf::Texture *tileTexture
+    - std::mutex mtx
+}
+
+Background ..> TextureLoader
+
+class Button {
+    + Button(const sf::Font &font, const std::string &str, sf::Color color, sf::Vector2f position, int fontSize)
+    + void setOnClick(const std::function<void()> &callback)
+    + void handleEvent(const sf::Event &event, sf::RenderWindow &window)
+    + sf::FloatRect getBounds() const
+
+    - std::function<void()> onClickCallback
+}
+
+
+class ClientManager {
+    + ClientManager()
+    + ~ClientManager()
+    + const GameStatus &getGameData() const
+    + void toggleDebug()
+    + void on_receive_heartbeat()
+    + void on_receive_score(const Packet &packet)
+    + void on_receive_player_list(const Packet &packet)
+    + void on_receive_game_screen(const Packet &packet)
+    + void on_receive_end_screen(const Packet &packet)
+    + void on_receive_next_tetromino(const Packet &packet)
+    + void on_receive_player_id(const Packet &packet)
+    + void on_receive_background_sound(const Packet &packet)
+    + void TaskStartHeartbeat()
+    + void TaskHeartbeat()
+    + void TaskStopHeartbeat()
+    + void connect(const std::string &serverAddress = "localhost", uint16_t port = 12345)
+    + void disconnect()
+    + bool IsConnected() const
+    + PlayerList &getPlayerList()
+    + bool hasBoard(nlohmann::json &board)
+    + bool hasEndGameData(nlohmann::json &board)
+    + void request_game_start()
+    + void onPressKey(sf::Event::KeyEvent e)
+    + int getMyID()
+    + static void printMatrix(const std::vector<std::vector<int>> &matrix, const std::string &label)
+
+    - bool debugEnabled
+    - ENetPeer *serverPeer
+    - std::atomic<bool> isConnected
+    - PlayerData me
+    - GameStatus score
+    - PlayerList players
+    - std::mutex nextTetrominoMutex
+    - std::mutex getIDMutex
+    - ThreadSafeQueue<nlohmann::json> boardBuffer
+    - ThreadSafeQueue<nlohmann::json> endGameDataBuffer
+    - std::thread ThreadHeartbeat
+    - std::atomic<bool> HeartBeatRunningFlag
+    - unsigned long last_heartbeat
+    - ThreadSafeQueue<std::shared_ptr<Tetromino>> next_tetrominos
+}
+
+ClientManager --|> NetworkManager
+ClientManager ..> GameStatus
+ClientManager ..> PlayerData
+ClientManager o-- PlayerList
+ClientManager ..> ThreadSafeQueue
+ClientManager ..> Packet
+
+class Resizeable {
+    + Resizeable()
+    + ~Resizeable()
+    + void onResize(sf::Event::SizeEvent e)
+    
+    # virtual void updateSize(const sf::Vector2u a) = 0
+}
+
+class Screen {
+    + Screen(sf::RenderWindow &window)
+    + ~Screen()
+    + sf::Font &getDefaultFont()
+    + void stop()
+    + virtual void handleEvent(sf::Event event, ScreenManager &manager) = 0
+    + virtual void update(float deltaTime) = 0
+    + virtual void render(sf::RenderWindow &window) = 0
+    + virtual void updateSize(const sf::Vector2u a) = 0
+
+    # void setBackground(const std::string &atlasName, const std::string &tileName)
+    # void resizeBackgound(const sf::Vector2u a)
+    # void renderBackground()
+
+    # std::atomic<bool> running
+    # sf::Font defaultFont
+    # sf::RenderWindow &window
+
+    - std::unique_ptr<Background> background
+}
+
+Screen --|> Resizeable
+Screen o-- Background
+Screen ..> ScreenManager
+
+
+class ScreenManager {
+    + ScreenManager(sf::RenderWindow &window)
+    + ~ScreenManager()
+    + sf::RenderWindow &getWindow()
+    + void quit()
+    + void addScreen(const std::string &name, std::unique_ptr<Screen> screen)
+    + void setActiveScreen(const std::string &name)
+    + void handleEvent(sf::Event event)
+    + void update(float deltaTime)
+    + void render(sf::RenderWindow &window)
+    + void startThread()
+    + void stopThread()
+
+    - sf::RenderWindow &window
+    - std::map<std::string, std::unique_ptr<Screen>> screens
+    - Screen *activeScreen
+    - std::thread screenThread
+    - std::mutex mtx
+    - std::condition_variable cv
+    - std::atomic<bool> threadRunning
+}
+
+ScreenManager o-- Screen
+
+class TextureLoader {
+    + static TextureLoader &getInstance()
+    + sf::Texture &getTexture(const std::string &name, const std::string &filePath)
+    + sf::Texture &getTile(const std::string &atlasName, const std::string &tileName, const sf::IntRect &tileRect)
+    + void clear()
+
+    - TextureLoader()
+    - ~TextureLoader()
+    - TextureLoader(const TextureLoader &) = delete
+    - TextureLoader &operator=(const TextureLoader &) = delete
+    - sf::Image getTileImage(const sf::Texture &atlas, const sf::IntRect &tileRect)
+
+    - std::map<std::string, std::string> atlasFilePaths
+    - std::map<std::string, sf::Texture> textures
+    - std::mutex mtx
+}
+
+@enduml

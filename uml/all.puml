@@ -1,0 +1,893 @@
+@startuml
+
+' ----------------------------------- Client -----------------------------------
+
+class BoardRenderer {
+    + BoardRenderer(std::shared_ptr<ClientManager> client, std::shared_ptr<TetrisBoard> tetrisBoard, const sf::Vector2u initialSize)
+    + ~BoardRenderer()
+    + void updateBoardFromJson(const nlohmann::json &boardData, sf::RenderTarget &target)
+    + void updateSize(const sf::Vector2u a) override
+
+    - void initializeShapes(const sf::Vector2u a)
+    - float computeCellSize(const sf::Vector2u a) const
+    - void draw(sf::RenderTarget &target, sf::RenderStates states) const override
+
+    - std::shared_ptr<ClientManager> client
+    - std::shared_ptr<TetrisBoard> board
+    - std::vector<std::vector<std::shared_ptr<CellRenderer>>> grid
+    - mutable std::mutex boardMutex
+}
+
+BoardRenderer --|> Resizeable
+BoardRenderer o-- ClientManager
+BoardRenderer o-- TetrisBoard
+BoardRenderer o-- CellRenderer
+
+
+class CellRenderer {
+    + CellRenderer(sf::Vector2f size, sf::Vector2f position, CellRenderMode mode, std::shared_ptr<Cell> c)
+    + ~CellRenderer()
+    + void refreshPosition(sf::Vector2f newSize, sf::Vector2f newPosition)
+    + void setOutlineThickness(float thickness)
+    + void setOutlineColor(const sf::Color &color)
+    + void setOnClick(const std::function<void()> &callback)
+    + void handleEvent(const sf::Event &event, const sf::RenderWindow &window)
+    + void updateData()
+    + std::shared_ptr<Cell> getCell()
+
+    - void updateGeometry()
+    - void rebuildFill()
+    - void rebuildOutline()
+    - void draw(sf::RenderTarget &target, sf::RenderStates states) const override
+
+    - static int cells_count
+    - std::shared_ptr<Cell> cell
+    - std::function<void()> onClickCallback
+    - sf::VertexArray fillVertices
+    - sf::RectangleShape outlineShape
+    - sf::Vector2f size
+    - CellRenderMode renderMode
+}
+
+
+CellRenderer o-- Cell
+
+class GameStatusRenderer {
+    + GameStatusRenderer(sf::Font &defaultFont)
+    + ~GameStatusRenderer()
+    + void updateSize(const sf::Vector2u a) override
+    + void updateGameStatus(GameStatus gs)
+
+    - void draw(sf::RenderTarget &target, sf::RenderStates states) const override
+    - Button score
+    - Button lines
+    - Button level
+}
+
+GameStatusRenderer --|> Resizeable
+GameStatusRenderer ..> GameStatus
+GameStatusRenderer o-- Button
+
+
+class MiniBoardRenderer {
+    + MiniBoardRenderer(sf::Vector2f position, float cellSize)
+    + void updateSize(const sf::Vector2u) override
+    + void setTetromino(std::shared_ptr<Tetromino> t, CellRenderMode renderMode)
+    + float getWidth() const
+    + float getHeight() const
+    + sf::Vector2f getPosition() const
+
+    - void draw(sf::RenderTarget &target, sf::RenderStates states) const override
+    - mutable std::mutex renderMutex
+    - float cellSize
+    - sf::Vector2f position
+    - std::vector<std::vector<std::shared_ptr<CellRenderer>>> renderGrid
+}
+
+MiniBoardRenderer --|> Resizeable
+MiniBoardRenderer o-- CellRenderer
+MiniBoardRenderer ..> Tetromino
+
+class BoardScreen {
+    + BoardScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager)
+    + void updateSize(const sf::Vector2u a) override
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void render(sf::RenderWindow &window) override
+    + void update(float deltaTime) override
+    + void handleKeyPress(sf::Event event)
+
+    - std::shared_ptr<ClientManager> clientManager
+    - std::shared_ptr<TetrisBoard> board
+    - std::shared_ptr<MiniBoardRenderer> miniBoard
+    - std::shared_ptr<BoardRenderer> mainBoard
+    - std::shared_ptr<GameStatusRenderer> statusDisplay
+    - std::mutex renderMutex
+}
+
+BoardScreen --|> Screen
+BoardScreen o-- ClientManager
+BoardScreen o-- TetrisBoard
+BoardScreen o-- MiniBoardRenderer
+BoardScreen o-- BoardRenderer
+BoardScreen o-- GameStatusRenderer
+BoardScreen ..> ScreenManager
+
+class EndGameScreen {
+    + EndGameScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
+    + ~EndGameScreen()
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void updateSize(const sf::Vector2u a) override
+
+    - ScreenManager &screenManager
+    - std::shared_ptr<ClientManager> client
+    - EndGameData data
+    - sf::Text title
+    - sf::Text totalPoints
+    - sf::Text gameTime
+    - sf::Text linesRemoved
+    - sf::Text finalLevel
+    - std::vector<sf::Text> playerScores
+    - Button quitButton
+    - Button playAgainButton
+    - bool hasFetchedData
+}
+
+EndGameScreen --|> Screen
+EndGameScreen o-- ScreenManager
+EndGameScreen o-- ClientManager
+EndGameScreen o-- EndGameData
+EndGameScreen o-- Button
+
+class GameScreen {
+    + GameScreen(sf::RenderWindow &window)
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void updateSize(const sf::Vector2u a) override
+
+    - sf::Text gameText
+}
+
+GameScreen --|> Screen
+GameScreen ..> ScreenManager
+
+
+class LobbyScreen {
+    + LobbyScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager)
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void initializeButtons()
+    + void updateSize(const sf::Vector2u a) override
+
+    - std::shared_ptr<Button> mainText
+    - std::shared_ptr<Button> startGameText
+    - std::shared_ptr<ClientManager> clientMan
+    - const float circleRadius
+    - const float padding
+    - std::vector<Button> clickableTexts
+}
+
+LobbyScreen --|> Screen
+LobbyScreen o-- Button
+LobbyScreen o-- ClientManager
+LobbyScreen ..> ScreenManager
+
+
+class MenuScreen {
+    + MenuScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void updateSize(const sf::Vector2u a) override
+
+    - void initializeButtons()
+    - ScreenManager &manager
+    - std::shared_ptr<ClientManager> clientMan
+    - std::shared_ptr<Button> titleText
+    - std::shared_ptr<Button> connectText
+    - std::shared_ptr<Button> quitText
+}
+
+MenuScreen --|> Screen
+MenuScreen o-- Button
+MenuScreen o-- ClientManager
+MenuScreen o-- ScreenManager
+
+
+class WaitingConnectionScreen {
+    + WaitingConnectionScreen(sf::RenderWindow &window, ScreenManager &screenManager, std::shared_ptr<ClientManager> clientManager)
+    + void handleEvent(sf::Event event, ScreenManager &manager) override
+    + void update(float deltaTime) override
+    + void render(sf::RenderWindow &window) override
+    + void updateSize(const sf::Vector2u a)
+
+    - Button titleText
+    - Button backText
+    - ScreenManager &screenMan
+    - std::shared_ptr<ClientManager> clientMan
+    - static constexpr float x_offset_screen
+    - static constexpr float y_offset_screen
+}
+
+WaitingConnectionScreen --|> Screen
+WaitingConnectionScreen o-- Button
+WaitingConnectionScreen o-- ScreenManager
+WaitingConnectionScreen o-- ClientManager
+
+class AudioManager {
+    + AudioManager()
+    + ~AudioManager()
+    + void playSound(SoundType type, bool loop)
+    + void loadAllSounds()
+
+    - void stopBackgroundMusic()
+    - bool tryLoadSound(SoundType type, const std::string &filepath)
+
+    - SoundType m_currentBackgroundSound
+    - Logger *logger
+    - std::map<SoundType, sf::SoundBuffer> m_soundBuffers
+    - std::map<SoundType, sf::Sound> m_sounds
+}
+
+AudioManager o-- Logger
+
+class Background {
+    + Background(sf::RenderWindow &window, const std::string &atlasName, const std::string &tileName)
+    + void resize(const sf::Vector2u &newSize)
+    + void render(sf::RenderWindow &window)
+
+    - sf::RectangleShape shape
+    - sf::Texture *tileTexture
+    - std::mutex mtx
+}
+
+Background ..> TextureLoader
+
+class Button {
+    + Button(const sf::Font &font, const std::string &str, sf::Color color, sf::Vector2f position, int fontSize)
+    + void setOnClick(const std::function<void()> &callback)
+    + void handleEvent(const sf::Event &event, sf::RenderWindow &window)
+    + sf::FloatRect getBounds() const
+
+    - std::function<void()> onClickCallback
+}
+
+
+class ClientManager {
+    + ClientManager()
+    + ~ClientManager()
+    + const GameStatus &getGameData() const
+    + void toggleDebug()
+    + void on_receive_heartbeat()
+    + void on_receive_score(const Packet &packet)
+    + void on_receive_player_list(const Packet &packet)
+    + void on_receive_game_screen(const Packet &packet)
+    + void on_receive_end_screen(const Packet &packet)
+    + void on_receive_next_tetromino(const Packet &packet)
+    + void on_receive_player_id(const Packet &packet)
+    + void on_receive_background_sound(const Packet &packet)
+    + void TaskStartHeartbeat()
+    + void TaskHeartbeat()
+    + void TaskStopHeartbeat()
+    + void connect(const std::string &serverAddress = "localhost", uint16_t port = 12345)
+    + void disconnect()
+    + bool IsConnected() const
+    + PlayerList &getPlayerList()
+    + bool hasBoard(nlohmann::json &board)
+    + bool hasEndGameData(nlohmann::json &board)
+    + void request_game_start()
+    + void onPressKey(sf::Event::KeyEvent e)
+    + int getMyID()
+    + static void printMatrix(const std::vector<std::vector<int>> &matrix, const std::string &label)
+
+    - bool debugEnabled
+    - ENetPeer *serverPeer
+    - std::atomic<bool> isConnected
+    - PlayerData me
+    - GameStatus score
+    - PlayerList players
+    - std::mutex nextTetrominoMutex
+    - std::mutex getIDMutex
+    - ThreadSafeQueue<nlohmann::json> boardBuffer
+    - ThreadSafeQueue<nlohmann::json> endGameDataBuffer
+    - std::thread ThreadHeartbeat
+    - std::atomic<bool> HeartBeatRunningFlag
+    - unsigned long last_heartbeat
+    - ThreadSafeQueue<std::shared_ptr<Tetromino>> next_tetrominos
+}
+
+ClientManager --|> NetworkManager
+ClientManager ..> GameStatus
+ClientManager ..> PlayerData
+ClientManager o-- PlayerList
+ClientManager ..> ThreadSafeQueue
+ClientManager ..> Packet
+
+class Resizeable {
+    + Resizeable()
+    + ~Resizeable()
+    + void onResize(sf::Event::SizeEvent e)
+    
+    # virtual void updateSize(const sf::Vector2u a) = 0
+}
+
+class Screen {
+    + Screen(sf::RenderWindow &window)
+    + ~Screen()
+    + sf::Font &getDefaultFont()
+    + void stop()
+    + virtual void handleEvent(sf::Event event, ScreenManager &manager) = 0
+    + virtual void update(float deltaTime) = 0
+    + virtual void render(sf::RenderWindow &window) = 0
+    + virtual void updateSize(const sf::Vector2u a) = 0
+
+    # void setBackground(const std::string &atlasName, const std::string &tileName)
+    # void resizeBackgound(const sf::Vector2u a)
+    # void renderBackground()
+
+    # std::atomic<bool> running
+    # sf::Font defaultFont
+    # sf::RenderWindow &window
+
+    - std::unique_ptr<Background> background
+}
+
+Screen --|> Resizeable
+Screen o-- Background
+Screen ..> ScreenManager
+
+
+class ScreenManager {
+    + ScreenManager(sf::RenderWindow &window)
+    + ~ScreenManager()
+    + sf::RenderWindow &getWindow()
+    + void quit()
+    + void addScreen(const std::string &name, std::unique_ptr<Screen> screen)
+    + void setActiveScreen(const std::string &name)
+    + void handleEvent(sf::Event event)
+    + void update(float deltaTime)
+    + void render(sf::RenderWindow &window)
+    + void startThread()
+    + void stopThread()
+
+    - sf::RenderWindow &window
+    - std::map<std::string, std::unique_ptr<Screen>> screens
+    - Screen *activeScreen
+    - std::thread screenThread
+    - std::mutex mtx
+    - std::condition_variable cv
+    - std::atomic<bool> threadRunning
+}
+
+ScreenManager o-- Screen
+
+class TextureLoader {
+    + static TextureLoader &getInstance()
+    + sf::Texture &getTexture(const std::string &name, const std::string &filePath)
+    + sf::Texture &getTile(const std::string &atlasName, const std::string &tileName, const sf::IntRect &tileRect)
+    + void clear()
+
+    - TextureLoader()
+    - ~TextureLoader()
+    - TextureLoader(const TextureLoader &) = delete
+    - TextureLoader &operator=(const TextureLoader &) = delete
+    - sf::Image getTileImage(const sf::Texture &atlas, const sf::IntRect &tileRect)
+
+    - std::map<std::string, std::string> atlasFilePaths
+    - std::map<std::string, sf::Texture> textures
+    - std::mutex mtx
+}
+
+' ----------------------------------- Common -----------------------------------
+
+class ISerializable {
+    +virtual ~ISerializable()
+    +virtual nlohmann::json serialize() const
+    +virtual void deserialize(const nlohmann::json &data)
+}
+
+' class nlohmann::json {
+    
+' }
+
+class Cell {
+
+    -CellState state
+    -CellColor color
+    -Coordinate coordinate
+    -int pieceId
+    -int ownerID
+
+    +Cell(Coordinate coord)
+    +~Cell()
+    +int getOwnerID() const
+    +int getPieceId() const
+    +void setPieceId(int id)
+    +CellColor getColor() const
+    +CellState getState() const
+    +void setColor(CellColor c)
+    +void setState(CellState s)
+    +void setOwnerID(int o)
+    +void setEmpty()
+    +nlohmann::json serialize() const override
+    +void deserialize(const nlohmann::json &json)
+}
+
+Cell --|> ISerializable 
+Cell o-- Coordinate
+
+class Clock {
+    + Clock(std::string measurementName)
+    + void start()
+    + void end()
+    + long long elapsedMicroseconds() const
+
+    - std::chrono::time_point<std::chrono::high_resolution_clock> startTime_
+    - std::string measurementName_
+}
+
+class Coordinate {
+    + Coordinate()
+    + Coordinate(int xVal, int yVal)
+    + int getX()
+    + int getY()
+    + void addX(int x)
+    + void addY(int y)
+    + void setX(int x)
+    + void setY(int y)
+    + nlohmann::json serialize() const
+    + void deserialize(const nlohmann::json &json)
+
+    - int x
+    - int y
+}
+
+Coordinate --|> ISerializable
+' Coordinate ..> nlohmann::json
+
+class EndGameData {
+    + int totalPoints
+    + int gameTime
+    + int linesRemoved
+    + int finalLevel
+    + std::vector<PlayerData> players
+    + nlohmann::json serialize() const
+    + void deserialize(const nlohmann::json &data)
+}
+
+EndGameData --|> ISerializable 
+EndGameData o-- PlayerData
+' EndGameData ..> nlohmann::json
+
+class GameStatus {
+    + GameStatus()
+    + ~GameStatus()
+    + bool shouldLevelUp(int requiredLinesForLevelUp = 10)
+    + int getScore() const
+    + int getLevel() const
+    + int getTotalLinesCleared() const
+    + int getLinesClearedOnThisLevel() const
+    + void addScore(int s)
+    + void setLevel(int l)
+    + void addTotalLinesCleared(int t)
+    + void addLinesClearedOnThisLevel(int c)
+    + nlohmann::json serialize() const
+    + void deserialize(const nlohmann::json &json)
+
+    - int score
+    - int level
+    - int totalLinesCleared
+    - int linesClearedOnThisLevel
+}
+
+GameStatus --|> ISerializable
+' GameStatus ..> nlohmann::json
+
+
+class Logger {
+    + Logger(std::string name)
+    + ~Logger()
+    + void console_log(const std::string &msg) const
+    - std::string className
+}
+
+class NetworkManager {
+    + const int network_frequency
+    + static const int version
+    + NetworkManager()
+    + ~NetworkManager()
+    + void registerListener(PacketType, std::function<void(const Packet &)>)
+    + bool isRunning() const
+    + std::string uint32_to_ipv4(uint32_t ip_addr)
+    + ENetHost *getHost()
+    + std::vector<ENetPeer *> getPeers()
+    + void sendPacket(const Packet &)
+    + void broadcastPacket(const Packet &)
+
+    # Logger *logger
+    # ENetHost *host
+    # Packet parsePacket(const ENetPacket *enetPacket, ENetPeer *sourcePeer)
+    # void handlePacket(Packet &packet, ENetPeer *peer)
+    # virtual void onPeerConnect(ENetPeer *peer) = 0
+    # virtual void onPeerDisconnect(ENetPeer *peer) = 0
+    # void TaskStartNetwork()
+    # void TaskStopNetwork()
+
+    - std::unordered_map<uint8_t, std::function<void(const Packet &)>> listeners
+    - std::queue<Packet> outgoingPackets
+    - std::queue<Packet> incomingPackets
+    - std::mutex outgoingMutex
+    - std::mutex incomingMutex
+    - std::condition_variable outgoingCondition
+    - std::condition_variable incomingCondition
+    - std::thread networkThread
+    - std::thread sendThread
+    - std::thread receiveThread
+    - std::atomic<bool> mainTask
+    - std::atomic<bool> sending
+    - std::atomic<bool> receiving
+
+    - void processENetEvent(ENetEvent &event)
+    - void processIncomingPackets()
+    - void sendOutgoingPackets()
+    - ENetPacket *createENetPacket(const Packet &packet)
+    - void TaskNetwork()
+    - void TaskSend()
+    - void TaskReceive()
+}
+
+NetworkManager o-- Logger
+NetworkManager o-- Packet
+' NetworkManager ..> nlohmann::json
+
+class Packet {
+    + Packet(PacketType t, ENetPeer *dest = nullptr)
+    + Packet(PacketType t, const std::vector<uint8_t> &d, ENetPeer *dest = nullptr)
+    + Packet(PacketType t, int i, ENetPeer *dest = nullptr)
+    + Packet(PacketType t, const ISerializable &serializable, ENetPeer *dest = nullptr)
+    + std::vector<uint8_t> toRawPacket() const
+    + void setENetPeer(ENetPeer *p)
+    + const std::vector<uint8_t> &getData() const
+    + nlohmann::json getPayloadAsJson() const
+    + PacketType getType() const
+    + ENetPeer *getPeer() const
+
+    - PacketType type
+    - std::vector<uint8_t> data
+    - ENetPeer *peer
+}
+
+' Packet ..> nlohmann::json
+
+class PlayerData extends ISerializable {
+    + nlohmann::json serialize() const
+    + void deserialize(const nlohmann::json &data)
+
+    - std::string playerName
+    - int id
+    - int score
+    - bool isConnected
+}
+
+class PlayerList {
+    + PlayerList()
+    + ~PlayerList()
+    + nlohmann::json serialize() const
+    + void deserialize(const nlohmann::json &data)
+    + const std::vector<PlayerData> &getPlayers() const
+    + void clearPlayers()
+    + void addPlayer(const PlayerData &player)
+    + void removePlayer(const PlayerData &player)
+
+    - std::vector<PlayerData> players
+}
+
+PlayerList --|> ISerializable
+PlayerList o-- PlayerData
+
+class TetrisBoard {
+    + TetrisBoard(int h, int w)
+    + ~TetrisBoard()
+    + void printDebug() const
+    + int getWidth() const
+    + int getHeight() const
+    + std::vector<std::vector<std::shared_ptr<Cell>>> &getGrid()
+    + void clearBoard() const
+    + void setSize(int x, int y)
+    + int getNormalizedY(int y) const
+    + nlohmann::json serialize() const
+    + void deserialize(const nlohmann::json &data)
+
+    - Logger *logger
+    - int width
+    - int height
+    - std::vector<std::vector<std::shared_ptr<Cell>>> grid
+    - void setupGrid()
+}
+
+TetrisBoard --|> ISerializable
+TetrisBoard *-- Cell
+TetrisBoard o-- Logger
+
+class Tetromino {
+    + Tetromino()
+    + Tetromino(Coordinate coord, CellColor color, const std::vector<std::vector<int>> &s)
+    + virtual ~Tetromino()
+    + Coordinate getCoordinate() const
+    + Coordinate &getCoordinate()
+    + CellColor getColor() const
+    + std::shared_ptr<TetrominoShape> getShape() const
+    + int getId() const
+    + bool hasChanged()
+    + bool shouldBroadcastState()
+    + nlohmann::json serialize() const
+    + void deserialize(const nlohmann::json &data)
+
+    - Coordinate coordinate
+    - int pieceId
+    - bool changed
+    - void setShape(std::vector<std::vector<int>> &s)
+    - void setCoordinate(Coordinate &coord)
+    - void setChanged(bool c)
+
+    # std::shared_ptr<TetrominoShape> shape
+    # CellColor color
+
+    - bool canMove
+    - bool lockedInPlace
+
+    + static const std::vector<CellColor> tetromino_colors
+}
+
+Tetromino --|> ISerializable
+Tetromino *-- Coordinate
+Tetromino o-- TetrominoShape
+
+class TetrominoShape {
+    + TetrominoShape()
+    + TetrominoShape(const std::vector<std::vector<int>> &shape)
+    + const std::vector<std::vector<int>> &getShape() const
+    + void setShape(const std::vector<std::vector<int>> &newShape)
+    + nlohmann::json serialize() const
+    + void deserialize(const nlohmann::json &data)
+    + void invertShape()
+
+    - std::vector<std::vector<int>> shape
+}
+
+TetrominoShape --|> ISerializable
+
+
+class ThreadSafeQueue <T>{
+    + void push(T value)
+    + bool pop(T &value)
+    + void wait_and_pop(T &value)
+    + bool empty() const
+    + void clear()
+
+    - std::queue<T> queue_
+    - std::mutex mutex_
+    - std::condition_variable cond_
+}
+
+' ----------------------------------- Server  ----------------------------------- 
+
+class BoardController {
+    + BoardController(std::shared_ptr<TetrisBoard> board)
+    + ~BoardController()
+    + void clearFallingTetromino(const std::shared_ptr<Tetromino> currentTetromino)
+    + void clearFallenTetrominos()
+    + CollisionType checkCollision(std::shared_ptr<Tetromino> currentTetromino, TetrisAction action, std::shared_ptr<TetrominoController> tetrominoController) const
+    + void setCellState(int ownerID, const std::shared_ptr<Tetromino> currentTetromino, CellState state)
+    + int findAndClearFullLines()
+
+    - std::weak_ptr<TetrisBoard> board
+    - void printMatrix(const std::vector<std::vector<int>> &matrix, const std::string &label) const
+}
+
+BoardController o-- TetrisBoard
+BoardController ..> Tetromino
+BoardController ..> TetrominoController
+
+class Game {
+    + Game(ServerManager &sender)
+    + ~Game()
+    + GameState getState()
+    + void addPlayer(Player *player)
+    + void startGame()
+    + void endGameLoop(bool force)
+
+    - static int instanceCount
+    - const int this_instance
+    - std::atomic<bool> stopLoop
+    - Clock gameTime
+    - Logger *logger
+    - ServerManager &server
+    - std::atomic<GameState> gameState
+    - GamePhysics physics
+    - GameStatus gameData
+    - std::shared_ptr<TetrominoManager> tetrominoManager
+    - std::shared_ptr<TetrominoController> tetrominoController
+    - std::shared_ptr<BoardController> boardController
+    - std::shared_ptr<TetrisBoard> board
+    - std::vector<Player *> players
+    - void processPlayersActions()
+    - void loop()
+    - void processAction(Player *player, std::shared_ptr<Tetromino> tetromino, TetrisAction action)
+    - void trySpawnTetromino(Player *player)
+    - void checkMusicLimits()
+    - void broadcastBoardIfChanges() const
+    - void broadcastEndGameStatus() const
+    - int calculatePoints(int nLines, int level)
+    - void checkForPlacedTetrominos()
+    - std::thread gameThread
+}
+
+Game o-- ServerManager
+Game o-- Logger
+Game o-- Clock
+Game o-- GamePhysics
+Game o-- TetrisBoard
+Game o-- BoardController
+Game o-- TetrominoManager
+Game o-- TetrominoController
+Game o-- Player
+
+
+class GameManager {
+    + GameManager(ServerManager &server)
+    + ~GameManager()
+    + void StartGameListener(const Packet &)
+    + void restart()
+    + void endGame()
+    + void start()
+
+    - Logger *logger
+    - ServerManager &server
+    - Game *game
+}
+
+GameManager o-- ServerManager
+GameManager o-- Logger
+GameManager o-- Game
+GameManager ..> Packet
+
+class Gravity {
+    + Gravity()
+    + int getGravityTimeMs() const
+    + void increaseGravityDifficulty()
+    + void updateGravityTime()
+    + bool hasGravityIntervalElapsed()
+
+    - static constexpr int kMinGravityTimeMs
+    - static constexpr int kInitialGravityTimeMs
+    - static constexpr double kDifficultyRate
+    - int gravityTimeMs
+    - int level
+    - std::chrono::steady_clock::time_point lastGravityUpdate
+}
+
+class GamePhysics {
+    + GamePhysics(SoundSender &sound)
+    + void applyGravity(std::shared_ptr<BoardController> boardManager, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager)
+    + CollisionType applyHardDrop(std::shared_ptr<Tetromino> tetromino, std::shared_ptr<BoardController> boardManager, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager)
+    + CollisionType applyAction(std::shared_ptr<Tetromino> tetromino, TetrisAction action, std::shared_ptr<BoardController> boardController, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager)
+    + void onTetrominoColide(std::shared_ptr<Tetromino> tetromino, CollisionType col, TetrisAction action, std::shared_ptr<BoardController> boardController, std::shared_ptr<TetrominoController> tetrominoController, std::shared_ptr<TetrominoManager> tetrominoManager)
+    + void increaseGravityDifficulty()
+
+    - Gravity gravity
+    - SoundSender &sound
+    - int countNewLockedTetrominos(std::vector<std::shared_ptr<Tetromino>> tetrominos, std::shared_ptr<BoardController> boardController, std::shared_ptr<TetrominoController> tetrominoController)
+}
+
+GamePhysics *-- Gravity
+GamePhysics ..> BoardController
+GamePhysics ..> TetrominoController
+GamePhysics ..> TetrominoManager
+GamePhysics ..> Tetromino
+GamePhysics ..> SoundSender
+
+
+class TetrominoController {
+    + TetrominoController()
+    + ~TetrominoController()
+    + void setCanMove(std::shared_ptr<Tetromino> &tetromino, bool b)
+    + void setLockedInPlace(std::shared_ptr<Tetromino> &tetromino, bool b)
+    + bool canMove(const std::shared_ptr<Tetromino> &tetromino)
+    + bool isLockedInPlace(const std::shared_ptr<Tetromino> &tetromino)
+    + void transform(std::shared_ptr<Tetromino> &tetromino, TetrisAction action, bool forward)
+
+    - void rotate(std::shared_ptr<Tetromino> &tetromino, TetrisAction action)
+}
+
+TetrominoController ..> Tetromino
+
+
+class TetrominoFactory {
+    + std::unique_ptr<Tetromino> createTetromino()
+
+    - static const std::unordered_map<char, TetrominoCreator> tetrominoCreators
+    - static const std::vector<char> tetrominoTypes
+}
+
+TetrominoFactory ..> Tetromino
+TetrominoFactory ..> Coordinate
+
+class TetrominoManager {
+    + TetrominoManager()
+    + ~TetrominoManager()
+    + bool spawnNextTetromino(Player *player, std::shared_ptr<BoardController> boardManager, std::shared_ptr<TetrominoController> tetrominoController, int maxTries)
+    + std::shared_ptr<Tetromino> getCurrentTetromino(Player *player) const
+    + std::shared_ptr<Tetromino> getNextTetromino(Player *player) const
+    + std::vector<std::shared_ptr<Tetromino>> getCurrentTetrominos() const
+    + Player *getPlayerByTetromino(std::shared_ptr<Tetromino> tetromino) const
+
+    - std::unordered_map<Player *, std::shared_ptr<Tetromino>> currentTetromino
+    - std::unordered_map<Player *, std::shared_ptr<Tetromino>> nextTetromino
+}
+
+TetrominoManager o-- Player
+TetrominoManager o-- Tetromino
+TetrominoManager ..> BoardController
+TetrominoManager ..> TetrominoController
+
+class Player {
+    + Player(int id, const std::string &name)
+    + ~Player()
+    + const PlayerData getData() const
+    + void addScore(int amount)
+    + void setName(const std::string &newName)
+    + void disconnect()
+    + bool isConnected() const
+    + int getid()
+    + void enqueueAction(const TetrisAction &action)
+    + bool popAction(TetrisAction &action)
+
+    - ThreadSafeQueue<TetrisAction> actions
+    - PlayerData data
+}
+
+Player o-- PlayerData
+Player ..> ThreadSafeQueue
+
+
+class ServerManager {
+    + ServerManager(uint16_t port = 12345)
+    + ~ServerManager()
+    + void stop()
+    + void broadcastSound(SoundType soundType) override
+    + void playSoundToPlayer(const Player *player, SoundType soundType) override
+    + void broadcastBackgroundSound(SoundType sound) override
+    + void broadcast_starting_game()
+    + ENetPeer *getEnetPeerByPlayer(const Player *player)
+    + static Player *getPlayerFromPacket(const Packet &packet)
+    + std::vector<Player *> getPlayers()
+
+    - int getNextAvailableid()
+    - void broadcastPlayerList()
+    - void createPlayerAndLink(ENetPeer *peer)
+    - PlayerList players
+
+    # void onPeerConnect(ENetPeer *peer) override
+    # void onPeerDisconnect(ENetPeer *peer) override
+}
+
+ServerManager --|> NetworkManager
+ServerManager --|> SoundSender
+ServerManager o-- PlayerList
+ServerManager ..> Packet
+ServerManager ..> Player
+
+interface SoundSender {
+    + void playSoundToPlayer(const Player *player, SoundType sound)
+    + void broadcastSound(SoundType sound)
+    + void broadcastBackgroundSound(SoundType sound)
+}
+
+SoundSender ..> Player
+
+
+@enduml
