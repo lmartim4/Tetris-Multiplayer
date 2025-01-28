@@ -226,13 +226,10 @@ void Game::checkForPlacedTetrominos()
 void Game::checkMusicLimits()
 {
     double completed = (board->getHighestCell() * 100.0f) / (board->getHeight() * 1.0f);
-    std::cout << "Completed: " << std::to_string(completed) << std::endl;
 
-    // Define thresholds
     const double thresholds[] = {25.f, 50.f, 75.f, 100.f};
-    static int lastThresholdIndex = -1; // Keeps track of the last range index
+    static int lastThresholdIndex = -1;
 
-    // Find the current threshold index
     int currentThresholdIndex = -1;
     for (int i = 0; i < 4; ++i)
     {
@@ -243,29 +240,23 @@ void Game::checkMusicLimits()
         }
     }
 
-    // If the player crosses a threshold, update the sound
     if (currentThresholdIndex != lastThresholdIndex)
     {
         lastThresholdIndex = currentThresholdIndex;
 
-        // Play the new sound based on the threshold
         switch (currentThresholdIndex)
         {
-        case 0:                                              // Below 0.25
-            server.broadcastBackgroundSound(SoundType::Lv2); // Looping
-            logger->console_log("Playing low-pressure sound.");
+        case 0:
+            server.broadcastBackgroundSound(SoundType::Lv1);
             break;
-        case 1:                                              // 0.25 - 0.5
-            server.broadcastBackgroundSound(SoundType::Lv3); // Looping
-            logger->console_log("Playing medium-pressure sound.");
+        case 1:
+            server.broadcastBackgroundSound(SoundType::Lv2);
             break;
-        case 2:                                              // 0.5 - 0.75
-            server.broadcastBackgroundSound(SoundType::Lv4); // Looping
-            logger->console_log("Playing high-pressure sound.");
+        case 2:
+            server.broadcastBackgroundSound(SoundType::Lv3);
             break;
-        case 3:                                                // 0.75 - 1.0
-            server.broadcastBackgroundSound(SoundType::Lv256); // Looping
-            logger->console_log("Playing critical-pressure sound.");
+        case 3:
+            server.broadcastBackgroundSound(SoundType::Lv256);
             break;
         default:
             break;

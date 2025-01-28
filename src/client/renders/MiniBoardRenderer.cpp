@@ -14,24 +14,19 @@ void MiniBoardRenderer::draw(sf::RenderTarget &target, sf::RenderStates states) 
 
 void MiniBoardRenderer::updateSize(const sf::Vector2u size)
 {
-    position.x = size.x - 4 * cellSize - 100.f;
+    std::lock_guard<std::mutex> lock(renderMutex);
+
+    position.x = size.x - 220.f;
     position.y = 100.f;
 
     if (renderGrid.size() == 0)
         return;
 
-    position.x = size.x - renderGrid[0].size() * cellSize - 100.f; // 10px margin from the right
-    position.y = 100.f;                                            // 10px margin from the top
-
     for (int x = 0; x < renderGrid.size(); ++x)
-    {
         for (int y = 0; y < renderGrid[x].size(); ++y)
-        {
             renderGrid[x][y]->refreshPosition(
                 sf::Vector2f(cellSize - 10.f, cellSize - 10.f),
                 sf::Vector2f(position.x + y * cellSize, position.y + x * cellSize));
-        }
-    }
 }
 
 MiniBoardRenderer::MiniBoardRenderer(sf::Vector2f position, float cellSize)
@@ -63,18 +58,19 @@ void MiniBoardRenderer::setTetromino(std::shared_ptr<Tetromino> t, CellRenderMod
 
         for (int y = 0; y < width; ++y)
         {
-            if (shape[x][y] == 0)
-                continue;
-
             std::shared_ptr<Cell> cell = std::make_shared<Cell>(Coordinate(x, y));
-            cell->setColor(t->getColor());
+
+            if (shape[x][y] != 0)
+                cell->setColor(t->getColor());
+            else
+                cell->setEmpty();
 
             auto cellRenderer = std::make_shared<CellRenderer>(
                 sf::Vector2f(cellSize - 10.f, cellSize - 10.f),
                 sf::Vector2f(position.x + y * cellSize, position.y + x * cellSize),
                 renderMode,
                 cell);
-            
+
             row.push_back(cellRenderer);
         }
 

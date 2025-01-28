@@ -70,9 +70,6 @@ void CellRenderer::draw(sf::RenderTarget &target, sf::RenderStates states) const
 
 void CellRenderer::refreshPosition(sf::Vector2f newSize, sf::Vector2f newPosition)
 {
-    if (newSize == newPosition)
-        return;
-
     size = newSize;
     setPosition(newPosition);
     rebuildFill();

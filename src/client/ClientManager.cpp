@@ -158,6 +158,7 @@ void ClientManager::on_receive_next_tetromino(const Packet &packet)
 {
     std::shared_ptr<Tetromino> receivedTetromino = std::make_shared<Tetromino>();
     receivedTetromino->deserialize(packet.getPayloadAsJson());
+    next_tetrominos.clear();
     next_tetrominos.push(receivedTetromino);
 }
 

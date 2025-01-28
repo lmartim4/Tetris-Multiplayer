@@ -57,7 +57,7 @@ void BoardScreen::updateSize(const sf::Vector2u a)
 {
     std::lock_guard<std::mutex> lock(renderMutex);
 
-    miniBoard->updateSize(a);
     mainBoard->updateSize(a);
+    miniBoard->updateSize(a);
     statusDisplay->updateSize(a);
 }

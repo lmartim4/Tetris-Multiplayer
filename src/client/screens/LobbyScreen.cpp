@@ -2,36 +2,30 @@
 
 LobbyScreen::LobbyScreen(sf::RenderWindow &window, std::shared_ptr<ClientManager> clientManager)
     : Screen(window),
-      clientMan(clientManager),
-      mainText(defaultFont, "Tetris Lobby", sf::Color::Blue, {window.getSize().x / 2 - 100, 20}, 50),
-      startGameText(defaultFont, "Start Game", sf::Color::Green, {window.getSize().x / 2 - 100, 380}, 40)
+      clientMan(clientManager)
 {
+    initializeButtons();
 
-    auto size = window.getSize();
-
-    startGameText.setOnClick([clientManager]()
-                             { clientManager->request_game_start(); });
+    startGameText->setOnClick([clientManager]()
+                              { clientManager->request_game_start(); });
 }
 
 void LobbyScreen::handleEvent(sf::Event event, ScreenManager &manager)
 {
-    startGameText.handleEvent(event, manager.getWindow());
+    mainText->handleEvent(event, manager.getWindow());
+    startGameText->handleEvent(event, manager.getWindow());
 
     for (Button ct : clickableTexts)
         ct.handleEvent(event, manager.getWindow());
 
     if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-        std::cout << "Lobby event: escape pressed" << std::endl;
+        clientMan->disconnect();
 }
 
 void LobbyScreen::update(float deltaTime) {}
 
 void LobbyScreen::render(sf::RenderWindow &window)
 {
-    // Render static elements
-    startGameText.render(window);
-    mainText.render(window);
-
     // Variables for grid layout
     int index = 0;
     int maxColumns = 5; // Max number of circles per row
@@ -55,7 +49,6 @@ void LobbyScreen::render(sf::RenderWindow &window)
 
     for (auto &pd : clientMan->getPlayerList().getPlayers())
     {
-        // Create a circle for the player
         sf::CircleShape circle(circleRadius);
         circle.setFillColor(sf::Color::Cyan);
         circle.setOutlineThickness(2.0f);
@@ -74,9 +67,9 @@ void LobbyScreen::render(sf::RenderWindow &window)
             defaultFont,
             pd.playerName + " " + std::to_string(pd.id),
             sf::Color::Red,
-            {x - circleRadius, y + 2 * circleRadius + 5}, 20); // Adjusted text position
+            {x - circleRadius / 2, y + 2 * circleRadius + 5}, 20); // Adjusted text position
 
-        itext.render(window);
+        window.draw(itext);
         itext.setOnClick([&]()
                          { std::cout << " clicked " << pd.id << std::endl; });
 
@@ -84,11 +77,21 @@ void LobbyScreen::render(sf::RenderWindow &window)
 
         index++;
     }
+
+    // Render static elements
+    window.draw(*startGameText);
+    window.draw(*mainText);
+}
+
+void LobbyScreen::initializeButtons()
+{
+    mainText = std::make_shared<Button>(defaultFont, "Tetris Lobby", sf::Color::Blue, sf::Vector2f{window.getSize().x / 2.f, 70.f}, 60);
+    startGameText = std::make_shared<Button>(defaultFont, "Start Game", sf::Color::Green, sf::Vector2f{window.getSize().x / 2.f, 440.f}, 50);
+    updateSize(window.getSize());
 }
 
 void LobbyScreen::updateSize(const sf::Vector2u a)
 {
-    sf::View view = window.getView();
-    view.setSize(static_cast<float>(a.x), static_cast<float>(a.y));
-    window.setView(view);
+    startGameText->setOrigin(startGameText->getLocalBounds().width / 2.f, startGameText->getLocalBounds().height / 2.f);
+    mainText->setOrigin(mainText->getLocalBounds().width / 2.f, mainText->getLocalBounds().height / 2.f);
 }

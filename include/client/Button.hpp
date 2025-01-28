@@ -11,6 +11,5 @@ public:
     Button(const sf::Font &font, const std::string &str, sf::Color color, sf::Vector2f position, int fontSize);
     void setOnClick(const std::function<void()> &callback);
     void handleEvent(const sf::Event &event, sf::RenderWindow &window);
-    void render(sf::RenderWindow &window);
     sf::FloatRect getBounds() const;
 };

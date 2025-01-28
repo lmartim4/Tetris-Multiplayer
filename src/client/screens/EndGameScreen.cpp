@@ -110,8 +110,8 @@ void EndGameScreen::render(sf::RenderWindow &window)
     for (auto &scoreText : playerScores)
         window.draw(scoreText);
 
-    quitButton.render(window);
-    playAgainButton.render(window);
+    window.draw(quitButton);
+    window.draw(playAgainButton);
 }
 
 void EndGameScreen::updateSize(const sf::Vector2u a)

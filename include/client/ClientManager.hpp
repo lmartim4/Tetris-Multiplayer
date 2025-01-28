@@ -83,4 +83,16 @@ public:
         std::lock_guard<std::mutex> lock(getIDMutex);
         return me.id;
     }
+
+    static void printMatrix(const std::vector<std::vector<int>> &matrix, const std::string &label)
+    {
+        std::cout << label << ":\n";
+        for (const auto &row : matrix)
+        {
+            for (const auto &cell : row)
+                std::cout << cell << " ";
+            std::cout << "\n";
+        }
+        std::cout << std::endl;
+    }
 };

@@ -12,7 +12,7 @@
 
 class LobbyScreen : public Screen
 {
-    Button mainText, startGameText;
+    std::shared_ptr<Button> mainText, startGameText;
     std::shared_ptr<ClientManager> clientMan;
 
     const float circleRadius = 30.0f;
@@ -25,7 +25,7 @@ public:
     void handleEvent(sf::Event event, ScreenManager &manager) override;
     void update(float deltaTime) override;
     void render(sf::RenderWindow &window) override;
-
+    
+    void initializeButtons();
     void updateSize(const sf::Vector2u a) override;
-
 };

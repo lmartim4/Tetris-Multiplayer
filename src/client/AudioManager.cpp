@@ -41,7 +41,7 @@ void AudioManager::playSound(SoundType type, bool loop)
     // Set looping and play the sound
     it->second.setLoop(loop);
     it->second.play();
-    logger->console_log("(+) Playing sound: " + std::to_string(static_cast<int>(type)) + " with loop set to: " + std::string(loop ? "true" : "false"));
+    //logger->console_log("(+) Playing sound: " + std::to_string(static_cast<int>(type)) + " with loop set to: " + std::string(loop ? "true" : "false"));
 }
 
 void AudioManager::stopBackgroundMusic()
@@ -54,7 +54,7 @@ void AudioManager::stopBackgroundMusic()
     }
 
     it->second.stop(); // Stop the currently playing background sound
-    logger->console_log("(-) Background music stopped: " + std::to_string(static_cast<int>(m_currentBackgroundSound)));
+    //logger->console_log("(-) Background music stopped: " + std::to_string(static_cast<int>(m_currentBackgroundSound)));
     m_currentBackgroundSound = SoundType::STOP; // Reset the background sound type
 }
 

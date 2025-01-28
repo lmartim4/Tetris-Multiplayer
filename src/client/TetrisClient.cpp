@@ -21,7 +21,9 @@ AudioManager audioManager;
 std::shared_ptr<ClientManager> client;
 
 void heartbeat_listener(const Packet &packet) { client->on_receive_heartbeat(); }
+
 void onGameScore(const Packet &packet) { client->on_receive_score(packet); }
+
 void onPlaySoundPacket(const Packet &packet)
 {
     audioManager.playSound((SoundType)packet.getData()[0], false);
